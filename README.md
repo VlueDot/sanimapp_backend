@@ -13,8 +13,8 @@
   ```
   npm i firebase-tools -g
   npm i typescript -g
-  ```
-  
+  npm i firebase-functions
+  ```  
 - Build: npm run build
 - Emulate: npm run serve
 - Shell: npm run shell
