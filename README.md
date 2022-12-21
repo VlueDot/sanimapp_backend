@@ -3,11 +3,18 @@
 ## Initialize
 
 - Login: firebase login
-- Initialize: firebase init database/firestore/etc
+- Initialize: firebase init {database|firestore|others}
 - init functions: firebase init functions
 
 ## Run
 
+- Chose node version: nvm use 16.17.1
+- if first time: 
+  ```
+  npm i firebase-tools -g
+  npm i typescript -g
+  npm i firebase-functions
+  ```  
 - Build: npm run build
 - Emulate: npm run serve
 - Shell: npm run shell
