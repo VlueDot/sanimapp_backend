@@ -11,8 +11,20 @@ export const helloWorld = functions.https.onRequest((request, response) => {
 });
 
 export const OdooSync = functions.https.onRequest(async (request, response)=> {
-  await Odoo.OdooLogin();
-  response.send("Odoo login!");
+  try{
+    let odoo_login = await Odoo.OdooLogin();
+    functions.logger.info("Odoo Login: " + odoo_login);
+    let odoo_logout = await Odoo.OdooLogout()
+    functions.logger.info("Odoo Logout: " + odoo_logout);
+  }
+  catch(error)
+  {
+    functions.logger.info("Odoo Error: " + error);
+    response.send("OdooSync failed " + error)
+  }
+  
+  response.send("OdooSync")
+  
 })
 
 
