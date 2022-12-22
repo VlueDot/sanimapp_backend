@@ -10,8 +10,9 @@ export const helloWorld = functions.https.onRequest((request, response) => {
   response.send("Hello from Firebase!");
 });
 
-export const OdooSync = functions.https.onRequest((request, response)=> {
-  Odoo.OdooLogin();
+export const OdooSync = functions.https.onRequest(async (request, response)=> {
+  await Odoo.OdooLogin();
+  response.send("Odoo login!");
 })
 
 
