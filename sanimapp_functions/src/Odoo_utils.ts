@@ -1,5 +1,7 @@
 import fetch from 'node-fetch'
 import * as settings from './GlobalSetting'
+import * as functions from "firebase-functions";
+
 
 export async function OdooLogin(){ 
     const response = await fetch(settings.odoo_url + "session/authenticate", settings.odoo_access);
@@ -7,16 +9,23 @@ export async function OdooLogin(){
     if(response.status === 200)
         {
             try {
-                return ["OK" , "Odoo Authentication Succeeded. Expiration: " + data['result']['expiration_date'] ]
+                functions.logger.info(response.status +" Odoo Authentication Succeeded. User Expiration: " + data['result']['expiration_date'] )
+                return 1
             } catch (error) {
-                return  ["ERROR" ,  data['error']['message'] ]
+                functions.logger.error(response.status +" Odoo Authentication Failed: " + data['error']['message'] )
             }
-    } else return ["ERROR", response.status]
+    } else functions.logger.error(response.status +" OdooLogin Error: unexpected " )
+
+    return 0
          
 }
 
 export async function OdooLogout(){ 
     const response = await fetch(settings.odoo_url + "session/logout");
+    if(response.status === 200){
+        functions.logger.info( "Odoo Logout Succeeded. ")
+    } else functions.logger.error("OdooLogout Error: unexpected " + response.status)
+
     return response.status;
             
     }

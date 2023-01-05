@@ -10,6 +10,6 @@
       {
         "params":{
             "db": "oxe360-ooc-sanisol-staging-13-0-6571046",
-            "login":"pablo@sanima.pee",
+            "login":"pablo@sanima.pe",
             "password" : "Sanima2021"
   }})}
