@@ -1,4 +1,4 @@
-﻿# Sanimapp Functions
+﻿# Sanimapp Backend
 
 ## Initialize
 
