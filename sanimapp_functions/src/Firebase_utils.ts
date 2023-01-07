@@ -1,7 +1,7 @@
-import * as functions from "firebase-functions";
+// import * as functions from "firebase-functions";
 import * as admin from "firebase-admin"
 
-const url_timestamps = "/timestamp_collection"
+// const url_timestamps = "/timestamp_collection"
 
 
 const serviceAccount = require('../service-account.json')
@@ -28,4 +28,4 @@ admin.initializeApp({
 //     }
 // }
 
-export const getTimestampsFirebase = functions.database.ref(url_database + url_timestamps).subscribe((data)=>{})
+// export const getTimestampsFirebase = functions.database.ref(url_database + url_timestamps).subscribe((data)=>{})
