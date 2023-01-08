@@ -8,12 +8,14 @@
 
 ## Run
 
-- Chose node version: nvm use 16.17.1
+- Chose node version: nvm use 16.19.0
 - if first time: 
   ```
   npm i firebase-tools -g
   npm i typescript -g
   npm i firebase-functions
+  npm install --save firebase-functions@latest
+  clear()
   ```  
 - Build: npm run build
 - Emulate: npm run serve
