@@ -1,4 +1,4 @@
-﻿# Sanimapp Backend
+firebase deploy firebase.cmd deploy ﻿# Sanimapp Backend
 
 ## Initialize
 
@@ -15,11 +15,13 @@
   npm i typescript -g
   npm i firebase-functions
   npm install --save firebase-functions@latest
-  clear()
+  clear
   ```  
 - Build: npm run build
 - Emulate: npm run serve
 - Shell: npm run shell
+- fix code: .\node_modules\.bin\eslint.cmd src --fix  (modify in .eslintrc.js, in rules > "@typescript-eslint/no-var-requires": 0,)
+- Deploy: firebase deploy --only functions
 
 ## Fork
 - create a branch using this > https://trello.com/invite/b/Ku7GUi6c/ATTI03fe0e90f63625e30cd676f69a7c5494D35144F9/sanimapp
