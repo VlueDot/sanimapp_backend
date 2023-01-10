@@ -3,8 +3,8 @@ firebase deploy firebase.cmd deploy ﻿# Sanimapp Backend
 ## Initialize
 
 - Login: firebase login
-- Initialize: firebase init {database|firestore|others}
 - init functions: firebase init functions
+- Initialize: firebase init {database|firestore|others}
 
 ## Run
 
