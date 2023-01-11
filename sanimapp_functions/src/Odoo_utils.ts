@@ -3,7 +3,7 @@ import * as settings from './GlobalSetting'
 import * as functions from "firebase-functions";
 
 
-export async function OdooLogin(){ 
+export async function  OdooLogin(){ 
     const response = await fetch(settings.odoo_url + "session/authenticate", settings.odoo_access);
     const data = await response.json()
     if(response.status === 200)

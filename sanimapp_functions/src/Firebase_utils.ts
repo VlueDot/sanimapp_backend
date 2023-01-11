@@ -1,31 +1,16 @@
-// import * as functions from "firebase-functions";
-import * as admin from "firebase-admin"
 
-// const url_timestamps = "/timestamp_collection"
+import * as functions from "firebase-functions";
 
 
-const serviceAccount = require('../service-account.json')
-const url_database = 'https://${serviceAccount.project_id}.firebaseio.com'
-admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-    databaseURL: url_database
-})
+export async function updateCRM_Odoo(change: functions.Change<functions.database.DataSnapshot>){
+
+    console.log(change.before.val());
+    console.log(change.after.val());
+    change.after.ref.set("Meow");
 
 
-// export class Firebase_utils {
-//     connectFirebase(){}
+    let succeeded = false;
+    if(succeeded) return "Success";
+    else return "Error";
 
-//     readFirebase(){
-
-//     }
-
-//     writeFirebase(){
-
-//     }
-
-//     getTimestampFirebase(){
-
-//     }
-// }
-
-// export const getTimestampsFirebase = functions.database.ref(url_database + url_timestamps).subscribe((data)=>{})
+}
