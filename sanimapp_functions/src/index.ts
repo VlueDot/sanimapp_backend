@@ -45,6 +45,32 @@ export const OdooSync = functions.https.onRequest(async (request, response)=> {
   
 })
 
+export const OdooToFirebase = functions.https.onRequest(async (request, response)=> {
+  //this will run with certain periodicity. This will be the stable function. 
+  try{
+    let odoo_session = await OdooFcn.OdooLogin();
+
+    if (odoo_session != null) {
+
+      await OdooFcn.OdooToFirebase_CRM(odoo_session)
+
+      await OdooFcn.OdooLogout()
+      
+    }
+
+    response.send("OdooSync End")
+  
+  }
+  catch(error)
+  {
+    functions.logger.error(error);
+
+    response.send("OdooSync Error: "+error)
+    
+  }
+  
+})
+
 
 export const FirebaseToOdoo_CRM = functions.database
     .ref("/test")

@@ -14,3 +14,18 @@ export async function updateCRM_Odoo(change: functions.Change<functions.database
     else return "Error";
 
 }
+
+
+import * as admin from "firebase-admin";
+
+export async function firebase_set(ref: string, data:any) {
+    try{
+        const messageRef = admin.database().ref(ref);
+        await messageRef.set(data);
+        return true
+    }
+    catch(error){
+        return error
+    }
+
+  }
