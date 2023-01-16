@@ -33,7 +33,7 @@ export async function odoo_Logout() {
   return response.status;
 }
 
-export async function odooToFirebase_CRM(odoo_session:any) {
+export async function odooToFirebase_CRM_Campaigns(odoo_session:any) {
   const CustomHeaders: HeadersInit = {
     "Content-Type": "application/json",
     "Cookie": "session_id="+odoo_session,
@@ -94,3 +94,14 @@ export async function odooToFirebase_CRM(odoo_session:any) {
 }
 
 
+
+//LOOK for HomeFragment L.157 
+//Have to delete that part
+export async function odooToFirebase_CRM_Tickets(odoo_session:any) {
+//First have to check the timestamp. we will leave it theere as backup in case something works as fuck
+const res = await FirebaseFcn.firebaseGet("timestamp_collection");
+console.log("timestamp_collection",res);
+
+
+
+}

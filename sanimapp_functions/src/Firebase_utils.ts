@@ -27,3 +27,14 @@ export async function firebaseSet(ref: string, data:object) {
     return error;
   }
 }
+
+export async function firebaseGet(ref: string) {
+  try {
+    const messageRef = admin.database().ref(ref)
+    await messageRef.get()
+   
+    return messageRef;
+  } catch (error) {
+    return error;
+  }
+}
