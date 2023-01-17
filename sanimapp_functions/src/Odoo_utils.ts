@@ -99,9 +99,43 @@ export async function odooToFirebase_CRM_Campaigns(odoo_session:any) {
 //Have to delete that part
 export async function odooToFirebase_CRM_Tickets(odoo_session:any) {
 //First have to check the timestamp. we will leave it theere as backup in case something works as fuck
-const res = await FirebaseFcn.firebaseGet("timestamp_collection");
-console.log("timestamp_collection",res);
+const fb_timestamp = await FirebaseFcn.firebaseGet("/timestamp_collection/CMR_tickets_timestamp");
+const date = new Date(Number(fb_timestamp));
+const data_str = date.getFullYear()+"-"+("0" + (date.getMonth() + 1)).slice(-2)+"-"+("0" +date.getDate()).slice(-2)+" "+ ("0" +date.getHours()).slice(-2)+":"+("0" +date.getMinutes()).slice(-2)+":"+("0" +date.getSeconds()).slice(-2);
+console.log(data_str);
+const CustomHeaders: HeadersInit = {
+  "Content-Type": "application/json",
+  "Cookie": "session_id="+odoo_session,
+};
+
+const raw = JSON.stringify({
+  "params": {
+    "model": "crm.lead",
+    "offset": 0,
+    "fields": ["partner_id","campaign_id","stage_id","medium_id",
+     "source_id","referred", "name","phone","mobile","tag_ids", "create_uid", "create_date"]
+    },
+    "domain": ["write_date",">", data_str]
+}
+
+);
+
+const params = {
+  headers: CustomHeaders,
+  method: "post",
+  body: raw,
+};
+
+console.log(params);
+
+const response = await fetch(settings.odoo_url + "dataset/search_read", params);
+const data = await response.json();
+
+console.log("data: " + JSON.stringify(data));
 
 
+
+
+return null;
 
 }

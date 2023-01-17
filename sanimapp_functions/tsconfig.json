@@ -8,9 +8,10 @@
       "strict": true,
       "target": "es2017",
       "resolveJsonModule": true,
+      
     },
     "compileOnSave": true,
     "include": [
       "src"
-    ]
+   ]
   }

@@ -4,10 +4,10 @@ import * as FirebaseFcn from "./Firebase_utils";
 import * as admin from "firebase-admin";
 
 // Firebase Connection Settings
-import * as serviceAccount from "../service-account.json";
-export const urldatabase = "https://" + serviceAccount.project_id +"-default-rtdb.firebaseio.com";
+const serviceAccount = require("./service-account.json");
+export const urldatabase = "https://sanimappdev-default-rtdb.firebaseio.com";
 admin.initializeApp({
-  credential: admin.credential.cert(String(serviceAccount)),
+  credential: admin.credential.cert(serviceAccount),
   databaseURL: urldatabase,
 });
 
@@ -34,22 +34,6 @@ export const TestFunction = functions.https.onRequest( async (request, response)
   
 });
 
-
-// export const OdooSync = functions.https.onRequest(async (request, response)=> {
-//   // this will run with certain periodicity. This will be the stable function.
-//   try {
-//     const odoo_login = await OdooFcn.odoo_Login();
-
-
-//     if (odoo_login != 0) OdooFcn.odoo_Logout();
-
-//     response.send("OdooSync Finished Successfully");
-//   } catch (error) {
-//     functions.logger.error(error);
-
-//     response.send("OdooSync Error: "+error);
-//   }
-// });
 
 export const OdooToFirebase = functions.https.onRequest(async (request, response)=> {
   // this will run with certain periodicity. This will be the stable function.
