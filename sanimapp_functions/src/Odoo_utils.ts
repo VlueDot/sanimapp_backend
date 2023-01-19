@@ -103,6 +103,15 @@ export async function odooToFirebase_CRM_Tickets(odoo_session:any) {
 // const date = new Date(Number(fb_timestamp));
 // const data_str = "'"+ date.getFullYear()+"-"+("0" + (date.getMonth() + 1)).slice(-2)+"-"+("0" +date.getDate()).slice(-2)+" "+ ("0" +date.getHours()).slice(-2)+":"+("0" +date.getMinutes()).slice(-2)+":"+("0" +date.getSeconds()).slice(-2) + "'";
 
+let CRM_tickets_not_archived = await FirebaseFcn.firebaseGet("/CRM_tickets_not_archived")
+const CRM_tickets_not_archived_dataAsKeys = new Map()
+for(let key in CRM_tickets_not_archived) {
+  CRM_tickets_not_archived_dataAsKeys.set(CRM_tickets_not_archived[key], key)
+}
+
+
+
+
 const CustomHeaders: HeadersInit = {
   "Content-Type": "application/json",
   "Cookie": "session_id="+odoo_session,
@@ -144,7 +153,7 @@ const params = {
   body: raw,
 };
 
-console.log(params);
+// console.log(params);
 
 const response = await fetch(settings.odoo_url + "dataset/search_read", params);
 const data = await response.json();
@@ -214,23 +223,25 @@ for(var i = 0; i < data_len ; i++){
       if (partner_id ==null || campaign_id ==null || medium_id ==null || source_id ==null  ) {
      
         let changed = ""
-        if (campaign_id==null) {campaign_id = "NaN"; changed += "campaign_id"}
-        if (partner_id==null) {partner_id = "NaN"; changed += " partner_id" }
-        if (medium_id==null) {medium_id = "NaN"; changed += " medium_id" }
-        if (source_id==null) {source_id = "NaN" ; changed += " source_id"}
-        functions.logger.warn("[odooToFirebase_CRM_Tickets] Null founded. Id: " + records[i]["id"] + ". Changing nulls " + changed  );
+        if (campaign_id==null) {campaign_id = "NaN"; changed += "campaign_id "}
+        if (partner_id==null) {partner_id = "NaN"; changed += "partner_id " }
+        if (medium_id==null) {medium_id = "NaN"; changed += "medium_id " }
+        if (source_id==null) {source_id = "NaN" ; changed += "source_id "}
+        functions.logger.warn("Nulls found. " , {"Function" : "odooToFirebase_CRM_Tickets", "Id" : records[i]["id"] , "Changing nulls" : changed  });
       }
 
       if(partner_id ==null || campaign_id ==null || medium_id ==null || source_id ==null || referred ==null || name ==null || create_uid ==null || tag_ids ==null || create_date==null || estateCRM==null || typeService==null ) {
-        functions.logger.error("[odooToFirebase_CRM_Tickets] Null founded beside corrected: " + JSON.stringify( records[i] ));
+        functions.logger.error("ERROR: Nulls found beside correction.", {"Function:": "odooToFirebase_CRM_Tickets", "record": records[i]});
       } 
       
       //VerifyAndUpdateCMRTicket OdooUserX.kt line 1403
+      //have to check a match between odoo and firebase. line 1413
+      
       
       
   }
   catch (error){
-    functions.logger.error( "[odooToFirebase_CRM_Tickets] ERROR: ", error);}
+    functions.logger.error( "ERROR: " + error, {"Function":"odooToFirebase_CRM_Tickets"});}
   }
 
   
