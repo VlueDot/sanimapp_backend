@@ -130,7 +130,7 @@ const raw = JSON.stringify({
         [
             "write_date",
             ">",
-            "2022-11-06 21:50:37"
+            "2019-06-06 21:50:37"
         ]
     ]
   }
@@ -148,7 +148,7 @@ console.log(params);
 
 const response = await fetch(settings.odoo_url + "dataset/search_read", params);
 const data = await response.json();
-console.log("data: " + JSON.stringify(data));
+// console.log("data: " + JSON.stringify(data));
 const data_len = data["result"]["length"];
 const records = data["result"]["records"];
 
@@ -156,16 +156,16 @@ const records = data["result"]["records"];
 
 for(var i = 0; i < data_len ; i++){
   var stage_id = records[i]["stage_id"][0];
-  var partner_id="NaN"    //why Nan ? 
-  var campaign_id="NaN"
+  let partner_id="NaN"    //why Nan ? 
+ 
   var medium_id="NaN"
   var source_id="NaN"
   var estateCRM="Cliente Nuevo"
-  // var typeService="Otro"
+  var typeService="Otro"
 
 
   try {
-      campaign_id=records[i]["campaign_id"][1];
+      let campaign_id=records[i]["campaign_id"][1];
       if (stage_id!=1) partner_id = records[i]["partner_id"][0];
       medium_id=records[i]["medium_id"][1];
       source_id=records[i]["source_id"][1];
@@ -201,16 +201,33 @@ for(var i = 0; i < data_len ; i++){
           break;
       }
     
-      var tag_ids_map = []
-      for (var i = 0; i < tag_ids.length; i++){
-        tag_ids_map.push (tag_ids[i])
+      for (var j = 0; j < tag_ids.length; j++){
 
+        if(tag_ids[j] == "2") typeService = "Ventas-Pamplona"
+        else if(tag_ids[j] == "3") typeService = "Ventas-Accu"
+        else typeService = "Otro"
+        
+        
+         
       }
 
-      console.log("tag_ids map" +tag_ids_map)
-      
+      if (partner_id ==null || campaign_id ==null || medium_id ==null || source_id ==null  ) {
+     
+        let changed = ""
+        if (campaign_id==null) {campaign_id = "NaN"; changed += "campaign_id"}
+        if (partner_id==null) {partner_id = "NaN"; changed += " partner_id" }
+        if (medium_id==null) {medium_id = "NaN"; changed += " medium_id" }
+        if (source_id==null) {source_id = "NaN" ; changed += " source_id"}
+        functions.logger.warn("[odooToFirebase_CRM_Tickets] Null founded. Id: " + records[i]["id"] + ". Changing nulls " + changed  );
+      }
 
-      console.log({partner_id, campaign_id,medium_id,source_id, referred, name, create_uid, tag_ids, create_date, estateCRM});
+      if(partner_id ==null || campaign_id ==null || medium_id ==null || source_id ==null || referred ==null || name ==null || create_uid ==null || tag_ids ==null || create_date==null || estateCRM==null || typeService==null ) {
+        functions.logger.error("[odooToFirebase_CRM_Tickets] Null founded beside corrected: " + JSON.stringify( records[i] ));
+      } 
+      
+      //VerifyAndUpdateCMRTicket OdooUserX.kt line 1403
+      
+      
   }
   catch (error){
     functions.logger.error( "[odooToFirebase_CRM_Tickets] ERROR: ", error);}
@@ -218,7 +235,7 @@ for(var i = 0; i < data_len ; i++){
 
   
 
-  console.log("stage_id", stage_id);
+  
 
  
 
