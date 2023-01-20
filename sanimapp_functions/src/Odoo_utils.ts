@@ -109,6 +109,13 @@ for(let key in CRM_tickets_not_archived) {
   CRM_tickets_not_archived_dataAsKeys.set(CRM_tickets_not_archived[key], key)
 }
 
+//get potencialUserIds
+const notRegisteredUsers = await FirebaseFcn.firebaseGet("/notRegisteredUsers");
+console.log(notRegisteredUsers)
+notRegisteredUsers.forEach((record:any, index:number) => {
+  console.log(notRegisteredUsers[index])
+})
+
 
 
 
@@ -236,6 +243,8 @@ for(var i = 0; i < data_len ; i++){
       
       //VerifyAndUpdateCMRTicket OdooUserX.kt line 1403
       //have to check a match between odoo and firebase. line 1413
+
+      
       
       
       
