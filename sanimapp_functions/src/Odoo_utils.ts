@@ -109,13 +109,12 @@ for(let key in CRM_tickets_not_archived) {
   CRM_tickets_not_archived_dataAsKeys.set(CRM_tickets_not_archived[key], key)
 }
 
-//get potencialUserIds
+//get potencialUserIds from firebase
 const notRegisteredUsers = await FirebaseFcn.firebaseGet("/notRegisteredUsers");
-console.log(notRegisteredUsers)
-notRegisteredUsers.forEach((record:any, index:number) => {
-  console.log(notRegisteredUsers[index])
-})
-
+// console.log("notRegisteredUsers", notRegisteredUsers)
+let potencialUserId :any = []
+for(let ids in notRegisteredUsers) potencialUserId.push(ids)
+// console.log("potencialUserIds", potencialUserId)
 
 
 
@@ -146,7 +145,7 @@ const raw = JSON.stringify({
         [
             "write_date",
             ">",
-            "2019-06-06 21:50:37"
+            "2022-06-06 21:50:37"
         ]
     ]
   }
@@ -169,8 +168,11 @@ const data_len = data["result"]["length"];
 const records = data["result"]["records"];
 
 
+let changed = ""
+
 
 for(var i = 0; i < data_len ; i++){
+  let id = String(records[i]["id"]);
   var stage_id = records[i]["stage_id"][0];
   let partner_id="NaN"    //why Nan ? 
  
@@ -179,6 +181,7 @@ for(var i = 0; i < data_len ; i++){
   var estateCRM="Cliente Nuevo"
   var typeService="Otro"
 
+ 
 
   try {
       let campaign_id=records[i]["campaign_id"][1];
@@ -229,12 +232,13 @@ for(var i = 0; i < data_len ; i++){
 
       if (partner_id ==null || campaign_id ==null || medium_id ==null || source_id ==null  ) {
      
-        let changed = ""
+        changed = ""
         if (campaign_id==null) {campaign_id = "NaN"; changed += "campaign_id "}
         if (partner_id==null) {partner_id = "NaN"; changed += "partner_id " }
         if (medium_id==null) {medium_id = "NaN"; changed += "medium_id " }
         if (source_id==null) {source_id = "NaN" ; changed += "source_id "}
         functions.logger.warn("Nulls found. " , {"Function" : "odooToFirebase_CRM_Tickets", "Id" : records[i]["id"] , "Changing nulls" : changed  });
+      
       }
 
       if(partner_id ==null || campaign_id ==null || medium_id ==null || source_id ==null || referred ==null || name ==null || create_uid ==null || tag_ids ==null || create_date==null || estateCRM==null || typeService==null ) {
@@ -244,8 +248,35 @@ for(var i = 0; i < data_len ; i++){
       //VerifyAndUpdateCMRTicket OdooUserX.kt line 1403
       //have to check a match between odoo and firebase. line 1413
 
+      // in firebase does exist id from odoo?
       
+      if(potencialUserId.includes(id)){
+        console.log("includes")
+        if(estateCRM == "Cliente Potencial"){
+          let data = {
+            "Campaign_month": campaign_id,
+            "How_know_us": medium_id,
+            "How_know_us_method" : source_id,
+            "How_know_us_referals" : referred,
+            "Name_potencial": name,
+            "Phone1" : phone,
+            "Phone2" : mobile,
+            "Sales_person" : create_uid,
+            "Zone" : typeService
+            
+          }
+          FirebaseFcn.firebaseSet("/notRegisteredUsers/"+id + "/", data);
+        }
+        else{
+          
+
+        }
+      }
+      else{
+
+      }
       
+     
       
       
   }
@@ -254,10 +285,6 @@ for(var i = 0; i < data_len ; i++){
   }
 
   
-
-  
-
- 
 
 
 
