@@ -116,6 +116,17 @@ let potencialUserId :any = []
 for(let ids in notRegisteredUsers) potencialUserId.push(ids)
 // console.log("potencialUserIds", potencialUserId)
 
+//get user registered ids
+let typesVentas = [
+  "Cliente Potencial", "Cliente con firma",
+  "Cliente ganado", "Cliente con Venta perdida"]
+const RegisteredUsers = await FirebaseFcn.firebaseGet("/Data_client");
+// console.log("RegisteredUsers", RegisteredUsers)
+let RegisteredUsersId :any = []
+for(let ids in RegisteredUsers) {
+  if (typesVentas.includes(RegisteredUsers[ids]["Data_client_3"]["client_type"])) RegisteredUsersId.push(ids)
+}
+console.log("RegisteredUsersId", RegisteredUsersId)
 
 
 const CustomHeaders: HeadersInit = {
@@ -237,7 +248,7 @@ for(var i = 0; i < data_len ; i++){
         if (partner_id==null) {partner_id = "NaN"; changed += "partner_id " }
         if (medium_id==null) {medium_id = "NaN"; changed += "medium_id " }
         if (source_id==null) {source_id = "NaN" ; changed += "source_id "}
-        functions.logger.warn("Nulls found. " , {"Function" : "odooToFirebase_CRM_Tickets", "Id" : records[i]["id"] , "Changing nulls" : changed  });
+        functions.logger.warn("Nulls found. " , {"Function" : "odooToFirebase_CRM_Tickets", "Id" : id , "Changing nulls" : changed  });
       
       }
 
@@ -249,25 +260,42 @@ for(var i = 0; i < data_len ; i++){
       //have to check a match between odoo and firebase. line 1413
 
       // in firebase does exist id from odoo?
+      console.log("record Odoo", records[i])
+
       
       if(potencialUserId.includes(id)){
-        console.log("includes")
+        
+        // if (id == "2808") {
+        //   console.log("notRegisteredUsers", notRegisteredUsers["2808"])
+          // console.log("record Odoo", records[i])
+
+        // }
+        let data = notRegisteredUsers[id]
+       
+        data["Campaign_month"] = campaign_id
+        data["How_know_us"] = medium_id
+        data["How_know_us_method"] = source_id
+        data["How_know_us_referals"] = referred
+        data["Name_potencial"] = name
+        data["Phone1"] = phone
+        data["Phone2"] = mobile
+        data["Sales_person"] = create_uid
+        data["Zone"] = typeService
+      
+        
         if(estateCRM == "Cliente Potencial"){
-          let data = {
-            "Campaign_month": campaign_id,
-            "How_know_us": medium_id,
-            "How_know_us_method" : source_id,
-            "How_know_us_referals" : referred,
-            "Name_potencial": name,
-            "Phone1" : phone,
-            "Phone2" : mobile,
-            "Sales_person" : create_uid,
-            "Zone" : typeService
-            
-          }
-          FirebaseFcn.firebaseSet("/notRegisteredUsers/"+id + "/", data);
+          console.log("Case 1.1" + id)
+          FirebaseFcn.firebaseSet("/notRegisteredUsers1/"+id + "/", data);
         }
         else{
+          console.log("Case 1.2" + id)
+          if(partner_id == "NaN"){
+            data["Client_Type"] = estateCRM
+            FirebaseFcn.firebaseSet("/notRegisteredUsers1/"+id + "/", data);
+          }
+          else{
+            if(RegisteredUsersId.includes(partner_id)){ console.log("partner id ", partner_id)}
+          }
           
 
         }
