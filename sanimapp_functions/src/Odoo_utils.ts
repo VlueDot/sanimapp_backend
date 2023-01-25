@@ -109,6 +109,7 @@ for(let key in CRM_tickets_not_archived) {
   CRM_tickets_not_archived_dataAsKeys.set(CRM_tickets_not_archived[key], key)
 }
 
+
 //get potencialUserIds from firebase
 const notRegisteredUsers = await FirebaseFcn.firebaseGet("/notRegisteredUsers");
 // console.log("notRegisteredUsers", notRegisteredUsers)
@@ -126,7 +127,7 @@ let RegisteredUsersId :any = []
 for(let ids in RegisteredUsers) {
   if (typesVentas.includes(RegisteredUsers[ids]["Data_client_3"]["client_type"])) RegisteredUsersId.push(ids)
 }
-console.log("RegisteredUsersId", RegisteredUsersId)
+
 
 
 const CustomHeaders: HeadersInit = {
@@ -179,7 +180,7 @@ const data_len = data["result"]["length"];
 const records = data["result"]["records"];
 
 
-let changed = ""
+
 
 
 for(var i = 0; i < data_len ; i++){
@@ -243,7 +244,7 @@ for(var i = 0; i < data_len ; i++){
 
       if (partner_id ==null || campaign_id ==null || medium_id ==null || source_id ==null  ) {
      
-        changed = ""
+        let changed = ""
         if (campaign_id==null) {campaign_id = "NaN"; changed += "campaign_id "}
         if (partner_id==null) {partner_id = "NaN"; changed += "partner_id " }
         if (medium_id==null) {medium_id = "NaN"; changed += "medium_id " }
@@ -260,19 +261,22 @@ for(var i = 0; i < data_len ; i++){
       //have to check a match between odoo and firebase. line 1413
 
       // in firebase does exist id from odoo?
-      console.log("record Odoo", records[i])
+      
 
       
       if(potencialUserId.includes(id)){
-        
+      
         // if (id == "2808") {
         //   console.log("notRegisteredUsers", notRegisteredUsers["2808"])
           // console.log("record Odoo", records[i])
 
         // }
-        let data = notRegisteredUsers[id]
-       
+        let data : any = []
+        data = notRegisteredUsers[id]
+        
+        
         data["Campaign_month"] = campaign_id
+        
         data["How_know_us"] = medium_id
         data["How_know_us_method"] = source_id
         data["How_know_us_referals"] = referred
@@ -284,23 +288,51 @@ for(var i = 0; i < data_len ; i++){
       
         
         if(estateCRM == "Cliente Potencial"){
-          console.log("Case 1.1" + id)
-          FirebaseFcn.firebaseSet("/notRegisteredUsers1/"+id + "/", data);
+          console.log("Case 1 " + id)
+          FirebaseFcn.firebaseSet("/notRegisteredUsers/"+id + "/", data);
         }
         else{
-          console.log("Case 1.2" + id)
-          if(partner_id == "NaN"){
+          
+          if(partner_id == "NaN" ){
+            console.log("Case 2 " + id)
             data["Client_Type"] = estateCRM
-            FirebaseFcn.firebaseSet("/notRegisteredUsers1/"+id + "/", data);
+            FirebaseFcn.firebaseSet("/notRegisteredUsers/"+id + "/", data);
+            
+            
           }
           else{
-            if(RegisteredUsersId.includes(partner_id)){ console.log("partner id ", partner_id)}
+
+            FirebaseFcn.firebaseRemove("/notRegisteredUsers/"+ id)
+            
+            if(RegisteredUsersId.includes(partner_id)){ 
+              console.log("Case 3 " + id)
+              
+              FirebaseFcn.firebaseSet("/Data_client/" + CRM_tickets_not_archived_dataAsKeys.get(id)+"Data_client_2/Client_Type/", estateCRM)
+              FirebaseFcn.firebaseSet("/Data_client/" + CRM_tickets_not_archived_dataAsKeys.get(id)+"Data_client_3/client_type/", estateCRM)
+            
+            
+            }
+            else{
+              console.log("Case 4 "+ id)
+              //Read user and write it to firebase
+              //ok use data but not phone 1, phone2 
+
+              
+              
+              FirebaseFcn.firebaseSet("/CRM_tickets_not_archived/"+partner_id + "/", id)                
+              ReadContactsAndUpdate(odoo_session, partner_id,data,estateCRM) 
+
+            }
           }
           
 
         }
       }
       else{
+        //line 1484
+
+        
+
 
       }
       
@@ -309,7 +341,7 @@ for(var i = 0; i < data_len ; i++){
       
   }
   catch (error){
-    functions.logger.error( "ERROR: " + error, {"Function":"odooToFirebase_CRM_Tickets"});}
+    functions.logger.error( "ERROR: " + error, {"Function":"odooToFirebase_CRM_Tickets", "Record": records[i]});}
   }
 
   
@@ -320,4 +352,141 @@ for(var i = 0; i < data_len ; i++){
 
 return null;
 
+}
+
+
+
+async function ReadContactsAndUpdate( odoo_session:any,partner_id:any,  dataCRM : any, stateCRM : any) {
+  const CustomHeaders: HeadersInit = {
+    "Content-Type": "application/json",
+    "Cookie": "session_id="+odoo_session,
+  };
+  
+  const raw = JSON.stringify({
+    "params": {
+      "model": "res.partner",
+      "fields": [
+          "id",
+          "phone",
+          "mobile",
+          "comment",
+          "surname",
+          "mother_name",
+          "first_name",
+          "middle_name",
+          "vat",
+          "contact_address",
+          "country_id",
+          "l10n_pe_ubigeo",
+          "display_name",
+          "category_id"
+
+      ],
+      "offset": 0,
+      "domain": [
+          [
+              "id",
+              "=",
+              partner_id
+          ]
+      ]
+    }
+  }
+  
+  );
+  
+  const params = {
+    headers: CustomHeaders,
+    method: "post",
+    body: raw,
+  };
+
+
+  
+
+  try{
+    const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+    const data = await response.json();
+    const data_len = Number( data["result"]["length"]);
+    if(data_len>1) {functions.logger.error( "ERROR: " + "Data length must be 1.", {"Function":"ReadContactsAndUpdate", "Partner id: ": partner_id}); }
+    const records = data["result"]["records"];
+    let id = records["id"]
+    try {
+      let phone = String(records["phone"])
+      let mobile = String(records["mobile"])
+      let comment = String(records["comment"])
+      let surname = String(records["surname"])
+      let mother_name = String(records["mother_name"])
+      let first_name = String(records["first_name"])
+      let middle_name = String(records["middle_name"])
+      let vat = String(records["vat"])
+      let contact_address = String(records["contact_address"])
+      let country_id = String(records["country_id"])
+      let l10n_pe_ubigeo = String(records["l10_pe_ubigeo"])
+      let display_name = String(records["display_name"])
+
+      if (phone=="false"){
+        phone="NaN"
+    }
+    if (comment=="false"){
+        comment="NaN"
+    }
+    if (mobile=="false"){
+        mobile="NaN"
+    }
+
+    let userData1 = dataCRM
+
+    userData1["Sales_person_Commit"]="NaN"
+    userData1["Client_Community"]="NaN"
+    userData1["Name_1"]=first_name
+    userData1["Name_2"]= middle_name
+    userData1["Last_name_1"]=surname
+    userData1["Last_name_2"]=mother_name
+    userData1["Addr_reference"]="NaN"
+    userData1["Address"]= contact_address
+    userData1["Birth_date"]="NaN"
+    userData1["Country"]= country_id
+    userData1["DNI"]=vat
+    userData1["Lost_client_reason"]="NaN"
+    userData1["Phone1"]=phone
+    userData1["Phone2"]=mobile
+    userData1["Urine_preference"]="NaN"
+    userData1["ubigeo"]=l10n_pe_ubigeo
+
+    let userData2= {
+
+      "Route":"NaN",
+      "Stops":"NaN",
+      "Client_Type":stateCRM,
+      "Lat":0,
+      "Long":0,
+
+    }
+    let userData3= {
+      "Name_complete":display_name,
+      "Addr":contact_address,
+      "Addr_reference":"NaN",
+      "client_coment_OPE":"NaN",
+      "Phone1":phone,
+      "Phone2":mobile,
+      "client_type":stateCRM
+
+    }
+    FirebaseFcn.firebaseSet("/Data_client/Data_client_1/",userData1)
+    FirebaseFcn.firebaseSet("/Data_client/Data_client_2/",userData2)
+    FirebaseFcn.firebaseSet("/Data_client/Data_client_3/",userData3)
+    functions.logger.info("User "  + id + " has been registered successfully")
+      
+    }
+    catch (err) {functions.logger.error(
+      functions.logger.error( "ERROR: " + "Some Variable wasnt readed. " + err, {"Function":"ReadContactsAndUpdate", "Partner id: ": partner_id})
+    )}
+
+
+  }
+  catch(err) {
+    functions.logger.error( "ERROR: " + err, {"Function":"ReadContactsAndUpdate", "Partner id: ": partner_id});}
+  
+    
 }

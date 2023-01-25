@@ -24,6 +24,8 @@ export const TestFunction = functions.https.onRequest( async (request, response)
 
       await OdooFcn.odoo_Logout();
     }
+  
+  
 
     response.send("OdooSync End");
   } catch (error) {
@@ -31,6 +33,9 @@ export const TestFunction = functions.https.onRequest( async (request, response)
 
     response.send("OdooSync Error: "+error);
   }
+
+
+
   
 });
 

@@ -19,7 +19,7 @@ import * as admin from "firebase-admin";
 
 
 
-export async function firebaseSet(ref: string, data:object) {
+export async function firebaseSet(ref: string, data:any) {
   try {
     const messageRef = admin.database().ref(ref);
     await messageRef.set(data);
@@ -33,6 +33,17 @@ export async function firebaseGet(ref: string) {
   try {
     return await (await admin.database().ref(ref).get()).val()
 
+  } catch (error) {
+    return error;
+  }
+}
+
+
+export async function firebaseRemove(ref: string) {
+  try {
+    const messageRef = admin.database().ref(ref);
+    await messageRef.remove();
+    return true;
   } catch (error) {
     return error;
   }
