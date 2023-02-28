@@ -20,7 +20,7 @@ export async function odoo_Login() {
     }
   } else functions.logger.error(response.status +" OdooLogin Error: unexpected " );
 
-  return 0;
+  return null;
 }
 
 
