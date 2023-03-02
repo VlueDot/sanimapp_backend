@@ -70,7 +70,7 @@ export const firebaseToOdoo_CRM = functions.database
 
 
 export const firebaseToOdoo_Stops_update = functions.database
-.ref("/test2/stops/{idStopFb}")
+.ref("stops/{idStopFb}")
 .onUpdate( async (change, context)=>{
   let partnerIds_before = change.before.val()
   let partnerIds_after = change.after.val()
