@@ -1,6 +1,6 @@
 
 
-export const odoo_url = "https://oxe360-ooc-sanisol-staging-13-0-7056032.dev.odoo.com/web/";
+export const odoo_url = "https://oxe360-ooc-sanisol-staging-13-0-7446164.dev.odoo.com/web/";
 
 export const odoo_access = {
   headers: {"Content-Type": "application/json"},
@@ -9,7 +9,7 @@ export const odoo_access = {
 
       {
         "params": {
-          "db": "oxe360-ooc-sanisol-staging-13-0-7056032",
+          "db": "oxe360-ooc-sanisol-staging-13-0-7446164",
           "login": "pablo@sanima.pe",
           "password": "Sanima2021",
         }})};

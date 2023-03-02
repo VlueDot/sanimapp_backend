@@ -27,8 +27,10 @@ module.exports = {
   rules: {
     "quotes": ["error", "double"],
     "import/no-unresolved": 0,
-    "require-jsdoc" : 0,
+    "require-jsdoc": 0,
     "camelcase": "off",
-    'max-len': 'off',
+    "max-len": "off",
+    "@typescript-eslint/no-var-requires": 0,
+    "@typescript-eslint/no-explicit-any": 0,
   },
 };

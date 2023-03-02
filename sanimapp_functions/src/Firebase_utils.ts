@@ -17,8 +17,6 @@ export async function updateCRMOdoo(chg:fcn.Change<fcn.database.DataSnapshot>) {
 
 import * as admin from "firebase-admin";
 
-
-
 export async function firebaseSet(ref: string, data:any) {
   try {
     const messageRef = admin.database().ref(ref);
@@ -31,8 +29,7 @@ export async function firebaseSet(ref: string, data:any) {
 
 export async function firebaseGet(ref: string) {
   try {
-    return await (await admin.database().ref(ref).get()).val()
-
+    return await (await admin.database().ref(ref).get()).val();
   } catch (error) {
     return error;
   }
