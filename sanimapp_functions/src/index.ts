@@ -101,9 +101,6 @@ export const firebaseToOdoo_Stops_update = functions.database
 
     functions.logger.info("[firebaseToOdoo_Stops_update]: Stops will update partners in odoo.", {"idStopFb": context.params.idStopFb, "Deleted": JSON.stringify(partnerIds_deleted), "Added": JSON.stringify(partnerIds_added)})
 
-
-    //obten el json y envialo a odoo
-    //primero tengo que estar logeado
     const odoo_session = await OdooFcn.odoo_Login();
     if (odoo_session != null) {
 

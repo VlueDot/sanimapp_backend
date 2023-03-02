@@ -472,8 +472,8 @@ export async function odooToFirebase_CRM_Campaigns(odoo_session:any) {
 // }
 
 
-export async function FirebaseToOdoo_ChangeStopsRoutesLabels(odoo_session:any, idOdoo: number, stopsRoutes_json:any) {
-  console.log(stopsRoutes_json)
+export async function FirebaseToOdoo_ChangeStopsRoutesLabels(odoo_session:any, idOdoo: number, stopsOrRoutes_json:any) {
+
   const CustomHeaders: HeadersInit = {
     "Content-Type": "application/json",
     "Cookie": "session_id="+odoo_session,
@@ -487,7 +487,7 @@ export async function FirebaseToOdoo_ChangeStopsRoutesLabels(odoo_session:any, i
       "kwargs": {},
       "args": [idOdoo, 
               {
-                "partner_ids": stopsRoutes_json
+                "partner_ids": stopsOrRoutes_json
               }],
     },
   });
@@ -499,12 +499,10 @@ export async function FirebaseToOdoo_ChangeStopsRoutesLabels(odoo_session:any, i
   };
 
 
-  console.log(params);
 
   const response = await fetch(settings.odoo_url + "dataset/call_kw/res.partner.category/write", params);
   const data = await response.json();
-  console.log(data);
-  console.log(JSON.stringify(stopsRoutes_json));
+  console.log("dataaa" , data);
 
   // if (response.status == 200) {
   //   try {
