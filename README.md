@@ -19,17 +19,19 @@ firebase deploy firebase.cmd deploy ﻿# Sanimapp Backend
   ```  
 - Build: npm run build
 - Emulate: npm run serve
+- but you can also: use npm run s  and just build
+- to test with database: npm run s-db
 - Shell: npm run shell
-- fix code: .\node_modules\.bin\eslint.cmd src --fix  (modify in .eslintrc.js, in rules > "@typescript-eslint/no-var-requires": 0,)
+- fix code: npm run lint-fix
 - Deploy: firebase deploy --only functions
 
+
 ## Fork
-- create a branch using this > https://trello.com/invite/b/Ku7GUi6c/ATTI03fe0e90f63625e30cd676f69a7c5494D35144F9/sanimapp
 - create a branch from the last version of main using the ticket id and a abbrevation of your name. e.g. : Vincent > xvince
 ```
   git checkout main
   git pull origin main 
-  git checkout -b task1-xvince
+  git checkout -b {branch's name if needed}-{user} e.g. xvince, odoologin-xvince
 ```
 - when is finished and tested, vincent will merged it
 
