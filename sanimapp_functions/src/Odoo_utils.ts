@@ -542,37 +542,59 @@ export async function FirebaseToOdoo_ChangeStopsRoutesLabels(odoo_session:any, i
   return null;
 }
 
-export async function FirebaseToOdoo_DeleteStopLabels(odoo_session:any, idOdoo: number) {
+export async function FirebaseToOdoo_DeleteStopLabels(odoo_session:any, idOdoo: number, partnerId: number) {
 
   const CustomHeaders: HeadersInit = {
     "Content-Type": "application/json",
     "Cookie": "session_id="+odoo_session,
   };
 
-  //from OdooGenerateJsonsToWriteOdoo function
-  const raw = JSON.stringify({
+  const raw_read = JSON.stringify({
     "params": {
-      "model": "res.partner.category",
-      "method": "write",
-      "kwargs": {},
-      "args": [idOdoo, 
-              {
-                "partner_ids": []
-              }],
+      "model":"res.partner",
+      "fields":[],
+      "offset":0,
+      "domain":[["id","like", partnerId]]
     },
   });
 
-  const params = {
+  const params_read = {
     headers: CustomHeaders,
     method: "post",
-    body: raw,
+    body: raw_read,
   };
 
+  const response_read = await fetch(settings.odoo_url + "dataset/search_read", params_read);
+  const data_read = await response_read.json();
+  let category_ids: Array<number> = data_read["result"]["records"][0]["category_id"];
+  console.log("category_ids" , category_ids);
 
+  let new_category_ids: Array<number> = category_ids.filter(id => (id != idOdoo))
+  console.log("new_category_ids", new_category_ids);
 
-  const response = await fetch(settings.odoo_url + "dataset/call_kw/res.partner/write", params);
-  const data = await response.json();
-  console.log("dataaa" , data);
+  const raw_write = JSON.stringify({
+    "params": {
+      "model": "res.partner",
+      "method": "write",
+      "kwargs": {},
+      "args": [
+          partnerId,
+          {
+            "category_id": new_category_ids
+          }
+      ]
+    }
+  });
+
+  const params_write = {
+    headers: CustomHeaders,
+    method: "post",
+    body: raw_write,
+  };
+
+  const response_write = await fetch(settings.odoo_url + "dataset/call_kw/res.partner/", params_write);
+  const data_write = await response_write.json();
+  console.log("data_write" , data_write);
 
   return null;
 }

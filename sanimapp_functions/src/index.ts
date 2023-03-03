@@ -90,6 +90,7 @@ export const firebaseToOdoo_Stops_update = functions.database.ref("stops/{idStop
       for(let index in partnerIds_before["partnersId"]){
         partnerIds_deleted.push(index)
       }
+      partnerIds_after_array.push(Number(partnerIds_deleted[0]))
       borrar = true
     }
 
@@ -97,10 +98,9 @@ export const firebaseToOdoo_Stops_update = functions.database.ref("stops/{idStop
 
     const odoo_session = await OdooFcn.odoo_Login();
     if (odoo_session != null) {
+      await OdooFcn.FirebaseToOdoo_ChangeStopsRoutesLabels(odoo_session, Number(partnerIds_after["idOdoo"]), partnerIds_after_array);
       if (borrar){
-        await OdooFcn.FirebaseToOdoo_DeleteStopLabels(odoo_session, Number(partnerIds_after["idOdoo"]));
-      } else {
-        await OdooFcn.FirebaseToOdoo_ChangeStopsRoutesLabels(odoo_session, Number(partnerIds_after["idOdoo"]), partnerIds_after_array);
+        await OdooFcn.FirebaseToOdoo_DeleteStopLabels(odoo_session, Number(partnerIds_after["idOdoo"]), partnerIds_after_array[0]);
       }
       await OdooFcn.odoo_Logout(odoo_session);
       return true;
