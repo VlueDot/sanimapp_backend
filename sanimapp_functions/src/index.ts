@@ -66,6 +66,7 @@ export const firebaseToOdoo_Stops_update = functions.database.ref("stops/{idStop
   let partnerIds_before = change.before.val()
   let partnerIds_after = change.after.val()
   let borrar = false
+  let llenar = false
 
   if (partnerIds_before === partnerIds_after) return null;
   else {
@@ -74,25 +75,40 @@ export const firebaseToOdoo_Stops_update = functions.database.ref("stops/{idStop
     let partnerIds_added = []
     let partnerIds_after_array = []
 
-    try{
-      let list = partnerIds_after["partnersId"]
-      for(let index in partnerIds_before["partnersId"]){
-        if(index in list) continue
-        else partnerIds_deleted.push(index)
-      }
+    let list_after = {}
+    let list_before = {}
 
-      for(let index in list){
-        partnerIds_after_array.push(Number(index))
-        if(index in partnerIds_before["partnersId"]) continue
-        else partnerIds_added.push(index)
-      }
-    } catch{
-      for(let index in partnerIds_before["partnersId"]){
-        partnerIds_deleted.push(index)
-      }
-      partnerIds_after_array.push(Number(partnerIds_deleted[0]))
+    list_after = partnerIds_after["partnersId"]
+    if (list_after != undefined){
+      console.log("list_after", list_after);
+    } else {
+      list_after = {}
       borrar = true
     }
+
+    list_before = partnerIds_before["partnersId"]
+    if (list_before != undefined){
+      console.log("list_before", list_before);
+    } else {
+      list_before = {}
+      llenar = true
+    }
+
+    console.log("borrar", borrar);
+    console.log("llenar", llenar);
+
+    for(let index in list_before){
+      if(index in list_after) continue
+      else partnerIds_deleted.push(index)
+    }
+
+    for(let index in list_after){
+      partnerIds_after_array.push(Number(index))
+      if(index in list_before) continue
+      else partnerIds_added.push(index)
+    }
+
+    if (borrar && !llenar) partnerIds_after_array.push(Number(partnerIds_deleted[0]))
 
     functions.logger.info("[firebaseToOdoo_Stops_update]: Stops will update partners in odoo.", {"idRouteFb": context.params.idStopFb, "Deleted": JSON.stringify(partnerIds_deleted), "Added": JSON.stringify(partnerIds_added)})
 
@@ -112,6 +128,8 @@ export const firebaseToOdoo_Stops_update = functions.database.ref("stops/{idStop
 export const firebaseToOdoo_Routes_update = functions.database.ref("/Route_definition/{idRouteFb}").onUpdate( async (change,context)=>{
   let partnerIds_before = change.before.val()
   let partnerIds_after = change.after.val()
+  let borrar = false
+  let llenar = false
 
   if (partnerIds_before === partnerIds_after) return null;
   else {
@@ -120,16 +138,40 @@ export const firebaseToOdoo_Routes_update = functions.database.ref("/Route_defin
     let partnerIds_added = []
     let partnerIds_after_array = []
 
-    for(let index in partnerIds_before["partnersId"]){
-      if(index in partnerIds_after["partnersId"]) continue
+    let list_after = {}
+    let list_before = {}
+
+    list_after = partnerIds_after["partnersId"]
+    if (list_after != undefined){
+      console.log("list_after", list_after);
+    } else {
+      list_after = {}
+      borrar = true
+    }
+
+    list_before = partnerIds_before["partnersId"]
+    if (list_before != undefined){
+      console.log("list_before", list_before);
+    } else {
+      list_before = {}
+      llenar = true
+    }
+
+    console.log("borrar", borrar);
+    console.log("llenar", llenar);
+
+    for(let index in list_before){
+      if(index in list_after) continue
       else partnerIds_deleted.push(index)
     }
 
-    for(let index in partnerIds_after["partnersId"]){
+    for(let index in list_after){
       partnerIds_after_array.push(Number(index))
-      if(index in partnerIds_before["partnersId"]) continue
+      if(index in list_before) continue
       else partnerIds_added.push(index)
     }
+
+    if (borrar && !llenar) partnerIds_after_array.push(Number(partnerIds_deleted[0]))
 
     functions.logger.info("[firebaseToOdoo_Routes_update]: Routes will update partners in odoo.", {"idRouteFb": context.params.idRouteFb, "Deleted": JSON.stringify(partnerIds_deleted), "Added": JSON.stringify(partnerIds_added)})
 
@@ -137,6 +179,9 @@ export const firebaseToOdoo_Routes_update = functions.database.ref("/Route_defin
     if (odoo_session != null) {
 
       await OdooFcn.FirebaseToOdoo_ChangeStopsRoutesLabels(odoo_session, Number(partnerIds_after["idOdoo"]), partnerIds_after_array);
+      if (borrar){
+        await OdooFcn.FirebaseToOdoo_DeleteStopLabels(odoo_session, Number(partnerIds_after["idOdoo"]), partnerIds_after_array[0]);
+      }
       await OdooFcn.odoo_Logout(odoo_session);
       return true;
     }
