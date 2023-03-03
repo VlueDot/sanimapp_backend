@@ -541,3 +541,75 @@ export async function FirebaseToOdoo_ChangeStopsRoutesLabels(odoo_session:any, i
 
   return null;
 }
+
+export async function FirebaseToOdoo_DeleteStopLabels(odoo_session:any, idOdoo: number) {
+
+  const CustomHeaders: HeadersInit = {
+    "Content-Type": "application/json",
+    "Cookie": "session_id="+odoo_session,
+  };
+
+  //from OdooGenerateJsonsToWriteOdoo function
+  const raw = JSON.stringify({
+    "params": {
+      "model": "res.partner.category",
+      "method": "write",
+      "kwargs": {},
+      "args": [idOdoo, 
+              {
+                "partner_ids": []
+              }],
+    },
+  });
+
+  const params = {
+    headers: CustomHeaders,
+    method: "post",
+    body: raw,
+  };
+
+
+
+  const response = await fetch(settings.odoo_url + "dataset/call_kw/res.partner/write", params);
+  const data = await response.json();
+  console.log("dataaa" , data);
+
+  return null;
+}
+
+export async function FirebaseToOdoo_CreateStopsRoutesLabels(odoo_session:any, name_stop: string, stops_json:any) {
+
+  const CustomHeaders: HeadersInit = {
+    "Content-Type": "application/json",
+    "Cookie": "session_id="+odoo_session,
+  };
+
+  //from OdooGenerateJsonsToWriteOdoo function
+  const raw = JSON.stringify({
+    "params": {
+      "model": "res.partner.category",
+      "method": "create",
+      "kwargs": {},
+      "args": [{
+        "name": name_stop,
+        "active": true,
+        "partner_ids": stops_json
+      }],
+    },
+  });
+
+  const params = {
+    headers: CustomHeaders,
+    method: "post",
+    body: raw,
+  };
+
+
+
+  const response = await fetch(settings.odoo_url + "dataset/call_kw/res.partner.category/create", params);
+  const data = await response.json();
+  const idOdoo = String(data["result"])
+  console.log("dataaa" , data);
+
+  return idOdoo;
+}

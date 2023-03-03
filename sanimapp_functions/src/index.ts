@@ -11,8 +11,6 @@ admin.initializeApp({
   databaseURL: urldatabase,
 });
 
-
-
 // Functions
 
 export const TestFunction = functions.https.onRequest( async (request, response) => {
@@ -35,7 +33,6 @@ export const TestFunction = functions.https.onRequest( async (request, response)
   }
 });
 
-
 export const OdooToFirebase = functions.https.onRequest(async (request, response)=> {
   // this will run with certain periodicity. This will be the stable function.
   // Here will be everything at the moment. eventually we will separate them to test each one of these.
@@ -56,38 +53,74 @@ export const OdooToFirebase = functions.https.onRequest(async (request, response
   }
 });
 
-
-export const firebaseToOdoo_CRM = functions.database
-    .ref("/test")
-    .onWrite( async (change)=>{
+export const firebaseToOdoo_CRM = functions.database.ref("/test").onWrite( async (change)=>{
       if (change.after.val() === change.before.val()) return null;
 
       else {
         const res = FirebaseFcn.updateCRMOdoo(change);
         return res;
       }
-    });
+});
 
-
-export const firebaseToOdoo_Stops_update = functions.database
-.ref("stops/{idStopFb}")
-.onUpdate( async (change, context)=>{
+export const firebaseToOdoo_Stops_update = functions.database.ref("stops/{idStopFb}").onUpdate( async (change, context)=>{
   let partnerIds_before = change.before.val()
   let partnerIds_after = change.after.val()
-  
-
+  let borrar = false
 
   if (partnerIds_before === partnerIds_after) return null;
-
   else {
 
     let partnerIds_deleted = []
     let partnerIds_added = []
     let partnerIds_after_array = []
 
+    try{
+      let list = partnerIds_after["partnersId"]
+      for(let index in partnerIds_before["partnersId"]){
+        if(index in list) continue
+        else partnerIds_deleted.push(index)
+      }
+
+      for(let index in list){
+        partnerIds_after_array.push(Number(index))
+        if(index in partnerIds_before["partnersId"]) continue
+        else partnerIds_added.push(index)
+      }
+    } catch{
+      for(let index in partnerIds_before["partnersId"]){
+        partnerIds_deleted.push(index)
+      }
+      borrar = true
+    }
+
+    functions.logger.info("[firebaseToOdoo_Stops_update]: Stops will update partners in odoo.", {"idRouteFb": context.params.idStopFb, "Deleted": JSON.stringify(partnerIds_deleted), "Added": JSON.stringify(partnerIds_added)})
+
+    const odoo_session = await OdooFcn.odoo_Login();
+    if (odoo_session != null) {
+      if (borrar){
+        await OdooFcn.FirebaseToOdoo_DeleteStopLabels(odoo_session, Number(partnerIds_after["idOdoo"]));
+      } else {
+        await OdooFcn.FirebaseToOdoo_ChangeStopsRoutesLabels(odoo_session, Number(partnerIds_after["idOdoo"]), partnerIds_after_array);
+      }
+      await OdooFcn.odoo_Logout(odoo_session);
+      return true;
+    }
+    return null;
+  }
+});
+
+export const firebaseToOdoo_Routes_update = functions.database.ref("/Route_definition/{idRouteFb}").onUpdate( async (change,context)=>{
+  let partnerIds_before = change.before.val()
+  let partnerIds_after = change.after.val()
+
+  if (partnerIds_before === partnerIds_after) return null;
+  else {
+
+    let partnerIds_deleted = []
+    let partnerIds_added = []
+    let partnerIds_after_array = []
 
     for(let index in partnerIds_before["partnersId"]){
-
       if(index in partnerIds_after["partnersId"]) continue
       else partnerIds_deleted.push(index)
     }
@@ -96,10 +129,9 @@ export const firebaseToOdoo_Stops_update = functions.database
       partnerIds_after_array.push(Number(index))
       if(index in partnerIds_before["partnersId"]) continue
       else partnerIds_added.push(index)
-
     }
 
-    functions.logger.info("[firebaseToOdoo_Stops_update]: Stops will update partners in odoo.", {"idStopFb": context.params.idStopFb, "Deleted": JSON.stringify(partnerIds_deleted), "Added": JSON.stringify(partnerIds_added)})
+    functions.logger.info("[firebaseToOdoo_Routes_update]: Routes will update partners in odoo.", {"idRouteFb": context.params.idRouteFb, "Deleted": JSON.stringify(partnerIds_deleted), "Added": JSON.stringify(partnerIds_added)})
 
     const odoo_session = await OdooFcn.odoo_Login();
     if (odoo_session != null) {
@@ -113,23 +145,50 @@ export const firebaseToOdoo_Stops_update = functions.database
   }
 });
 
+export const firebaseToOdoo_Stops_create = functions.database.ref("stops/{idStopFb}").onCreate( async (change, context)=>{
+  let partnersId_new = change.val()
 
-// export const firebaseToOdoo_Routes_update = functions.database
-// .ref("/test/Route_definition")
-// .onWrite( async (change)=>{
+  let partnerIds_toCreate = []
 
-//   console.log(change.after.val());
+  for(let index in partnersId_new["partnersId"]){
+    partnerIds_toCreate.push(Number(index))
+  }
 
-//   if (change.after.val() === change.before.val()) return null;
+  let idFirebase = context.params.idStopFb
 
-//   else {
+  functions.logger.info("[firebaseToOdoo_Stops_create]: Stops will be created with partners in odoo.", {"idStopFb": idFirebase, "Created": JSON.stringify(partnerIds_toCreate)})
 
-//     //obten el json y envialo a odoo
-//     //primero tengo que estar logeado
-//     const odoo_session = await OdooFcn.odoo_Login();
-//     const res = OdooFcn.FirebaseToOdoo_ChangeStopsRoutesLabels(odoo_session, change.after.val())
+  const odoo_session = await OdooFcn.odoo_Login();
+  if (odoo_session != null) {
+    let idOdoo = await OdooFcn.FirebaseToOdoo_CreateStopsRoutesLabels(odoo_session, partnersId_new["Stops_name"], partnerIds_toCreate);
+    await OdooFcn.odoo_Logout(odoo_session);
+    FirebaseFcn.firebaseSet("stops/" + idFirebase + "/idOdoo", idOdoo);
+    return true;
+  }
+    //si la respuesta del servidor es afirmativa devuelve un ok. Sino regresa el valor original y manda error
+  return null;
+});
 
-//     //si la respuesta del servidor es afirmativa devuelve un ok. Sino regresa el valor original y manda error
-//     return res;
-//   }
-// });
+export const firebaseToOdoo_Routes_create = functions.database.ref("/Route_definition/{idRouteFb}").onCreate( async (change, context)=>{
+  let partnersId_new = change.val()
+
+  let partnerIds_toCreate = []
+
+  for(let index in partnersId_new["partnersId"]){
+    partnerIds_toCreate.push(Number(index))
+  }
+
+  let idFirebase = context.params.idRouteFb
+
+  functions.logger.info("[firebaseToOdoo_Routes_create]: Routes will be created with partners in odoo.", {"idStopFb": idFirebase, "Created": JSON.stringify(partnerIds_toCreate)})
+
+  const odoo_session = await OdooFcn.odoo_Login();
+  if (odoo_session != null) {
+    let idOdoo = await OdooFcn.FirebaseToOdoo_CreateStopsRoutesLabels(odoo_session, partnersId_new["Nom_ruta"], partnerIds_toCreate);
+    await OdooFcn.odoo_Logout(odoo_session);
+    FirebaseFcn.firebaseSet("Route_definition/" + idFirebase + "/idOdoo", idOdoo);
+    return true;
+  }
+    //si la respuesta del servidor es afirmativa devuelve un ok. Sino regresa el valor original y manda error
+  return null;
+});
