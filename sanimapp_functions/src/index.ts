@@ -92,6 +92,7 @@ export const firebaseToOdoo_Stops_update = functions.database
       else partnerIds_deleted.push(index)
     }
 
+
     for(let index in partnerIds_after["partnersId"]){
       partnerIds_after_array.push(Number(index))
       if(index in partnerIds_before["partnersId"]) continue
@@ -133,3 +134,33 @@ export const firebaseToOdoo_Stops_update = functions.database
 //     return res;
 //   }
 // });
+
+
+
+
+
+
+
+
+export const OdooToFirebase_updateUsser = functions.https.onRequest(async (request, response)=> {
+  // this will run with certain periodicity. This will be the stable function.
+  // Here will be everything at the moment. eventually we will separate them to test each one of these.
+  try {
+    let lastupdate = await FirebaseFcn.firebaseGet("/timestamp_collection/ussersTimeStamp")
+    console.log(lastupdate)
+
+    const odoo_session = await OdooFcn.odoo_Login();
+
+    if (odoo_session != null) {
+      // await OdooFcn.odooToFirebase_Labels(odoo_session);
+
+      await OdooFcn.odoo_Logout(odoo_session);
+    }
+
+    response.send("OdooSync End");
+  } catch (error) {
+    functions.logger.error(error);
+
+    response.send("OdooSync Error: "+error);
+  }
+});
