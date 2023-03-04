@@ -27,6 +27,26 @@ export async function firebaseSet(ref: string, data:any) {
   }
 }
 
+export async function firebaseUpdate(ref: string, data:any) {
+  try {
+    const messageRef = admin.database().ref(ref);
+    await messageRef.update(data);
+    return true;
+  } catch (error) {
+    return error;
+  }
+}
+
+export async function firebasePush(ref: string, data:any) {
+  try {
+    const messageRef = admin.database().ref(ref);
+    await messageRef.push(data);
+    return true;
+  } catch (error) {
+    return error;
+  }
+}
+
 export async function firebaseGet(ref: string) {
   try {
     return await (await admin.database().ref(ref).get()).val();

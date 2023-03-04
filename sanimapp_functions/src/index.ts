@@ -70,10 +70,10 @@ export const firebaseToOdoo_Stops_update = functions.database.ref("stops/{idStop
 
   if (partnerIds_before === partnerIds_after) return null;
   else {
+    let partnerIds_deleted = [];
+    let partnerIds_added = [];
+    let partnerIds_after_array = [];
 
-    let partnerIds_deleted = []
-    let partnerIds_added = []
-    let partnerIds_after_array = []
 
     let list_after = {}
     let list_before = {}
@@ -236,4 +236,32 @@ export const firebaseToOdoo_Routes_create = functions.database.ref("/Route_defin
   }
     //si la respuesta del servidor es afirmativa devuelve un ok. Sino regresa el valor original y manda error
   return null;
+});
+//     //si la respuesta del servidor es afirmativa devuelve un ok. Sino regresa el valor original y manda error
+//     return res;
+//   }
+// });
+
+
+export const OdooToFirebase_updateUsser = functions.https.onRequest(async (request, response)=> {
+  // this will run with certain periodicity. This will be the stable function.
+  // Here will be everything at the moment. eventually we will separate them to test each one of these.
+  try {
+    const lastupdateTimestamp = await FirebaseFcn.firebaseGet("/timestamp_collection/ussersTimeStamp");
+
+
+    const odoo_session = await OdooFcn.odoo_Login();
+
+    if (odoo_session != null) {
+      await OdooFcn.odooToFirebase_Users(odoo_session, lastupdateTimestamp);
+
+      await OdooFcn.odoo_Logout(odoo_session);
+    }
+
+    response.send("OdooSync End");
+  } catch (error) {
+    functions.logger.error(error);
+
+    response.send("OdooSync Error: "+error);
+  }
 });
