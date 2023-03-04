@@ -611,7 +611,6 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
 }
 
 export async function FirebaseToOdoo_DeleteStopLabels(odoo_session:any, idOdoo: number, partnerId: number) {
-
   const CustomHeaders: HeadersInit = {
     "Content-Type": "application/json",
     "Cookie": "session_id="+odoo_session,
@@ -619,10 +618,10 @@ export async function FirebaseToOdoo_DeleteStopLabels(odoo_session:any, idOdoo: 
 
   const raw_read = JSON.stringify({
     "params": {
-      "model":"res.partner",
-      "fields":[],
-      "offset":0,
-      "domain":[["id","like", partnerId]]
+      "model": "res.partner",
+      "fields": [],
+      "offset": 0,
+      "domain": [["id", "like", partnerId]],
     },
   });
 
@@ -634,10 +633,10 @@ export async function FirebaseToOdoo_DeleteStopLabels(odoo_session:any, idOdoo: 
 
   const response_read = await fetch(settings.odoo_url + "dataset/search_read", params_read);
   const data_read = await response_read.json();
-  let category_ids: Array<number> = data_read["result"]["records"][0]["category_id"];
-  console.log("category_ids" , category_ids);
+  const category_ids: Array<number> = data_read["result"]["records"][0]["category_id"];
+  console.log("category_ids", category_ids);
 
-  let new_category_ids: Array<number> = category_ids.filter(id => (id != idOdoo))
+  const new_category_ids: Array<number> = category_ids.filter((id) => (id != idOdoo));
   console.log("new_category_ids", new_category_ids);
 
   const raw_write = JSON.stringify({
@@ -646,12 +645,12 @@ export async function FirebaseToOdoo_DeleteStopLabels(odoo_session:any, idOdoo: 
       "method": "write",
       "kwargs": {},
       "args": [
-          partnerId,
-          {
-            "category_id": new_category_ids
-          }
-      ]
-    }
+        partnerId,
+        {
+          "category_id": new_category_ids,
+        },
+      ],
+    },
   });
 
   const params_write = {
@@ -662,19 +661,18 @@ export async function FirebaseToOdoo_DeleteStopLabels(odoo_session:any, idOdoo: 
 
   const response_write = await fetch(settings.odoo_url + "dataset/call_kw/res.partner/", params_write);
   const data_write = await response_write.json();
-  console.log("data_write" , data_write);
+  console.log("data_write", data_write);
 
   return null;
 }
 
 export async function FirebaseToOdoo_CreateStopsRoutesLabels(odoo_session:any, name_stop: string, stops_json:any) {
-
   const CustomHeaders: HeadersInit = {
     "Content-Type": "application/json",
     "Cookie": "session_id="+odoo_session,
   };
 
-  //from OdooGenerateJsonsToWriteOdoo function
+  // from OdooGenerateJsonsToWriteOdoo function
   const raw = JSON.stringify({
     "params": {
       "model": "res.partner.category",
@@ -683,7 +681,7 @@ export async function FirebaseToOdoo_CreateStopsRoutesLabels(odoo_session:any, n
       "args": [{
         "name": name_stop,
         "active": true,
-        "partner_ids": stops_json
+        "partner_ids": stops_json,
       }],
     },
   });
@@ -695,11 +693,10 @@ export async function FirebaseToOdoo_CreateStopsRoutesLabels(odoo_session:any, n
   };
 
 
-
   const response = await fetch(settings.odoo_url + "dataset/call_kw/res.partner.category/create", params);
   const data = await response.json();
-  const idOdoo = String(data["result"])
-  console.log("dataaa" , data);
+  const idOdoo = String(data["result"]);
+  console.log("dataaa", data);
 
   return idOdoo;
 }

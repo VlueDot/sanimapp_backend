@@ -35,7 +35,24 @@ firebase deploy firebase.cmd deploy ﻿# Sanimapp Backend
   git pull origin main 
   git checkout -b {branch's name if needed}-{user} e.g. xvince, odoologin-xvince
 ```
-- when is finished and tested, vincent will merged it
+
+## Merge
+- First run lint in your branch
+```
+  npm run lint-fix
+```
+- Thereafter, push your changes. 
+- Change to main, pull last changes from origin main
+```
+  git checkout main
+  git pull origin main 
+```
+- merge and solve conflicts if there any. git merge {branch to be merged}
+
+- Test and push the merge
+```
+  git push origin main 
+```
 
 ## Final Commentary
 
