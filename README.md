@@ -9,12 +9,14 @@ firebase deploy firebase.cmd deploy ﻿# Sanimapp Backend
 ## Run
 
 - Chose node version: nvm use 16.19.0
-- if first time: 
+- if first time run inside sanimapp_functions: 
   ```
   npm i firebase-tools -g
   npm i typescript -g
   npm i firebase-functions
+  npm i -f
   npm install --save firebase-functions@latest
+  npm audit fix --force
   clear
   ```  
 - Build: npm run build
