@@ -30,7 +30,7 @@ export async function odoo_Logout(odoo_session:any) {
     "Cookie": "session_id="+odoo_session,
   };
 
-  //from OdooGenerateJsonsToWriteOdoo function
+  // from OdooGenerateJsonsToWriteOdoo function
   const raw = JSON.stringify({});
 
   const params = {
@@ -473,22 +473,21 @@ export async function odooToFirebase_CRM_Campaigns(odoo_session:any) {
 
 
 export async function FirebaseToOdoo_ChangeStopsRoutesLabels(odoo_session:any, idOdoo: number, stopsOrRoutes_json:any) {
-
   const CustomHeaders: HeadersInit = {
     "Content-Type": "application/json",
     "Cookie": "session_id="+odoo_session,
   };
 
-  //from OdooGenerateJsonsToWriteOdoo function
+  // from OdooGenerateJsonsToWriteOdoo function
   const raw = JSON.stringify({
     "params": {
       "model": "res.partner.category",
       "method": "write",
       "kwargs": {},
-      "args": [idOdoo, 
-              {
-                "partner_ids": stopsOrRoutes_json
-              }],
+      "args": [idOdoo,
+        {
+          "partner_ids": stopsOrRoutes_json,
+        }],
     },
   });
 
@@ -498,52 +497,120 @@ export async function FirebaseToOdoo_ChangeStopsRoutesLabels(odoo_session:any, i
     body: raw,
   };
 
+  await fetch(settings.odoo_url + "dataset/call_kw/res.partner.category/write", params);
+
+  return null;
+}
 
 
-  const response = await fetch(settings.odoo_url + "dataset/call_kw/res.partner.category/write", params);
-  const data = await response.json();
-  console.log("dataaa" , data);
-
-  // if (response.status == 200) {
-  //   try {
-  //     functions.logger.info( "[OdooToFirebase_CRM] Odoo request Succeeded. "+data["result"]["length"] + " records");
+export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp:any) {
+  const date = new Date(Number(lastupdateTimestamp));
+  const date_str = "'"+ date.getFullYear()+"-"+("0" + (date.getMonth() + 1)).slice(-2)+"-"+("0" +date.getDate()).slice(-2)+" "+ ("0" +date.getHours()).slice(-2)+":"+("0" +date.getMinutes()).slice(-2)+":"+("0" +date.getSeconds()).slice(-2) + "'";
 
 
-  //     const map = new Map();
-  //     let id : any;
-  //     let name : string;
+  const CustomHeaders: HeadersInit = {
+    "Content-Type": "application/json",
+    "Cookie": "session_id="+odoo_session,
+  };
+
+  const raw = JSON.stringify({
+    "params": {
+      "model": "res.partner",
+      "offset": 0,
+      "fields": [
+        "id", "phone", "mobile", "surname", "mother_name", "first_name", "middle_name",
+        "vat", "contact_address", "display_name", "category_id"],
+      "domain": [["write_date", ">", date_str]],
+    },
+  });
+
+  const params = {
+    headers: CustomHeaders,
+    method: "post",
+    body: raw,
+  };
+
+  try {
+    const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+    const data = await response.json();
+
+    const qtty_users = data.result.length;
+    if (qtty_users > 0) {
+      const updatedusers = data.result.records;
+
+      // console.log(updatedusers);
 
 
-  //     for (let i = 0, len = data["result"]["records"].length; i < len; i++) {
-  //       id = data["result"]["records"][i]["id"];
-  //       name = data["result"]["records"][i]["name"];
+      for (let i= 0; i<qtty_users; i++) {
+        const user_id = updatedusers[i].id;
+        const user_categories = updatedusers[i].category_id;
 
-  //       map.set(id, name);
-  //     }
+        // check for categories
+        // alternatively we could download every stops and categories. depending on demand or testings
 
-  //     const firebase_json = Object.fromEntries(map);
-  //     const res = await FirebaseFcn.firebaseSet("campaign_names", firebase_json);
+        // STOPS
 
-  //     if (res) {
-  //       functions.logger.info("[OdooToFirebase_CRM]  Campaings : Firebase successfully updated");
-  //       return true;
-  //     } else {
-  //       functions.logger.error("[OdooToFirebase_CRM]  Campaings : Firebase updated failure");
-  //     }
-  //   } catch (error) {
-  //     try {
-  //       functions.logger.error( "[OdooToFirebase_CRM] Code:" +data["error"]["code"] + ": "+ data["error"]["message"]);
-  //     } catch {
-  //       functions.logger.error( "[OdooToFirebase_CRM] ERROR: ", error);
-  //     }
-  //   }
-  // } else functions.logger.error("[OdooToFirebase_CRM] Odoo request Error: unexpected " + response.status);
+
+        const user_stop_data = await checkingCategoriesOdoo( CustomHeaders, user_categories, "paradero" );
+
+        let user_stopId = "NaN"; let user_namestop = "NaN";
+
+        if (user_stop_data.result.length > 0) {
+          user_stopId = user_stop_data.result.records[0].id;
+          user_namestop = user_stop_data.result.records[0].name;
+        }
+
+        // ROUTES
+
+        const user_route_data = await checkingCategoriesOdoo( CustomHeaders, user_categories, "ruta" );
+
+        let user_routeId = "NaN"; let user_nameroute = "NaN";
+
+        if (user_route_data.result.length > 0) {
+          user_routeId = user_route_data.result.records[0].id;
+          user_nameroute = user_route_data.result.records[0].name;
+        }
+
+        const task = {
+          "user_id": user_id,
+          "data_client2_json": {
+            "idStop": user_stopId,
+            "Stops": user_namestop,
+            "idRoute": user_routeId,
+            "Route": user_nameroute,
+
+          },
+        };
+
+        // we NEED to save task somewhere
+        try {
+          FirebaseFcn.firebasePush("Tasks", task);
+        } catch (err) {
+          functions.logger.error( "[odooToFirebase_Users] Error pushing Tasks. ", {"error": err, "user_id": user_id} );
+          return null;
+        }
+
+
+        try {
+          const res = await FirebaseFcn.firebaseUpdate("Data_client/" + user_id +"/Data_client_2/", task.data_client2_json );
+          if (res == true) functions.logger.info( "[odooToFirebase_Users] updating user in Firebase from Odoo. ", task );
+          else functions.logger.error( "[odooToFirebase_Users] Error updating user. ", {"error": res, "user_id": user_id});
+        } catch (err) {
+          functions.logger.error( "[odooToFirebase_Users] Error updating user. ", {"error": err, "user_id": user_id} );
+        }
+      }
+    } else functions.logger.info( "[odooToFirebase_Users] No update founded in Odoo.");
+
+    // let dateTime = Date.now();
+    // FirebaseFcn.firebaseSet("/timestamp_collection/ussersTimeStamp",String(dateTime))
+  } catch (err) {
+    functions.logger.error( "[odooToFirebase_Users] ERROR: " + err);
+  }
 
   return null;
 }
 
 export async function FirebaseToOdoo_DeleteStopLabels(odoo_session:any, idOdoo: number, partnerId: number) {
-
   const CustomHeaders: HeadersInit = {
     "Content-Type": "application/json",
     "Cookie": "session_id="+odoo_session,
@@ -551,10 +618,10 @@ export async function FirebaseToOdoo_DeleteStopLabels(odoo_session:any, idOdoo: 
 
   const raw_read = JSON.stringify({
     "params": {
-      "model":"res.partner",
-      "fields":[],
-      "offset":0,
-      "domain":[["id","like", partnerId]]
+      "model": "res.partner",
+      "fields": [],
+      "offset": 0,
+      "domain": [["id", "like", partnerId]],
     },
   });
 
@@ -566,10 +633,10 @@ export async function FirebaseToOdoo_DeleteStopLabels(odoo_session:any, idOdoo: 
 
   const response_read = await fetch(settings.odoo_url + "dataset/search_read", params_read);
   const data_read = await response_read.json();
-  let category_ids: Array<number> = data_read["result"]["records"][0]["category_id"];
-  console.log("category_ids" , category_ids);
+  const category_ids: Array<number> = data_read["result"]["records"][0]["category_id"];
+  console.log("category_ids", category_ids);
 
-  let new_category_ids: Array<number> = category_ids.filter(id => (id != idOdoo))
+  const new_category_ids: Array<number> = category_ids.filter((id) => (id != idOdoo));
   console.log("new_category_ids", new_category_ids);
 
   const raw_write = JSON.stringify({
@@ -578,12 +645,12 @@ export async function FirebaseToOdoo_DeleteStopLabels(odoo_session:any, idOdoo: 
       "method": "write",
       "kwargs": {},
       "args": [
-          partnerId,
-          {
-            "category_id": new_category_ids
-          }
-      ]
-    }
+        partnerId,
+        {
+          "category_id": new_category_ids,
+        },
+      ],
+    },
   });
 
   const params_write = {
@@ -594,19 +661,18 @@ export async function FirebaseToOdoo_DeleteStopLabels(odoo_session:any, idOdoo: 
 
   const response_write = await fetch(settings.odoo_url + "dataset/call_kw/res.partner/", params_write);
   const data_write = await response_write.json();
-  console.log("data_write" , data_write);
+  console.log("data_write", data_write);
 
   return null;
 }
 
 export async function FirebaseToOdoo_CreateStopsRoutesLabels(odoo_session:any, name_stop: string, stops_json:any) {
-
   const CustomHeaders: HeadersInit = {
     "Content-Type": "application/json",
     "Cookie": "session_id="+odoo_session,
   };
 
-  //from OdooGenerateJsonsToWriteOdoo function
+  // from OdooGenerateJsonsToWriteOdoo function
   const raw = JSON.stringify({
     "params": {
       "model": "res.partner.category",
@@ -615,7 +681,7 @@ export async function FirebaseToOdoo_CreateStopsRoutesLabels(odoo_session:any, n
       "args": [{
         "name": name_stop,
         "active": true,
-        "partner_ids": stops_json
+        "partner_ids": stops_json,
       }],
     },
   });
@@ -627,11 +693,37 @@ export async function FirebaseToOdoo_CreateStopsRoutesLabels(odoo_session:any, n
   };
 
 
-
   const response = await fetch(settings.odoo_url + "dataset/call_kw/res.partner.category/create", params);
   const data = await response.json();
-  const idOdoo = String(data["result"])
-  console.log("dataaa" , data);
+  const idOdoo = String(data["result"]);
+  console.log("dataaa", data);
 
   return idOdoo;
+}
+
+async function checkingCategoriesOdoo(CustomHeaders:any, user_categories: any, mode:string) {
+  try {
+    const raw = JSON.stringify({
+      "params": {
+        "model": "res.partner.category",
+        "fields": ["id", "name"],
+        "offset": 0,
+        "domain": ["&", ["id", "in", user_categories], ["name", "ilike", mode]],
+      },
+    });
+
+    const params = {
+      headers: CustomHeaders,
+      method: "post",
+      body: raw,
+    };
+
+    const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+    const res = await response.json();
+    // console.log("response.json();", JSON.stringify(res))
+    return res;
+  } catch (err) {
+    functions.logger.error( "[CheckingCategoriesOdoo] ERROR. ", {"error": err, "user_categories": user_categories});
+    return {"result": {"records": []}};
+  }
 }
