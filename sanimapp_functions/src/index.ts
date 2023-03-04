@@ -13,7 +13,7 @@ admin.initializeApp({
 
 // Functions
 
-export const TestFunction = functions.https.onRequest( async (request, response) => {
+export const testFunction = functions.https.onRequest( async (request, response) => {
   // do here whatever you must
   try {
     const odoo_session = await OdooFcn.odoo_Login();
@@ -33,7 +33,7 @@ export const TestFunction = functions.https.onRequest( async (request, response)
   }
 });
 
-export const OdooToFirebase = functions.https.onRequest(async (request, response)=> {
+export const odooToFirebase = functions.https.onRequest(async (request, response)=> {
   // this will run with certain periodicity. This will be the stable function.
   // Here will be everything at the moment. eventually we will separate them to test each one of these.
   try {
@@ -74,37 +74,43 @@ export const firebaseToOdoo_Stops_update = functions.database.ref("stops/{idStop
     const partnerIds_added = [];
     const partnerIds_after_array = [];
 
+    let dict_before = {};
+    let dict_after = {};
 
-    let list_after = {};
-    let list_before = {};
+    let list_after : Array<string>;
+    let list_before : Array<string>;
 
-    list_after = partnerIds_after["partnersId"];
-    if (list_after != undefined) {
+    dict_after = partnerIds_after["partnersId"];
+    if (dict_after != undefined) {
+      list_after = Object.keys(dict_before);
       console.log("list_after", list_after);
     } else {
-      list_after = {};
+      list_after = [];
       borrar = true;
     }
 
-    list_before = partnerIds_before["partnersId"];
-    if (list_before != undefined) {
+    dict_before = partnerIds_before["partnersId"];
+    if (dict_before != undefined) {
+      list_before = Object.keys(dict_before);
       console.log("list_before", list_before);
     } else {
-      list_before = {};
+      list_before = [];
       llenar = true;
     }
 
     console.log("borrar", borrar);
     console.log("llenar", llenar);
 
-    for (const index in list_before) {
-      if (index in list_after) continue;
+    for (let i = 0; i < list_before.length; i++) {
+      const index = list_before[i];
+      if (list_after.includes(index)) continue;
       else partnerIds_deleted.push(index);
     }
 
-    for (const index in list_after) {
+    for (let i = 0; i < list_after.length; i++) {
+      const index = list_after[i];
       partnerIds_after_array.push(Number(index));
-      if (index in list_before) continue;
+      if (list_before.includes(index)) continue;
       else partnerIds_added.push(index);
     }
 
@@ -137,36 +143,43 @@ export const firebaseToOdoo_Routes_update = functions.database.ref("/Route_defin
     const partnerIds_added = [];
     const partnerIds_after_array = [];
 
-    let list_after = {};
-    let list_before = {};
+    let dict_before = {};
+    let dict_after = {};
 
-    list_after = partnerIds_after["partnersId"];
-    if (list_after != undefined) {
+    let list_after : Array<string>;
+    let list_before : Array<string>;
+
+    dict_after = partnerIds_after["partnersId"];
+    if (dict_after != undefined) {
+      list_after = Object.keys(dict_before);
       console.log("list_after", list_after);
     } else {
-      list_after = {};
+      list_after = [];
       borrar = true;
     }
 
-    list_before = partnerIds_before["partnersId"];
-    if (list_before != undefined) {
+    dict_before = partnerIds_before["partnersId"];
+    if (dict_before != undefined) {
+      list_before = Object.keys(dict_before);
       console.log("list_before", list_before);
     } else {
-      list_before = {};
+      list_before = [];
       llenar = true;
     }
 
     console.log("borrar", borrar);
     console.log("llenar", llenar);
 
-    for (const index in list_before) {
-      if (index in list_after) continue;
+    for (let i = 0; i < list_before.length; i++) {
+      const index = list_before[i];
+      if (list_after.includes(index)) continue;
       else partnerIds_deleted.push(index);
     }
 
-    for (const index in list_after) {
+    for (let i = 0; i < list_after.length; i++) {
+      const index = list_after[i];
       partnerIds_after_array.push(Number(index));
-      if (index in list_before) continue;
+      if (list_before.includes(index)) continue;
       else partnerIds_added.push(index);
     }
 
@@ -177,7 +190,7 @@ export const firebaseToOdoo_Routes_update = functions.database.ref("/Route_defin
     const odoo_session = await OdooFcn.odoo_Login();
     if (odoo_session != null) {
       await OdooFcn.FirebaseToOdoo_ChangeStopsRoutesLabels(odoo_session, Number(partnerIds_after["idOdoo"]), partnerIds_after_array);
-      if (borrar) {
+      if (borrar && !llenar) {
         await OdooFcn.FirebaseToOdoo_DeleteStopLabels(odoo_session, Number(partnerIds_after["idOdoo"]), partnerIds_after_array[0]);
       }
       await OdooFcn.odoo_Logout(odoo_session);
@@ -191,10 +204,21 @@ export const firebaseToOdoo_Routes_update = functions.database.ref("/Route_defin
 export const firebaseToOdoo_Stops_create = functions.database.ref("stops/{idStopFb}").onCreate( async (change, context)=>{
   const partnersId_new = change.val();
 
-  const partnerIds_toCreate = [];
+  const partnerIds_toCreate : Array<number> = [];
 
-  for (const index in partnersId_new["partnersId"]) {
-    partnerIds_toCreate.push(Number(index));
+  let list : Array<string>;
+  let dict = {};
+
+  dict = partnersId_new["partnersId"];
+  if (dict != undefined) {
+    list = Object.keys(dict);
+    console.log("list_after", list);
+    for (let i = 0; i < list.length; i++) {
+      const index = Number(list[i]);
+      partnerIds_toCreate.push(index);
+    }
+  } else {
+    list = [];
   }
 
   const idFirebase = context.params.idStopFb;
@@ -217,8 +241,19 @@ export const firebaseToOdoo_Routes_create = functions.database.ref("/Route_defin
 
   const partnerIds_toCreate = [];
 
-  for (const index in partnersId_new["partnersId"]) {
-    partnerIds_toCreate.push(Number(index));
+  let list : Array<string>;
+  let dict = {};
+
+  dict = partnersId_new["partnersId"];
+  if (dict != undefined) {
+    list = Object.keys(dict);
+    console.log("list_after", list);
+    for (let i = 0; i < list.length; i++) {
+      const index = Number(list[i]);
+      partnerIds_toCreate.push(index);
+    }
+  } else {
+    list = [];
   }
 
   const idFirebase = context.params.idRouteFb;
@@ -241,7 +276,7 @@ export const firebaseToOdoo_Routes_create = functions.database.ref("/Route_defin
 // });
 
 
-export const OdooToFirebase_updateUsser = functions.https.onRequest(async (request, response)=> {
+export const odooToFirebase_updateUsser = functions.https.onRequest(async (request, response)=> {
   // this will run with certain periodicity. This will be the stable function.
   // Here will be everything at the moment. eventually we will separate them to test each one of these.
   try {
