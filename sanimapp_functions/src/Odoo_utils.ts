@@ -583,12 +583,12 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
         };
 
         // we NEED to save task somewhere
-        try {
-          FirebaseFcn.firebaseUpdate("Tasks", task);
-        } catch (err) {
-          functions.logger.error( "[odooToFirebase_Users] Error pushing Tasks. ", {"error": err, "user_id": user_id} );
-          return null;
-        }
+        // try {
+        //   FirebaseFcn.firebaseUpdate("Tasks", task);
+        // } catch (err) {
+        //   functions.logger.error( "[odooToFirebase_Users] Error pushing Tasks. ", {"error": err, "user_id": user_id} );
+        //   return null;
+        // }
 
 
         try {
