@@ -120,9 +120,9 @@ export const firebaseToOdoo_Stops_update = functions.database.ref("stops/{idStop
 
     const odoo_session = await OdooFcn.odoo_Login();
     if (odoo_session != null) {
-      await OdooFcn.FirebaseToOdoo_ChangeStopsRoutesLabels(odoo_session, Number(partnerIds_after["idOdoo"]), partnerIds_after_array);
+      await OdooFcn.firebaseToOdoo_ChangeStopsRoutesLabels(odoo_session, Number(partnerIds_after["idOdoo"]), partnerIds_after_array);
       if (borrar) {
-        await OdooFcn.FirebaseToOdoo_DeleteStopLabels(odoo_session, Number(partnerIds_after["idOdoo"]), partnerIds_after_array[0]);
+        await OdooFcn.firebaseToOdoo_DeleteStopLabels(odoo_session, Number(partnerIds_after["idOdoo"]), partnerIds_after_array[0]);
       }
       await OdooFcn.odoo_Logout(odoo_session);
       return true;
@@ -189,9 +189,9 @@ export const firebaseToOdoo_Routes_update = functions.database.ref("/Route_defin
 
     const odoo_session = await OdooFcn.odoo_Login();
     if (odoo_session != null) {
-      await OdooFcn.FirebaseToOdoo_ChangeStopsRoutesLabels(odoo_session, Number(partnerIds_after["idOdoo"]), partnerIds_after_array);
+      await OdooFcn.firebaseToOdoo_ChangeStopsRoutesLabels(odoo_session, Number(partnerIds_after["idOdoo"]), partnerIds_after_array);
       if (borrar && !llenar) {
-        await OdooFcn.FirebaseToOdoo_DeleteStopLabels(odoo_session, Number(partnerIds_after["idOdoo"]), partnerIds_after_array[0]);
+        await OdooFcn.firebaseToOdoo_DeleteStopLabels(odoo_session, Number(partnerIds_after["idOdoo"]), partnerIds_after_array[0]);
       }
       await OdooFcn.odoo_Logout(odoo_session);
       return true;
@@ -227,7 +227,7 @@ export const firebaseToOdoo_Stops_create = functions.database.ref("stops/{idStop
 
   const odoo_session = await OdooFcn.odoo_Login();
   if (odoo_session != null) {
-    const idOdoo = await OdooFcn.FirebaseToOdoo_CreateStopsRoutesLabels(odoo_session, partnersId_new["Stops_name"], partnerIds_toCreate);
+    const idOdoo = await OdooFcn.firebaseToOdoo_CreateStopsRoutesLabels(odoo_session, partnersId_new["Stops_name"], partnerIds_toCreate);
     await OdooFcn.odoo_Logout(odoo_session);
     FirebaseFcn.firebaseSet("stops/" + idFirebase + "/idOdoo", idOdoo);
     return true;
@@ -262,7 +262,7 @@ export const firebaseToOdoo_Routes_create = functions.database.ref("/Route_defin
 
   const odoo_session = await OdooFcn.odoo_Login();
   if (odoo_session != null) {
-    const idOdoo = await OdooFcn.FirebaseToOdoo_CreateStopsRoutesLabels(odoo_session, partnersId_new["Nom_ruta"], partnerIds_toCreate);
+    const idOdoo = await OdooFcn.firebaseToOdoo_CreateStopsRoutesLabels(odoo_session, partnersId_new["Nom_ruta"], partnerIds_toCreate);
     await OdooFcn.odoo_Logout(odoo_session);
     FirebaseFcn.firebaseSet("Route_definition/" + idFirebase + "/idOdoo", idOdoo);
     return true;

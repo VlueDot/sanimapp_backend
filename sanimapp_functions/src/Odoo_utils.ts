@@ -472,7 +472,7 @@ export async function odooToFirebase_CRM_Campaigns(odoo_session:any) {
 // }
 
 
-export async function FirebaseToOdoo_ChangeStopsRoutesLabels(odoo_session:any, idOdoo: number, stopsOrRoutes_json:any) {
+export async function firebaseToOdoo_ChangeStopsRoutesLabels(odoo_session:any, idOdoo: number, stopsOrRoutes_json:any) {
   const CustomHeaders: HeadersInit = {
     "Content-Type": "application/json",
     "Cookie": "session_id="+odoo_session,
@@ -610,7 +610,7 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
   return null;
 }
 
-export async function FirebaseToOdoo_DeleteStopLabels(odoo_session:any, idOdoo: number, partnerId: number) {
+export async function firebaseToOdoo_DeleteStopLabels(odoo_session:any, idOdoo: number, partnerId: number) {
   const CustomHeaders: HeadersInit = {
     "Content-Type": "application/json",
     "Cookie": "session_id="+odoo_session,
@@ -666,7 +666,7 @@ export async function FirebaseToOdoo_DeleteStopLabels(odoo_session:any, idOdoo: 
   return null;
 }
 
-export async function FirebaseToOdoo_CreateStopsRoutesLabels(odoo_session:any, name_stop: string, stops_json:any) {
+export async function firebaseToOdoo_CreateStopsRoutesLabels(odoo_session:any, name_stop: string, stops_json:any) {
   const CustomHeaders: HeadersInit = {
     "Content-Type": "application/json",
     "Cookie": "session_id="+odoo_session,
