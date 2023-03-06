@@ -276,7 +276,7 @@ export const firebaseToOdoo_Routes_create = functions.database.ref("/Route_defin
 // });
 
 
-export const odooToFirebase_updateUsser = functions.https.onRequest(async (request, response)=> {
+export const odooToFirebase_updateUser = functions.https.onRequest(async (request, response)=> {
   // this will run with certain periodicity. This will be the stable function.
   // Here will be everything at the moment. eventually we will separate them to test each one of these.
   try {
