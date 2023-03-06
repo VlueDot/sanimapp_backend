@@ -713,8 +713,14 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
       }
     } else functions.logger.info( "[odooToFirebase_Users] No update founded in Odoo.");
 
-    // let dateTime = Date.now();
-    // FirebaseFcn.firebaseSet("/timestamp_collection/ussersTimeStamp",String(dateTime))
+    let dateTime = Date.now();
+    FirebaseFcn.firebaseSet("/timestamp_collection/ussersTimeStamp",String(dateTime))
+    functions.logger.info( "[odooToFirebase_Users] updating ussersTimeStamp in Firebase" );  //MAYBE AN ID 
+
+
+
+
+
   } catch (err) {
     functions.logger.error( "[odooToFirebase_Users] ERROR: " + err);
   }
