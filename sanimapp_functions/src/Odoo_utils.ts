@@ -576,7 +576,7 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
 
         // Update FIREBASE below ----------------------------------------------------------------
 
-        const info = { 
+        const info = {
           "user_id_odoo": user_id,
           "stop_id_odoo": user_stopId,
           "stop_id_firebase": 0,
