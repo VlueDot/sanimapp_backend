@@ -82,7 +82,7 @@ export const firebaseToOdoo_Stops_update = functions.database.ref("stops/{idStop
 
     dict_after = partnerIds_after["partnersId"];
     if (dict_after != undefined) {
-      list_after = Object.keys(dict_before);
+      list_after = Object.keys(dict_after);
       console.log("list_after", list_after);
     } else {
       list_after = [];
@@ -151,7 +151,7 @@ export const firebaseToOdoo_Routes_update = functions.database.ref("/Route_defin
 
     dict_after = partnerIds_after["partnersId"];
     if (dict_after != undefined) {
-      list_after = Object.keys(dict_before);
+      list_after = Object.keys(dict_after);
       console.log("list_after", list_after);
     } else {
       list_after = [];
