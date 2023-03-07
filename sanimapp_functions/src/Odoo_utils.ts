@@ -507,7 +507,6 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
   const date = new Date(Number(lastupdateTimestamp));
   const date_str = "'"+ date.getFullYear()+"-"+("0" + (date.getMonth() + 1)).slice(-2)+"-"+("0" +date.getDate()).slice(-2)+" "+ ("0" +date.getHours()).slice(-2)+":"+("0" +date.getMinutes()).slice(-2)+":"+("0" +date.getSeconds()).slice(-2) + "'";
 
-
   const CustomHeaders: HeadersInit = {
     "Content-Type": "application/json",
     "Cookie": "session_id="+odoo_session,
@@ -713,14 +712,9 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
       }
     } else functions.logger.info( "[odooToFirebase_Users] No update founded in Odoo.");
 
-    let dateTime = Date.now();
-    FirebaseFcn.firebaseSet("/timestamp_collection/ussersTimeStamp",String(dateTime))
-    functions.logger.info( "[odooToFirebase_Users] updating ussersTimeStamp in Firebase" );  //MAYBE AN ID 
-
-
-
-
-
+    const dateTime = Date.now();
+    FirebaseFcn.firebaseSet("/timestamp_collection/ussersTimeStamp", String(dateTime));
+    functions.logger.info( "[odooToFirebase_Users] updating ussersTimeStamp in Firebase" ); // MAYBE AN ID
   } catch (err) {
     functions.logger.error( "[odooToFirebase_Users] ERROR: " + err);
   }
@@ -844,4 +838,36 @@ async function checkingCategoriesOdoo(CustomHeaders:any, user_categories: any, m
     functions.logger.error( "[CheckingCategoriesOdoo] ERROR. ", {"error": err, "user_categories": user_categories});
     return {"result": {"records": []}};
   }
+}
+
+export async function odooWriteInFirebase(odoo_session:any, idOdoo: number, lastupdateTimestamp: any) {
+  const date = new Date(Number(lastupdateTimestamp)-15000);
+  const date_str = "'"+ date.getFullYear()+"-"+("0" + (date.getMonth() + 1)).slice(-2)+"-"+("0" +date.getDate()).slice(-2)+" "+ ("0" +date.getHours()).slice(-2)+":"+("0" +date.getMinutes()).slice(-2)+":"+("0" +date.getSeconds()).slice(-2) + "'";
+
+  const CustomHeaders: HeadersInit = {
+    "Content-Type": "application/json",
+    "Cookie": "session_id="+odoo_session,
+  };
+
+  const raw = JSON.stringify({
+    "params": {
+      "model": "res.partner.category",
+      "fields": ["id", "name"],
+      "offset": 0,
+      "domain": ["&", ["id", "=", idOdoo], ["write_date", ">", date_str]],
+    },
+  });
+
+  const params = {
+    headers: CustomHeaders,
+    method: "post",
+    body: raw,
+  };
+
+  const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+  const data = await response.json();
+
+  const len: number = data["result"]["length"];
+
+  return (len <= 0);
 }

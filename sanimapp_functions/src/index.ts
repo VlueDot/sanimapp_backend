@@ -62,6 +62,39 @@ export const firebaseToOdoo_CRM = functions.database.ref("/test").onWrite( async
   }
 });
 
+export const firebase_Stops_UsersQuantity_update = functions.database.ref("stops/{idStopFb}").onUpdate( async (change, context)=>{
+  const stopData_before = change.before.val();
+  const stopData_after = change.after.val();
+  const idFirebase = context.params.idStopFb;
+
+  let usersQuantity_before : number;
+  let usersQuantity_after : number;
+
+  let dict_before = {};
+  dict_before = stopData_before["Users_quantity"];
+  if (dict_before != undefined) {
+    usersQuantity_before = Number(dict_before);
+  } else {
+    usersQuantity_before = -1;
+  }
+
+  let dict_after = {};
+  dict_after = stopData_after["partnersId"];
+  if (dict_after != undefined) {
+    usersQuantity_after = Object.keys(stopData_after["partnersId"]).length;
+    console.log("users after", usersQuantity_after);
+  } else {
+    usersQuantity_after = 0;
+  }
+
+  if (usersQuantity_before === usersQuantity_after) return null;
+  else {
+    FirebaseFcn.firebaseSet("stops/" + idFirebase + "/Users_quantity", usersQuantity_after);
+    functions.logger.info("[firebase_Stops_UsersQuantity_update]: Stop users quantity will be updated.", {"idRouteFb": context.params.idStopFb, "Old Users Quantity": usersQuantity_before, "New Users Quantity": usersQuantity_after});
+    return true;
+  }
+});
+
 export const firebaseToOdoo_Stops_update = functions.database.ref("stops/{idStopFb}").onUpdate( async (change, context)=>{
   const partnerIds_before = change.before.val();
   const partnerIds_after = change.after.val();
@@ -116,14 +149,17 @@ export const firebaseToOdoo_Stops_update = functions.database.ref("stops/{idStop
 
     if (borrar && !llenar) partnerIds_after_array.push(Number(partnerIds_deleted[0]));
 
-    functions.logger.info("[firebaseToOdoo_Stops_update]: Stops will update partners in odoo.", {"idRouteFb": context.params.idStopFb, "Deleted": JSON.stringify(partnerIds_deleted), "Added": JSON.stringify(partnerIds_added)});
-
     const odoo_session = await OdooFcn.odoo_Login();
     if (odoo_session != null) {
-      await OdooFcn.firebaseToOdoo_ChangeStopsRoutesLabels(odoo_session, Number(partnerIds_after["idOdoo"]), partnerIds_after_array);
-      if (borrar) {
-        await OdooFcn.firebaseToOdoo_DeleteStopLabels(odoo_session, Number(partnerIds_after["idOdoo"]), partnerIds_after_array[0]);
-      }
+      const lastupdateTimestamp = Date.now();
+      const verified = await OdooFcn.odooWriteInFirebase(odoo_session, partnerIds_after["idOdoo"], lastupdateTimestamp);
+
+      if (verified) {
+        functions.logger.info("[firebaseToOdoo_Stops_update]: Stops will update partners in odoo.", {"idRouteFb": context.params.idStopFb, "Deleted": JSON.stringify(partnerIds_deleted), "Added": JSON.stringify(partnerIds_added)});
+        await OdooFcn.firebaseToOdoo_ChangeStopsRoutesLabels(odoo_session, Number(partnerIds_after["idOdoo"]), partnerIds_after_array);
+        if (borrar) await OdooFcn.firebaseToOdoo_DeleteStopLabels(odoo_session, Number(partnerIds_after["idOdoo"]), partnerIds_after_array[0]);
+      } else console.log("verified", verified);
+
       await OdooFcn.odoo_Logout(odoo_session);
       return true;
     }
