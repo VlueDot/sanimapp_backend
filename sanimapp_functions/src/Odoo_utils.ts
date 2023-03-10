@@ -611,6 +611,13 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
                 if (res) functions.logger.info( "[odooToFirebase_Users] updating stop node in Fb without problems ("+fb_addr+") ", info);
                 else functions.logger.error( "[odooToFirebase_Users] Error updating stop node in Fb ("+fb_addr+"): " + res, info );
 
+                
+
+                //update the route label in firebase
+                
+                // updating the route nodes
+
+
                 break;
               } else {
                 if (index == len - 1) console.log("create stop in fb ", index + 1); // TODOOOOOOOOOOO
@@ -677,6 +684,10 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
 
         // ---------------------------------------------------------------------------------------------------------------
         // 2. update routes in firebase if needed. first get the id route if is attempting to delete it
+        if ( user_route_data.result.length > 0 && user_stop_data.result.length <= 0) {
+          //No man! what are you doing in Odoo. Dont touch it. Im the man here 
+          //look for the stop in odoo. Check the related route. write the correct route
+        }
 
 
         // 3. Data client 2 ------------------------------------------------------------------------------------------------------------------------------
