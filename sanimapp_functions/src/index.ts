@@ -18,6 +18,9 @@ export let firebaseToOdoo_Routes_create : any
 //FROM ODOO TO FIREBASE
 export let odooToFirebase_updateUser : any 
 
+//TRIGGERS INSIDE FIREBASE
+export let firebase_Stops_UsersQuantity_update : any 
+
 // Firebase Connection Settings
 const serviceAccount = require("./service-account.json");
 export const urldatabase = "https://sanimappdev-default-rtdb.firebaseio.com";
@@ -26,7 +29,7 @@ admin.initializeApp({
   databaseURL: urldatabase,
 });
 
-// Functions
+//FUNCTIONS
 
 testFunction = functions.https.onRequest( async (request, response) => {
   // do here whatever you must
@@ -77,7 +80,7 @@ firebaseToOdoo_CRM = functions.database.ref("/test").onWrite( async (change)=>{
   }
 });
 
-export const firebase_Stops_UsersQuantity_update = functions.database.ref("stops/{idStopFb}").onUpdate( async (change, context)=>{
+firebase_Stops_UsersQuantity_update = functions.database.ref("stops/{idStopFb}").onUpdate( async (change, context)=>{
   const stopData_before = change.before.val();
   const stopData_after = change.after.val();
   const idFirebase = context.params.idStopFb;
