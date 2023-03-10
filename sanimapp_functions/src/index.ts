@@ -4,13 +4,13 @@ import * as FirebaseFcn from "./Firebase_utils";
 import * as admin from "firebase-admin";
 
 
-//Function declarations
+//Test - must be deleted
 export let testFunction : any
 export let odooToFirebase : any 
 export let firebaseToOdoo_CRM : any 
 
 //FROM FIREBASE TO ODOO
-export let firebaseToOdoo_Stops_update : any 
+export let firebaseToOdoo_Stops_update : any //add description for each one
 export let firebaseToOdoo_Routes_update : any 
 export let firebaseToOdoo_Stops_create : any 
 export let firebaseToOdoo_Routes_create : any 
