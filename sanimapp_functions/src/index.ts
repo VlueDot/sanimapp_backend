@@ -3,6 +3,21 @@ import * as OdooFcn from "./Odoo_utils";
 import * as FirebaseFcn from "./Firebase_utils";
 import * as admin from "firebase-admin";
 
+
+//Test - must be deleted
+export let testFunction : any
+export let odooToFirebase : any 
+export let firebaseToOdoo_CRM : any 
+
+//FROM FIREBASE TO ODOO
+export let firebaseToOdoo_Stops_update : any //add description for each one
+export let firebaseToOdoo_Routes_update : any 
+export let firebaseToOdoo_Stops_create : any 
+export let firebaseToOdoo_Routes_create : any 
+
+//FROM ODOO TO FIREBASE
+export let odooToFirebase_updateUser : any 
+
 // Firebase Connection Settings
 const serviceAccount = require("./service-account.json");
 export const urldatabase = "https://sanimappdev-default-rtdb.firebaseio.com";
@@ -13,7 +28,7 @@ admin.initializeApp({
 
 // Functions
 
-export const testFunction = functions.https.onRequest( async (request, response) => {
+testFunction = functions.https.onRequest( async (request, response) => {
   // do here whatever you must
   try {
     const odoo_session = await OdooFcn.odoo_Login();
@@ -25,7 +40,7 @@ export const testFunction = functions.https.onRequest( async (request, response)
     }
 
 
-    response.send("OdooSync End");
+    response.send("OdooSync End: " + odoo_session);
   } catch (error) {
     functions.logger.error(error);
 
@@ -33,7 +48,7 @@ export const testFunction = functions.https.onRequest( async (request, response)
   }
 });
 
-export const odooToFirebase = functions.https.onRequest(async (request, response)=> {
+odooToFirebase = functions.https.onRequest(async (request, response)=> {
   // this will run with certain periodicity. This will be the stable function.
   // Here will be everything at the moment. eventually we will separate them to test each one of these.
   try {
@@ -53,7 +68,7 @@ export const odooToFirebase = functions.https.onRequest(async (request, response
   }
 });
 
-export const firebaseToOdoo_CRM = functions.database.ref("/test").onWrite( async (change)=>{
+firebaseToOdoo_CRM = functions.database.ref("/test").onWrite( async (change)=>{
   if (change.after.val() === change.before.val()) return null;
 
   else {
@@ -95,7 +110,7 @@ export const firebase_Stops_UsersQuantity_update = functions.database.ref("stops
   }
 });
 
-export const firebaseToOdoo_Stops_update = functions.database.ref("stops/{idStopFb}").onUpdate( async (change, context)=>{
+firebaseToOdoo_Stops_update = functions.database.ref("stops/{idStopFb}").onUpdate( async (change, context)=>{
   const partnerIds_before = change.before.val();
   const partnerIds_after = change.after.val();
   let borrar = false;
@@ -167,7 +182,7 @@ export const firebaseToOdoo_Stops_update = functions.database.ref("stops/{idStop
   }
 });
 
-export const firebaseToOdoo_Routes_update = functions.database.ref("/Route_definition/{idRouteFb}").onUpdate( async (change, context)=>{
+firebaseToOdoo_Routes_update = functions.database.ref("/Route_definition/{idRouteFb}").onUpdate( async (change, context)=>{
   const partnerIds_before = change.before.val();
   const partnerIds_after = change.after.val();
   let borrar = false;
@@ -237,7 +252,7 @@ export const firebaseToOdoo_Routes_update = functions.database.ref("/Route_defin
   }
 });
 
-export const firebaseToOdoo_Stops_create = functions.database.ref("stops/{idStopFb}").onCreate( async (change, context)=>{
+firebaseToOdoo_Stops_create = functions.database.ref("stops/{idStopFb}").onCreate( async (change, context)=>{
   const partnersId_new = change.val();
 
   const partnerIds_toCreate : Array<number> = [];
@@ -272,7 +287,7 @@ export const firebaseToOdoo_Stops_create = functions.database.ref("stops/{idStop
   return null;
 });
 
-export const firebaseToOdoo_Routes_create = functions.database.ref("/Route_definition/{idRouteFb}").onCreate( async (change, context)=>{
+firebaseToOdoo_Routes_create = functions.database.ref("/Route_definition/{idRouteFb}").onCreate( async (change, context)=>{
   const partnersId_new = change.val();
 
   const partnerIds_toCreate = [];
@@ -306,13 +321,8 @@ export const firebaseToOdoo_Routes_create = functions.database.ref("/Route_defin
   // si la respuesta del servidor es afirmativa devuelve un ok. Sino regresa el valor original y manda error
   return null;
 });
-//     //si la respuesta del servidor es afirmativa devuelve un ok. Sino regresa el valor original y manda error
-//     return res;
-//   }
-// });
 
-
-export const odooToFirebase_updateUser = functions.https.onRequest(async (request, response)=> {
+odooToFirebase_updateUser = functions.https.onRequest(async (request, response)=> {
   // this will run with certain periodicity. This will be the stable function.
   // Here will be everything at the moment. eventually we will separate them to test each one of these.
   try {
