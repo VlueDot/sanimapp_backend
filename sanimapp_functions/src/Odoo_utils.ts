@@ -4,17 +4,30 @@ import * as functions from "firebase-functions";
 import * as FirebaseFcn from "./Firebase_utils";
 
 
+let info = {
+  "odoo_session": 0,
+  "user_id_odoo": 0,
+  "stop_id_odoo": 0,
+  "stop_id_firebase": 0,
+  "stop_name": "",
+  "route_id_odoo": 0,
+  "route_id_firebase": 0,
+  "route_name": "",
+
+};
+
+
 export async function odoo_Login() {
   const response = await fetch(settings.odoo_url + "session/authenticate", settings.odoo_access);
   const data = await response.json();
   const data_headers = await response.headers.get("set-cookie");
-  const session_id = data_headers?.split("=", 2)[1].split(";", 1)[0];
+  const odoo_session = data_headers?.split("=", 2)[1].split(";", 1)[0];
 
   if (response.status === 200) {
     try {
-      functions.logger.info(response.status +" Odoo Authentication Succeeded. Session Id: " + session_id);
+      functions.logger.info(response.status +" Odoo Authentication Succeeded." ,  {"odoo_session" : odoo_session});
       functions.logger.warn( " Odoo User Expiration: " + data["result"]["expiration_date"] );
-      return session_id;
+      return odoo_session;
     } catch (error) {
       functions.logger.error(response.status +" Odoo Authentication Failed: " + data["error"]["message"] );
     }
@@ -41,8 +54,8 @@ export async function odoo_Logout(odoo_session:any) {
 
   const response = await fetch(settings.odoo_url + "session/logout", params);
   if (response.status === 200) {
-    functions.logger.info( "Odoo Logout Succeeded: " + odoo_session);
-  } else functions.logger.error("OdooLogout Error: unexpected " + response.status);
+    functions.logger.info( "Odoo Logout Succeeded. " , {"odoo_session" : odoo_session});
+  } else functions.logger.error("OdooLogout Error: unexpected " + response.status,  {"odoo_session" : odoo_session});
 
   return response.status;
 }
@@ -536,11 +549,13 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
     const qtty_users = data.result.length;
     if (qtty_users > 0) {
       const updatedusers = data.result.records;
-
-      functions.logger.info( "[odooToFirebase_Users] Entries Founded:  ", {"updatedusers": updatedusers} );
+      functions.logger.info( "[odooToFirebase_Users] Entries Founded:  ",
+        { "odoo_session" : odoo_session,
+          "updatedusers": updatedusers
+        } );
 
       const fb_stops = await FirebaseFcn.firebaseGet("stops");
-      // console.log("fb_stops " ,fb_stops)
+      // console.log("fb_stops  wadafaaaaq" ,fb_stops)
       const keys = Object.keys(fb_stops);
 
       for (let i= 0; i<qtty_users; i++) {
@@ -555,7 +570,7 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
 
         const user_stop_data = await checkingCategoriesOdoo( CustomHeaders, user_categories, "paradero" );
 
-        let user_stopId = "NaN"; let user_namestop = "NaN";
+        let user_stopId = 0; let user_namestop = "NaN";
 
         if (user_stop_data.result.length > 0) {
           user_stopId = user_stop_data.result.records[0].id;
@@ -566,7 +581,7 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
 
         const user_route_data = await checkingCategoriesOdoo( CustomHeaders, user_categories, "ruta" );
 
-        let user_routeId = "NaN"; let user_nameroute = "NaN";
+        let user_routeId = 0; let user_nameroute = "NaN";
 
         if (user_route_data.result.length > 0) {
           user_routeId = user_route_data.result.records[0].id;
@@ -575,7 +590,8 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
 
         // Update FIREBASE below ----------------------------------------------------------------
 
-        const info = {
+        info = {
+          "odoo_session" : odoo_session,
           "user_id_odoo": user_id,
           "stop_id_odoo": user_stopId,
           "stop_id_firebase": 0,
@@ -595,55 +611,59 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
         //   return null;
         // }
 
+        //0. Auxiliary functions  INFO HAS ODOO INFO
+        const dataclient2_from_FB = await FirebaseFcn.firebaseGet("Data_client/" + user_id +"/Data_client_2/" );
+        const stop_from_FBdataclient2_idStop = dataclient2_from_FB["idStop"];
+        const stop_from_FBdataclient2_nameStop = dataclient2_from_FB["Stops"];
+        const route_from_FBdataclient2_idRoute = dataclient2_from_FB["idRoute"];
+        // const route_from_FBdataclient2_nameRoute = dataclient2_from_FB["Route"];
 
-        // ---------------------------------------------------------------------------------------------------------------
-        // 1. update stops in firebase if needed. first get the id stop if is attempting to delete it
+        let ToDoList = []
+        if( info.route_id_odoo != route_from_FBdataclient2_idRoute) ToDoList.push("route changed");
+        if(  info.stop_id_odoo != stop_from_FBdataclient2_idStop) ToDoList.push("stop changed");
+        if( info.stop_id_odoo != 0 && !info.route_id_odoo) ToDoList.push("There is stop but  no route");
+        functions.logger.warn( "[odooToFirebase_Users] Tasks: ", {
+          "odoo_session" : odoo_session,
+          "user_id_odoo": user_id,
+          "to-do-list" : ToDoList
+        });
 
+        //--------------------------------------------------------------------------------------------------------  
+        //1. if there is routes changes
+        
 
-        if ( user_stop_data.result.length > 0) {
-          try {
-            for (let index = 0, len = fb_stops.length; index < len; index++) {
-              if ( fb_stops[Number(keys[index])].idOdoo == user_stopId) {
-                info.stop_id_firebase = Number(keys[index]); //
-                const fb_addr = "stops/" + info.stop_id_firebase + "/partnersId/" + user_id;
-                const res = await FirebaseFcn.firebaseSet(fb_addr, true);
-                if (res) functions.logger.info( "[odooToFirebase_Users] updating stop node in Fb without problems ("+fb_addr+") ", info);
-                else functions.logger.error( "[odooToFirebase_Users] Error updating stop node in Fb ("+fb_addr+"): " + res, info );
+        if( info.route_id_odoo != route_from_FBdataclient2_idRoute ||  info.stop_id_odoo != stop_from_FBdataclient2_idStop || (info.stop_id_odoo != 0 && !info.route_id_odoo) ) {
 
-                
+          //First, delete the route from the categories array
+          let index_category = user_categories.indexOf(info.route_id_odoo)
+          if(index_category != -1 ) user_categories.splice( index_category , 1)
+            
 
-                //update the route label in firebase
-                
-                // updating the route nodes
-
-
-                break;
-              } else {
-                if (index == len - 1) console.log("create stop in fb ", index + 1); // TODOOOOOOOOOOO
+          if (info.stop_id_odoo == 0) { // if there is no stop in odoo then there is no route either
+            info.route_id_odoo = 0
+            info.route_name = "NaN"
+          }
+          else{
+            //search route in firebase for that stop             
+            for (let index = 0, len = fb_stops.length; index < len; index++) { // obtain stop_id_firebase
+              // console.log("fb_stops[Number(keys[index])].idOdoo ", fb_stops[Number(keys[index])].idOdoo )
+              // console.log("info.stop_id_odoo " , info.stop_id_odoo)
+              if ( fb_stops[Number(keys[index])].idOdoo == info.stop_id_odoo) {
+                info.stop_id_firebase = Number(keys[index]); 
+                break;  
               }
             }
-          } catch (err) {
-            functions.logger.error( "[odooToFirebase_Users] Error updating stop: " + err, {"user_id": user_id} );
-          }
-        } else {
-          // get the stop from "/Data_client_2/" is there is any
-          const stop_from_FBdataclient2 = await FirebaseFcn.firebaseGet("Data_client/" + user_id +"/Data_client_2/" );
-          // console.log("stop_from_FBdataclient2 ", JSON.stringify(stop_from_FBdataclient2))
-          let stop_from_FBdataclient2_idStop = stop_from_FBdataclient2["idStop"];
-          const stop_from_FBdataclient2_nameStop = stop_from_FBdataclient2["Stops"];
-
-          console.log("stop_from_FBdataclient2_idStop ", stop_from_FBdataclient2_idStop);
-          console.log("stop_from_FBdataclient2_Stops ", stop_from_FBdataclient2_nameStop);
-
-          if (stop_from_FBdataclient2_nameStop == "NaN") continue; // because there is no stop in Fb (before) and no stop from Odoo (after).
-          else { // an stop was deleted in Odoo
-            if (stop_from_FBdataclient2_idStop == undefined) {
+           
+            let related_route_from_Odoo =  await FirebaseFcn.firebaseGet("stops/" + info.stop_id_firebase +"/Route_idOdoo/" );//obtain the route from stops in firebase
+    
+            if(related_route_from_Odoo == null ){ // if there is no route idOdoo find it in usinfg Nom_ruta and update the Route_idOdoo
+              const related_route = await FirebaseFcn.firebaseGet("stops/" + info.stop_id_firebase +"/Nom_ruta/" );
               const raw = JSON.stringify({
                 "params": {
                   "model": "res.partner.category",
-                  "fields": ["id", "name", "partner_ids"],
+                  "fields": ["id", "name"],
                   "offset": 0,
-                  "domain": [["name", "like", stop_from_FBdataclient2_nameStop]],
+                  "domain": [["name", "like", related_route]],
                 },
               });
 
@@ -652,46 +672,148 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
                 method: "post",
                 body: raw,
               };
-
               try {
                 const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
                 const data = await response.json();
-                stop_from_FBdataclient2_idStop = data.result.records[0].id;
+                related_route_from_Odoo = data.result.records[0].id;
+                info.route_id_odoo = related_route_from_Odoo
+                info.route_name  = data.result.records[0].name;
+
+                user_categories.push(info.route_id_odoo)
+  
               } catch (err) {
-                functions.logger.error( "[odooToFirebase_Users] Error finding stop id from Odoo: " + err, {"user_id": user_id} );
-              }
-            }
-
-
-            for (let index = 0, len = fb_stops.length; index < len; index++) {
-              if ( fb_stops[Number(keys[index])].idOdoo == stop_from_FBdataclient2_idStop) {
-                info.stop_id_firebase = Number(keys[index]);
-                const fb_addr ="stops/" + info.stop_id_firebase + "/partnersId/"+user_id +"/";
-                const res = await FirebaseFcn.firebaseRemove(fb_addr);
-                if (res) functions.logger.info( "[odooToFirebase_Users] deleting stop node ("+fb_addr+") in Fb without problems. ", info);
-
-                else functions.logger.error( "[odooToFirebase_Users] Error deleting stop node ("+fb_addr+") in Fb: " + res, {"user_id": user_id} );
-
-                break;
-              } else {
-                if (index == len - 1) console.log("Nothing to do. there is no stop");
+                functions.logger.error( "[odooToFirebase_Users] Error finding route idOdoo from Odoo using Firebase route relationship ("+ related_route +"): " + err, info);
               }
             }
           }
+          try{
+
+            
+            console.log("user_categories ", user_categories)
+
+            const raw = JSON.stringify({
+              "params": {
+                "model": "res.partner",
+                "method": "write",
+                "kwargs": {},
+                "args": [info.user_id_odoo,
+                  {
+                    "category_id": user_categories
+                  }],
+              },
+            });
+
+            const params = {
+              headers: CustomHeaders,
+              method: "post",
+              body: raw,
+            };
+
+            await fetch(settings.odoo_url + "dataset/call_kw/res.partner/write", params);
+            functions.logger.info( "[odooToFirebase_Users] updating route in Odoo without problem using Firebase stops relationship.", info);
+
+          }
+          catch(err){
+            functions.logger.error( "[odooToFirebase_Users] updating route in Odoo: " + err, info);
+
+          }
+        
         }
 
 
         // ---------------------------------------------------------------------------------------------------------------
-        // 2. update routes in firebase if needed. first get the id route if is attempting to delete it
-        if ( user_route_data.result.length > 0 && user_stop_data.result.length <= 0) {
-          //No man! what are you doing in Odoo. Dont touch it. Im the man here 
-          //look for the stop in odoo. Check the related route. write the correct route
-        }
+        // 2. update stops in firebase if needed. first get the id stop if is attempting to delete it. compare with firebase to know what to do
+        functions.logger.info("================================ info is: " , info);
 
 
+        if( info.stop_id_odoo != stop_from_FBdataclient2_idStop ) {
+
+          functions.logger.info("================================ user_stop_data is: " + user_stop_data, {"odoo_session" : odoo_session,});
+          if ( user_stop_data.result.length > 0) {
+            functions.logger.info("$$$$$$$$$$$$$$  1", {"odoo_session" : odoo_session,});
+            try {
+              for (let index = 0, len = fb_stops.length; index < len; index++) {
+                if ( fb_stops[Number(keys[index])].idOdoo == user_stopId) {
+                  info.stop_id_firebase = Number(keys[index]); //
+                  const fb_addr = "stops/" + info.stop_id_firebase + "/partnersId/" + user_id;
+                  const res = await FirebaseFcn.firebaseSet(fb_addr, true);
+                  if (res) functions.logger.info( "[odooToFirebase_Users] updating stop node in Fb without problems ("+fb_addr+") ", info);
+                  else functions.logger.error( "[odooToFirebase_Users] Error updating stop node in Fb ("+fb_addr+"): " + res, info );
+            
+                  break;
+                } else {
+                  if (index == len - 1) console.log("create stop in fb ", index + 1); // TODOOOOOOOOOOO
+                }
+              }
+            } catch (err) {
+              functions.logger.error( "[odooToFirebase_Users] Error updating stop: " + err, {
+                "odoo_session" : odoo_session,
+                "user_id": user_id} );
+            }
+          } else {
+            // get the stop from "/Data_client_2/" is there is any
+            // console.log("stop_from_FBdataclient2 ", JSON.stringify(stop_from_FBdataclient2))
+            // console.log("stop_from_FBdataclient2_idStop ", stop_from_FBdataclient2_idStop);
+            // console.log("stop_from_FBdataclient2_Stops ", stop_from_FBdataclient2_nameStop);
+            functions.logger.info("$$$$$$$$$$$$$$  2 " + stop_from_FBdataclient2_nameStop, {"odoo_session" : odoo_session,});
+
+            if (stop_from_FBdataclient2_nameStop == "NaN") continue; // because there is no stop in Fb (before) and no stop from Odoo (after).
+            else { // an stop was deleted in Odoo
+              functions.logger.info("$$$$$$$$$$$$$$  2.1 " + stop_from_FBdataclient2_idStop, {"odoo_session" : odoo_session,});
+              let idStop_fromFB
+              if (stop_from_FBdataclient2_idStop == undefined) {
+                const raw = JSON.stringify({
+                  "params": {
+                    "model": "res.partner.category",
+                    "fields": ["id", "name", "partner_ids"],
+                    "offset": 0,
+                    "domain": [["name", "like", stop_from_FBdataclient2_nameStop]],
+                  },
+                });
+
+                const params = {
+                  headers: CustomHeaders,
+                  method: "post",
+                  body: raw,
+                };
+
+                try {
+                  const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+                  const data = await response.json();
+                  idStop_fromFB = data.result.records[0].id;
+                  functions.logger.info("$$$$$$$$$$$$$$  2.2.0 " + idStop_fromFB, {"odoo_session" : odoo_session,});
+                } catch (err) {
+                  functions.logger.error( "[odooToFirebase_Users] Error finding stop id from Odoo: " + err, {
+                    "odoo_session" : odoo_session,
+                    "user_id": user_id} );
+                }
+              } else {idStop_fromFB = stop_from_FBdataclient2_idStop}
+              functions.logger.info("$$$$$$$$$$$$$$  2.2.1 " + idStop_fromFB, {"odoo_session" : odoo_session,});
+
+              for (let index = 0, len = fb_stops.length; index < len; index++) {
+                if ( fb_stops[Number(keys[index])].idOdoo == idStop_fromFB) {
+                  info.stop_id_firebase = Number(keys[index]);
+                  const fb_addr ="stops/" + info.stop_id_firebase + "/partnersId/"+user_id +"/";
+                  const res = await FirebaseFcn.firebaseRemove(fb_addr);
+                  if (res){
+                    functions.logger.info( "[odooToFirebase_Users] deleting stop node ("+fb_addr+") in Fb without problems. ", info);
+                  }
+                  else functions.logger.error( "[odooToFirebase_Users] Error deleting stop node ("+fb_addr+") in Fb: " + res, {
+                    "odoo_session" : odoo_session,
+                    "user_id": user_id} );
+
+
+                  break;
+                } else {
+                  if (index == len - 1) console.log("Nothing to do. there is no stop");
+                }
+              }
+            }
+          }
+
+          
         // 3. Data client 2 ------------------------------------------------------------------------------------------------------------------------------
-
-        // below is a json for fb
+          // below is a json for fb CHECK THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         const data_client2_json = {
           "idStop": user_stopId,
           "Stops": user_namestop,
@@ -704,30 +826,28 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
         try {
           const res = await FirebaseFcn.firebaseUpdate(fb_addr, data_client2_json );
           if (res == true) functions.logger.info( "[odooToFirebase_Users] updating user in Firebase ("+ fb_addr +") from Odoo. ", info );
-          else functions.logger.error( "[odooToFirebase_Users] Error updating user ("+ fb_addr+ "): " + res, {"user_id": user_id});
+          else functions.logger.error( "[odooToFirebase_Users] Error updating user ("+ fb_addr+ "): " + res, {
+            "odoo_session" : odoo_session,
+            "user_id": user_id});
         } catch (err) {
-          functions.logger.error( "[odooToFirebase_Users] Error updating user ("+ fb_addr +"): " + err, {"user_id": user_id} );
+          functions.logger.error( "[odooToFirebase_Users] Error updating user ("+ fb_addr +"): " + err, {
+            "odoo_session" : odoo_session,
+            "user_id": user_id} );
         }
 
+        }
 
-        // //update routes in firebase if needed
-        // if( user_route_data.result.length > 0){
-        //   try {
-        //     const res = await FirebaseFcn.firebaseUpdate("Data_client/" + user_id +"/Data_client_2/", task.data_client2_json );
-        //     if (res == true) functions.logger.info( "[odooToFirebase_Users] updating user in Firebase from Odoo. ", task );
-        //     else functions.logger.error( "[odooToFirebase_Users] Error updating user. ", {"error": res, "user_id": user_id});
-        //   } catch (err) {\app\portfolio-page
-        //     functions.logger.error( "[odooToFirebase_Users] Error updating user. ", {"error": err, "user_id": user_id} );
-        //   }
-        // }
       }
-    } else functions.logger.info( "[odooToFirebase_Users] No update founded in Odoo.");
+    } else functions.logger.info( "[odooToFirebase_Users] No update founded in Odoo.", {"odoo_session" : odoo_session,});
 
     const dateTime = Date.now();
     FirebaseFcn.firebaseSet("/timestamp_collection/ussersTimeStamp", String(dateTime));
-    functions.logger.info( "[odooToFirebase_Users] updating ussersTimeStamp in Firebase" ); // MAYBE AN ID
+    functions.logger.info( "[odooToFirebase_Users] updating ussersTimeStamp in Firebase", {
+      "odoo_session" : odoo_session,
+      "userTimestamp" : String(dateTime),
+    } ); 
   } catch (err) {
-    functions.logger.error( "[odooToFirebase_Users] ERROR: " + err);
+    functions.logger.error( "[odooToFirebase_Users] ERROR: " + err, {"odoo_session" : odoo_session,} );
   }
 
   return null;

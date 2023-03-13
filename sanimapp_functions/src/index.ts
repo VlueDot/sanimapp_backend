@@ -340,7 +340,7 @@ odooToFirebase_updateUser = functions.https.onRequest(async (request, response)=
       await OdooFcn.odoo_Logout(odoo_session);
     }
 
-    response.send("OdooSync End");
+    response.send("odooToFirebase_updateUser. odoo_session: .." + odoo_session?.substring(odoo_session.length - 5));
   } catch (error) {
     functions.logger.error(error);
 
