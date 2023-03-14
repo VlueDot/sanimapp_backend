@@ -1,6 +1,6 @@
 
 
-const odoo_db = "oxe360-ooc-sanisol-staging-13-0-7557531"
+const odoo_db = "oxe360-ooc-sanisol-staging-13-0-7596078"
 export const odoo_url = "https://"+ odoo_db +".dev.odoo.com/web/";
 
 export const odoo_access = {
