@@ -32,5 +32,7 @@ module.exports = {
     "max-len": "off",
     "@typescript-eslint/no-var-requires": 0,
     "@typescript-eslint/no-explicit-any": 0,
+    "prefer-const": 0, // this must be uncommented just after uploading
+
   },
 };

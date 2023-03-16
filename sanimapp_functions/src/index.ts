@@ -3,23 +3,17 @@ import * as OdooFcn from "./Odoo_utils";
 import * as FirebaseFcn from "./Firebase_utils";
 import * as admin from "firebase-admin";
 
+// FROM FIREBASE TO ODOO
+export let firebaseToOdoo_Stops_update : any; // [IN PRODUCTION] add description for each one
+export let firebaseToOdoo_Routes_update : any;// [IN PRODUCTION]
+export let firebaseToOdoo_Stops_create : any;// [IN PRODUCTION]
+export let firebaseToOdoo_Routes_create : any;// [IN PRODUCTION]
 
-//Test - must be deleted
-export let testFunction : any
-export let odooToFirebase : any 
-export let firebaseToOdoo_CRM : any 
+// FROM ODOO TO FIREBASE
+export let odooToFirebase_updateUser : any;// [IN PRODUCTION]
 
-//FROM FIREBASE TO ODOO
-export let firebaseToOdoo_Stops_update : any //add description for each one
-export let firebaseToOdoo_Routes_update : any 
-export let firebaseToOdoo_Stops_create : any 
-export let firebaseToOdoo_Routes_create : any 
-
-//FROM ODOO TO FIREBASE
-export let odooToFirebase_updateUser : any 
-
-//TRIGGERS INSIDE FIREBASE
-export let firebase_Stops_UsersQuantity_update : any 
+// TRIGGERS INSIDE FIREBASE
+export let firebase_Stops_UsersQuantity_update : any;// [IN PRODUCTION]
 
 // Firebase Connection Settings
 const serviceAccount = require("./service-account.json");
@@ -29,56 +23,56 @@ admin.initializeApp({
   databaseURL: urldatabase,
 });
 
-//FUNCTIONS
+// FUNCTIONS
 
-testFunction = functions.https.onRequest( async (request, response) => {
-  // do here whatever you must
-  try {
-    const odoo_session = await OdooFcn.odoo_Login();
+// testFunction = functions.https.onRequest( async (request, response) => {
+//   // do here whatever you must
+//   try {
+//     const odoo_session = await OdooFcn.odoo_Login();
 
-    if (odoo_session != null) {
-      // await OdooFcn.odooToFirebase_CRM_Tickets(odoo_session);
+//     if (odoo_session != null) {
+//       // await OdooFcn.odooToFirebase_CRM_Tickets(odoo_session);
 
-      await OdooFcn.odoo_Logout(odoo_session);
-    }
+//       await OdooFcn.odoo_Logout(odoo_session);
+//     }
 
 
-    response.send("OdooSync End: " + odoo_session);
-  } catch (error) {
-    functions.logger.error(error);
+//     response.send("OdooSync End: " + odoo_session);
+//   } catch (error) {
+//     functions.logger.error(error);
 
-    response.send("OdooSync Error: "+error);
-  }
-});
+//     response.send("OdooSync Error: "+error);
+//   }
+// });
 
-odooToFirebase = functions.https.onRequest(async (request, response)=> {
-  // this will run with certain periodicity. This will be the stable function.
-  // Here will be everything at the moment. eventually we will separate them to test each one of these.
-  try {
-    const odoo_session = await OdooFcn.odoo_Login();
+// odooToFirebase = functions.https.onRequest(async (request, response)=> {
+//   // this will run with certain periodicity. This will be the stable function.
+//   // Here will be everything at the moment. eventually we will separate them to test each one of these.
+//   try {
+//     const odoo_session = await OdooFcn.odoo_Login();
 
-    if (odoo_session != null) {
-      await OdooFcn.odooToFirebase_CRM_Campaigns(odoo_session);
+//     if (odoo_session != null) {
+//       await OdooFcn.odooToFirebase_CRM_Campaigns(odoo_session);
 
-      await OdooFcn.odoo_Logout(odoo_session);
-    }
+//       await OdooFcn.odoo_Logout(odoo_session);
+//     }
 
-    response.send("OdooSync End");
-  } catch (error) {
-    functions.logger.error(error);
+//     response.send("OdooSync End");
+//   } catch (error) {
+//     functions.logger.error(error);
 
-    response.send("OdooSync Error: "+error);
-  }
-});
+//     response.send("OdooSync Error: "+error);
+//   }
+// });
 
-firebaseToOdoo_CRM = functions.database.ref("/test").onWrite( async (change)=>{
-  if (change.after.val() === change.before.val()) return null;
+// firebaseToOdoo_CRM = functions.database.ref("/test").onWrite( async (change)=>{
+//   if (change.after.val() === change.before.val()) return null;
 
-  else {
-    const res = FirebaseFcn.updateCRMOdoo(change);
-    return res;
-  }
-});
+//   else {
+//     const res = FirebaseFcn.updateCRMOdoo(change);
+//     return res;
+//   }
+// });
 
 firebase_Stops_UsersQuantity_update = functions.database.ref("stops/{idStopFb}").onUpdate( async (change, context)=>{
   const stopData_before = change.before.val();
@@ -325,25 +319,33 @@ firebaseToOdoo_Routes_create = functions.database.ref("/Route_definition/{idRout
   return null;
 });
 
-odooToFirebase_updateUser = functions.https.onRequest(async (request, response)=> {
-  // this will run with certain periodicity. This will be the stable function.
-  // Here will be everything at the moment. eventually we will separate them to test each one of these.
-  try {
-    const lastupdateTimestamp = await FirebaseFcn.firebaseGet("/timestamp_collection/ussersTimeStamp");
+// odooToFirebase_updateUser = functions.https.onRequest(async (request, response)=> {
+odooToFirebase_updateUser = functions.pubsub.schedule("every minute")
+    .timeZone("America/Lima")
+    .onRun(async (context) =>{
+      // this will run with certain periodicity. This will be the stable function.
+      // Here will be everything at the moment. eventually we will separate them to test each one of these.
+
+      try {
+        functions.logger.info( "[odooToFirebase_updateUser] Start")
+        const lastupdateTimestamp = await FirebaseFcn.firebaseGet("/timestamp_collection/ussersTimeStamp");
 
 
-    const odoo_session = await OdooFcn.odoo_Login();
+        const odoo_session = await OdooFcn.odoo_Login();
 
-    if (odoo_session != null) {
-      await OdooFcn.odooToFirebase_Users(odoo_session, lastupdateTimestamp);
+        if (odoo_session != null) {
+                      
+          await OdooFcn.odooToFirebase_Users(odoo_session, lastupdateTimestamp);
 
-      await OdooFcn.odoo_Logout(odoo_session);
-    }
+          await OdooFcn.odoo_Logout(odoo_session);
+        }
 
-    response.send("odooToFirebase_updateUser. odoo_session: .." + odoo_session?.substring(odoo_session.length - 5));
-  } catch (error) {
-    functions.logger.error(error);
-
-    response.send("OdooSync Error: "+error);
-  }
-});
+        // response.send("odooToFirebase_updateUser. odoo_session: .." + odoo_session?.substring(odoo_session.length - 5));
+        
+        return true;
+      } catch (error) {
+        functions.logger.error( "[odooToFirebase_updateUser] ERROR at Start. ", error);
+        // response.send("OdooSync Error: "+error);
+        return false;
+      }
+    });
