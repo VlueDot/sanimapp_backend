@@ -170,7 +170,7 @@ firebaseToOdoo_Stops_update = functions.database.ref("stops/{idStopFb}").onUpdat
         functions.logger.info("[firebaseToOdoo_Stops_update]: Stops will update partners in odoo.", {"idRouteFb": context.params.idStopFb, "Deleted": JSON.stringify(partnerIds_deleted), "Added": JSON.stringify(partnerIds_added)});
         await OdooFcn.firebaseToOdoo_ChangeStopsRoutesLabels(odoo_session, Number(partnerIds_after["idOdoo"]), partnerIds_after_array);
         if (borrar) await OdooFcn.firebaseToOdoo_DeleteStopLabels(odoo_session, Number(partnerIds_after["idOdoo"]), partnerIds_after_array[0]);
-      } else functions.logger.info("[firebaseToOdoo_Stops_update] verified  que rayos es verify??? ", verified);
+      } else functions.logger.info("[firebaseToOdoo_Stops_update] POR FAVOR SE MAS EXPLICITO ", verified);
 
       await OdooFcn.odoo_Logout(odoo_session);
       return true;
