@@ -128,7 +128,7 @@ firebaseToOdoo_Stops_update = functions.database.ref("stops/{idStopFb}").onUpdat
     dict_after = partnerIds_after["partnersId"];
     if (dict_after != undefined) {
       list_after = Object.keys(dict_after);
-      console.log("list_after", list_after);
+      // console.log("list_after", list_after);
     } else {
       list_after = [];
       borrar = true;
@@ -137,14 +137,14 @@ firebaseToOdoo_Stops_update = functions.database.ref("stops/{idStopFb}").onUpdat
     dict_before = partnerIds_before["partnersId"];
     if (dict_before != undefined) {
       list_before = Object.keys(dict_before);
-      console.log("list_before", list_before);
+      // console.log("list_before", list_before);
     } else {
       list_before = [];
       llenar = true;
     }
 
-    console.log("borrar", borrar);
-    console.log("llenar", llenar);
+    // console.log("borrar", borrar);
+    // console.log("llenar", llenar);
 
     for (let i = 0; i < list_before.length; i++) {
       const index = list_before[i];
@@ -170,7 +170,7 @@ firebaseToOdoo_Stops_update = functions.database.ref("stops/{idStopFb}").onUpdat
         functions.logger.info("[firebaseToOdoo_Stops_update]: Stops will update partners in odoo.", {"idRouteFb": context.params.idStopFb, "Deleted": JSON.stringify(partnerIds_deleted), "Added": JSON.stringify(partnerIds_added)});
         await OdooFcn.firebaseToOdoo_ChangeStopsRoutesLabels(odoo_session, Number(partnerIds_after["idOdoo"]), partnerIds_after_array);
         if (borrar) await OdooFcn.firebaseToOdoo_DeleteStopLabels(odoo_session, Number(partnerIds_after["idOdoo"]), partnerIds_after_array[0]);
-      } else console.log("verified", verified);
+      } else functions.logger.info("[firebaseToOdoo_Stops_update] verified  que rayos es verify??? ", verified);
 
       await OdooFcn.odoo_Logout(odoo_session);
       return true;
@@ -200,7 +200,7 @@ firebaseToOdoo_Routes_update = functions.database.ref("/Route_definition/{idRout
     dict_after = partnerIds_after["partnersId"];
     if (dict_after != undefined) {
       list_after = Object.keys(dict_after);
-      console.log("list_after", list_after);
+      // console.log("list_after", list_after);
     } else {
       list_after = [];
       borrar = true;
@@ -209,14 +209,14 @@ firebaseToOdoo_Routes_update = functions.database.ref("/Route_definition/{idRout
     dict_before = partnerIds_before["partnersId"];
     if (dict_before != undefined) {
       list_before = Object.keys(dict_before);
-      console.log("list_before", list_before);
+      // console.log("list_before", list_before);
     } else {
       list_before = [];
       llenar = true;
     }
 
-    console.log("borrar", borrar);
-    console.log("llenar", llenar);
+    // console.log("borrar", borrar);
+    // console.log("llenar", llenar);
 
     for (let i = 0; i < list_before.length; i++) {
       const index = list_before[i];
