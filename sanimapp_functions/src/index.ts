@@ -327,21 +327,20 @@ odooToFirebase_updateUser = functions.pubsub.schedule("every minute")
       // Here will be everything at the moment. eventually we will separate them to test each one of these.
 
       try {
-        functions.logger.info( "[odooToFirebase_updateUser] Start")
+        functions.logger.info( "[odooToFirebase_updateUser] Start. " + context.eventId);
         const lastupdateTimestamp = await FirebaseFcn.firebaseGet("/timestamp_collection/ussersTimeStamp");
 
 
         const odoo_session = await OdooFcn.odoo_Login();
 
         if (odoo_session != null) {
-                      
           await OdooFcn.odooToFirebase_Users(odoo_session, lastupdateTimestamp);
 
           await OdooFcn.odoo_Logout(odoo_session);
         }
 
         // response.send("odooToFirebase_updateUser. odoo_session: .." + odoo_session?.substring(odoo_session.length - 5));
-        
+
         return true;
       } catch (error) {
         functions.logger.error( "[odooToFirebase_updateUser] ERROR at Start. ", error);
