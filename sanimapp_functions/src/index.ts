@@ -327,7 +327,6 @@ odooToFirebase_updateUser = functions.pubsub.schedule("every minute")
       // Here will be everything at the moment. eventually we will separate them to test each one of these.
 
       try {
-        functions.logger.info( "[odooToFirebase_updateUser] Start. " + context.eventId);
         const lastupdateTimestamp = await FirebaseFcn.firebaseGet("/timestamp_collection/ussersTimeStamp");
 
 
