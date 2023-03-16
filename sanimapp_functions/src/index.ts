@@ -322,7 +322,7 @@ firebaseToOdoo_Routes_create = functions.database.ref("/Route_definition/{idRout
 // odooToFirebase_updateUser = functions.https.onRequest(async (request, response)=> {
 odooToFirebase_updateUser = functions.pubsub.schedule("every minute")
     .timeZone("America/Lima")
-    .onRun(async (context) =>{
+    .onRun(async () =>{
       // this will run with certain periodicity. This will be the stable function.
       // Here will be everything at the moment. eventually we will separate them to test each one of these.
 
