@@ -499,10 +499,10 @@ export async function firebaseToOdoo_DeleteStopLabels(odoo_session:any, idOdoo: 
   const response_read = await fetch(settings.odoo_url + "dataset/search_read", params_read);
   const data_read = await response_read.json();
   const category_ids: Array<number> = data_read["result"]["records"][0]["category_id"];
-  console.log("category_ids", category_ids);
+  //console.log("category_ids", category_ids);
 
   const new_category_ids: Array<number> = category_ids.filter((id) => (id != idOdoo));
-  console.log("new_category_ids", new_category_ids);
+  //console.log("new_category_ids", new_category_ids);
 
   const raw_write = JSON.stringify({
     "params": {
@@ -526,9 +526,9 @@ export async function firebaseToOdoo_DeleteStopLabels(odoo_session:any, idOdoo: 
 
   const response_write = await fetch(settings.odoo_url + "dataset/call_kw/res.partner/", params_write);
   const data_write = await response_write.json();
-  console.log("data_write", data_write);
+  //console.log("data_write", data_write);
 
-  return null;
+  return data_write;
 }
 
 export async function firebaseToOdoo_CreateStopsRoutesLabels(odoo_session:any, name_stop: string, stops_json:any) {
@@ -561,7 +561,7 @@ export async function firebaseToOdoo_CreateStopsRoutesLabels(odoo_session:any, n
   const response = await fetch(settings.odoo_url + "dataset/call_kw/res.partner.category/create", params);
   const data = await response.json();
   const idOdoo = String(data["result"]);
-  console.log("dataaa", data);
+  //console.log("dataaa", data);
 
   return idOdoo;
 }
@@ -593,8 +593,8 @@ async function checkingCategoriesOdoo(CustomHeaders:any, user_categories: any, m
   }
 }
 
-export async function odooWriteInFirebase(odoo_session:any, idOdoo: number, lastupdateTimestamp: any) {
-  const date = new Date(Number(lastupdateTimestamp)-15000);
+export async function verifyIfodooWriteInFirebase(odoo_session:any, idOdoo: number, lastupdateTimestamp: any) {
+  const date = new Date(Number(lastupdateTimestamp)-5000);
   const date_str = "'"+ date.getFullYear()+"-"+("0" + (date.getMonth() + 1)).slice(-2)+"-"+("0" +date.getDate()).slice(-2)+" "+ ("0" +date.getHours()).slice(-2)+":"+("0" +date.getMinutes()).slice(-2)+":"+("0" +date.getSeconds()).slice(-2) + "'";
 
   const CustomHeaders: HeadersInit = {

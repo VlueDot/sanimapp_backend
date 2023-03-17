@@ -4,16 +4,16 @@ import * as FirebaseFcn from "./Firebase_utils";
 import * as admin from "firebase-admin";
 
 // FROM FIREBASE TO ODOO
-export let firebaseToOdoo_Stops_update : any; // [IN PRODUCTION] add description for each one
-export let firebaseToOdoo_Routes_update : any;// [IN PRODUCTION]
-export let firebaseToOdoo_Stops_create : any;// [IN PRODUCTION]
-export let firebaseToOdoo_Routes_create : any;// [IN PRODUCTION]
+export let firebaseToOdoo_Stops_update : any; // [IN PRODUCTION] if stops change in firebase, updates partner's tag in odoo 
+export let firebaseToOdoo_Routes_update : any;// [IN PRODUCTION] if Route change in firebase, updates partner's tag in odoo 
+export let firebaseToOdoo_Stops_create : any;// [IN PRODUCTION] if stop is created in firebase, creates the tag in odoo
+export let firebaseToOdoo_Routes_create : any;// [IN PRODUCTION] if Route is created in firebase, creates the tag in odoo
 
 // FROM ODOO TO FIREBASE
-export let odooToFirebase_updateUser : any;// [IN PRODUCTION]
+export let odooToFirebase_updateUser : any;// [IN PRODUCTION] //if Route or Stop tag is changed in odoo, it changes it in firebase
 
 // TRIGGERS INSIDE FIREBASE
-export let firebase_Stops_UsersQuantity_update : any;// [IN PRODUCTION]
+export let firebase_Stops_UsersQuantity_update : any;// [IN PRODUCTION] it stops changed, it updates users_quantity if necesary
 
 // Firebase Connection Settings
 const serviceAccount = require("./service-account.json");
@@ -88,13 +88,14 @@ firebase_Stops_UsersQuantity_update = functions.database.ref("stops/{idStopFb}")
     usersQuantity_before = Number(dict_before);
   } else {
     usersQuantity_before = -1;
+    console.log("info", "No Users_quantity in Firebase")
   }
 
   let dict_after = {};
   dict_after = stopData_after["partnersId"];
   if (dict_after != undefined) {
     usersQuantity_after = Object.keys(stopData_after["partnersId"]).length;
-    console.log("users after", usersQuantity_after);
+    //console.log("users after", usersQuantity_after);
   } else {
     usersQuantity_after = 0;
   }
@@ -102,7 +103,7 @@ firebase_Stops_UsersQuantity_update = functions.database.ref("stops/{idStopFb}")
   if (usersQuantity_before === usersQuantity_after) return null;
   else {
     FirebaseFcn.firebaseSet("stops/" + idFirebase + "/Users_quantity", usersQuantity_after);
-    functions.logger.info("[firebase_Stops_UsersQuantity_update]: Stop users quantity will be updated.", {"idRouteFb": context.params.idStopFb, "Old Users Quantity": usersQuantity_before, "New Users Quantity": usersQuantity_after});
+    functions.logger.info("[firebase_Stops_UsersQuantity_update]: Stop users quantity will be updated.", {"idStopFb": context.params.idStopFb, "Old Users Quantity": usersQuantity_before, "New Users Quantity": usersQuantity_after});
     return true;
   }
 });
@@ -164,13 +165,13 @@ firebaseToOdoo_Stops_update = functions.database.ref("stops/{idStopFb}").onUpdat
     const odoo_session = await OdooFcn.odoo_Login();
     if (odoo_session != null) {
       const lastupdateTimestamp = Date.now();
-      const verified = await OdooFcn.odooWriteInFirebase(odoo_session, partnerIds_after["idOdoo"], lastupdateTimestamp);
+      const odooWrite = await OdooFcn.verifyIfodooWriteInFirebase(odoo_session, partnerIds_after["idOdoo"], lastupdateTimestamp);
 
-      if (verified) {
+      if (!odooWrite) {
         functions.logger.info("[firebaseToOdoo_Stops_update]: Stops will update partners in odoo.", {"idRouteFb": context.params.idStopFb, "Deleted": JSON.stringify(partnerIds_deleted), "Added": JSON.stringify(partnerIds_added)});
         await OdooFcn.firebaseToOdoo_ChangeStopsRoutesLabels(odoo_session, Number(partnerIds_after["idOdoo"]), partnerIds_after_array);
         if (borrar) await OdooFcn.firebaseToOdoo_DeleteStopLabels(odoo_session, Number(partnerIds_after["idOdoo"]), partnerIds_after_array[0]);
-      } else functions.logger.info("[firebaseToOdoo_Stops_update] POR FAVOR SE MAS EXPLICITO ", verified);
+      } else functions.logger.info("[firebaseToOdoo_Stops_update]: Odoo write in Firebase. Doing nothing");
 
       await OdooFcn.odoo_Logout(odoo_session);
       return true;
@@ -260,7 +261,7 @@ firebaseToOdoo_Stops_create = functions.database.ref("stops/{idStopFb}").onCreat
   dict = partnersId_new["partnersId"];
   if (dict != undefined) {
     list = Object.keys(dict);
-    console.log("list_after", list);
+    //console.log("list_after", list);
     for (let i = 0; i < list.length; i++) {
       const index = Number(list[i]);
       partnerIds_toCreate.push(index);
@@ -295,7 +296,7 @@ firebaseToOdoo_Routes_create = functions.database.ref("/Route_definition/{idRout
   dict = partnersId_new["partnersId"];
   if (dict != undefined) {
     list = Object.keys(dict);
-    console.log("list_after", list);
+    //console.log("list_after", list);
     for (let i = 0; i < list.length; i++) {
       const index = Number(list[i]);
       partnerIds_toCreate.push(index);
