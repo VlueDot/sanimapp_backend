@@ -4,8 +4,8 @@ import * as FirebaseFcn from "./Firebase_utils";
 import * as admin from "firebase-admin";
 
 // FROM FIREBASE TO ODOO
-export let firebaseToOdoo_Stops_update : any; // [IN PRODUCTION] if stops change in firebase, updates partner's tag in odoo 
-export let firebaseToOdoo_Routes_update : any;// [IN PRODUCTION] if Route change in firebase, updates partner's tag in odoo 
+export let firebaseToOdoo_Stops_update : any; // [IN PRODUCTION] if stops change in firebase, updates partner's tag in odoo
+export let firebaseToOdoo_Routes_update : any;// [IN PRODUCTION] if Route change in firebase, updates partner's tag in odoo
 export let firebaseToOdoo_Stops_create : any;// [IN PRODUCTION] if stop is created in firebase, creates the tag in odoo
 export let firebaseToOdoo_Routes_create : any;// [IN PRODUCTION] if Route is created in firebase, creates the tag in odoo
 
@@ -88,14 +88,14 @@ firebase_Stops_UsersQuantity_update = functions.database.ref("stops/{idStopFb}")
     usersQuantity_before = Number(dict_before);
   } else {
     usersQuantity_before = -1;
-    console.log("info", "No Users_quantity in Firebase")
+    console.log("info", "No Users_quantity in Firebase");
   }
 
   let dict_after = {};
   dict_after = stopData_after["partnersId"];
   if (dict_after != undefined) {
     usersQuantity_after = Object.keys(stopData_after["partnersId"]).length;
-    //console.log("users after", usersQuantity_after);
+    // console.log("users after", usersQuantity_after);
   } else {
     usersQuantity_after = 0;
   }
@@ -261,7 +261,7 @@ firebaseToOdoo_Stops_create = functions.database.ref("stops/{idStopFb}").onCreat
   dict = partnersId_new["partnersId"];
   if (dict != undefined) {
     list = Object.keys(dict);
-    //console.log("list_after", list);
+    // console.log("list_after", list);
     for (let i = 0; i < list.length; i++) {
       const index = Number(list[i]);
       partnerIds_toCreate.push(index);
@@ -296,7 +296,7 @@ firebaseToOdoo_Routes_create = functions.database.ref("/Route_definition/{idRout
   dict = partnersId_new["partnersId"];
   if (dict != undefined) {
     list = Object.keys(dict);
-    //console.log("list_after", list);
+    // console.log("list_after", list);
     for (let i = 0; i < list.length; i++) {
       const index = Number(list[i]);
       partnerIds_toCreate.push(index);
