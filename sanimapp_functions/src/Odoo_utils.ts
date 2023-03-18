@@ -149,7 +149,6 @@ export async function firebaseToOdoo_ChangeStopsRoutesLabels(odoo_session:any, i
   return null;
 }
 
-
 export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp:any) {
   const date = new Date(Number(lastupdateTimestamp));
   const date_str = "'"+ date.getFullYear()+"-"+("0" + (date.getMonth() + 1)).slice(-2)+"-"+("0" +date.getDate()).slice(-2)+" "+ ("0" +date.getHours()).slice(-2)+":"+("0" +date.getMinutes()).slice(-2)+":"+("0" +date.getSeconds()).slice(-2) + "'";
@@ -474,6 +473,276 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
 
   return null;
 }
+
+export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdateTimestamp: any) {
+  // The function reads the tickes of service created in odoo after the last update
+  const serviceColletion= await FirebaseFcn.firebaseGet("/Service_collection");
+  const date = new Date(Number(lastupdateTimestamp));
+  const date_str = "'"+ date.getFullYear()+"-"+("0" + (date.getMonth() + 1)).slice(-2)+"-"+("0" +date.getDate()).slice(-2)+" "+ ("0" +date.getHours()).slice(-2)+":"+("0" +date.getMinutes()).slice(-2)+":"+("0" +date.getSeconds()).slice(-2) + "'";
+
+  const CustomHeaders: HeadersInit = {
+    "Content-Type": "application/json",
+    "Cookie": "session_id="+odoo_session,
+  };
+
+  const raw = JSON.stringify({
+    "params": {
+      "model": "helpdesk.ticket",
+      "offset": 0,
+      "fields": ["create_date", "partner_id", "description", "name", "stage_id", "tag_ids"],
+      "domain": [["write_date", ">", date_str]],
+    },
+  });
+
+  const params = {
+    headers: CustomHeaders,
+    method: "call",
+    body: raw,
+  };
+
+  try {
+    const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+    const data = await response.json();
+    const len = data.result.length;
+    // Only works if there is at least a new ticket
+    if (len > 0) {
+      const servCollKeys = Object.keys(serviceColletion); // list of tickets ids in Firebase
+      const tickets = data.result.records;
+      functions.logger.info( "[odooToFirebase_ServiceTickets] Entries Founded:", {
+        "odoo_session": odoo_session,
+        "updatedusers": tickets,
+      }
+      );
+      for (let i = 0; i < tickets.length; i++) {
+        const ticket = tickets[i];
+        const id = String(ticket["id"]);
+
+        try {
+          // save the data readed from odoo, organizing it to write in Firebase
+          const create_date = ticket["create_date"];
+          const partner_id = String(ticket["partner_id"][0]);
+          const description = ticket["description"];
+          const name = ticket["name"];
+
+          const stage_id = ticket["stage_id"];
+          // stage_id defines ticket status acording the relation below
+          let ticket_status = "NaN";
+          switch (stage_id) {
+            case 1:
+              ticket_status = "Nuevo";
+              break;
+            case 2:
+              ticket_status = "En progreso";
+              break;
+            case 14:
+              ticket_status = "Terminado";
+              break;
+            default:
+              break;
+          }
+
+          const tag_ids = ticket["tag_ids"];
+          // tag_ids defines ticket type acording the relation below
+          let ticket_type = "NaN";
+          if (tag_ids.includes(26)) ticket_type = "Asistencia Técnica";
+          if (tag_ids.includes(4)) ticket_type = "Asistencia Técnica";
+          if (tag_ids.includes(14)) ticket_type = "Instalación";
+          if (tag_ids.includes(16)) ticket_type = "Desinstalación";
+
+          // Use saved data to write in firebase depending on each case
+          if (servCollKeys.includes(id)) {// **************************************************************************************
+            // if ticket already exists in Firebase (Service_Collection) then just update some params
+            // The updating depends on the current ticket status in firebase and the new ticket status from odoo
+
+            // if ticket status is "Nuevo"--------------------------------------------------------------------------------------
+            if (ticket_status === "Nuevo") {
+              // just update if the current status is "Nuevo"
+              if (serviceColletion[id]["ticket_status"] === "Nuevo") {
+                const servCollData = {
+                  "id_client": partner_id,
+                  "ticket_commits": description,
+                  "ticket_name": name,
+                  "ticket_type": ticket_type,
+                };
+                await FirebaseFcn.firebaseUpdate("/Service_collection/" + id, servCollData);
+                functions.logger.info( "[odooToFirebase_ServiceTickets] Ticket updated in Firebase.", {
+                  "ticket_id": id,
+                  "Info updated in Firebase": servCollData,
+                });
+              }
+            }
+
+            // if ticket status is "En progreso"--------------------------------------------------------------------------------
+            if (ticket_status === "En progreso") {
+              // just update if the current status is "Nuevo" or "En progreso"
+
+              // If "Nuevo"
+              if (serviceColletion[id]["ticket_status"] === "Nuevo") {
+                const servCollData = {
+                  "id_client": partner_id,
+                  "ticket_commits": description,
+                  "ticket_name": name,
+                  "ticket_status": ticket_status,
+                  "ticket_type": ticket_type,
+                  "conflict_indicator": "Actualizado por Odoo",
+                };
+                await FirebaseFcn.firebaseUpdate("/Service_collection/" + id, servCollData);
+                functions.logger.info( "[odooToFirebase_ServiceTickets] Ticket updated in Firebase. Ticket updated by Odoo", {
+                  "ticket_id": id,
+                  "Info updated in Firebase": servCollData,
+                  "Ticket_status in Firebase (old)": "Nuevo",
+                  "Ticket_status in Odoo (new)": "En progreso",
+                });
+              }
+
+              // If "En progreso"
+              if (serviceColletion[id]["ticket_status"] === "En progreso") {
+                const servCollData = {
+                  "id_client": partner_id,
+                  "ticket_commits": description,
+                  "ticket_name": name,
+                };
+                await FirebaseFcn.firebaseUpdate("/Service_collection/" + id, servCollData);
+                functions.logger.info( "[odooToFirebase_ServiceTickets] Ticket updated in Firebase.", {
+                  "ticket_id": id,
+                  "Info updated in Firebase": servCollData,
+                });
+              }
+            }
+
+            // if ticket status is "Terminado"-----------------------------------------------------------------------------------
+            if (ticket_status === "Terminado") {
+              // just update if the current status is "Nuevo" or "En progreso"
+
+              // If "Nuevo"
+              if (serviceColletion[id]["ticket_status"] === "Nuevo") {
+                const servCollData = {
+                  "id_client": partner_id,
+                  "ticket_commits": description,
+                  "ticket_name": name,
+                  "ticket_status": ticket_status,
+                  "ticket_type": ticket_type,
+                };
+                await FirebaseFcn.firebaseUpdate("/Service_collection/" + id, servCollData);
+                functions.logger.info( "[odooToFirebase_ServiceTickets] Ticket updated in Firebase. Ticket updated by Odoo", {
+                  "ticket_id": id,
+                  "Info updated in Firebase": servCollData,
+                  "Ticket_status in Firebase (old)": "Nuevo",
+                  "Ticket_status in Odoo (new)": "Terminado",
+                });
+              }
+
+              // If "En progreso"
+              if (serviceColletion[id]["ticket_status"] === "En progreso") {
+                const servCollData = {
+                  "id_client": partner_id,
+                  "ticket_commits": description,
+                  "ticket_name": name,
+                  "ticket_status": ticket_status,
+                  "ticket_type": ticket_type,
+                };
+                await FirebaseFcn.firebaseUpdate("/Service_collection/" + id, servCollData);
+                functions.logger.info( "[odooToFirebase_ServiceTickets] Ticket updated in Firebase. Ticket updated by Odoo", {
+                  "ticket_id": id,
+                  "Info updated in Firebase": servCollData,
+                  "Ticket_status in Firebase (old)": "En progreso",
+                  "Ticket_status in Odoo (new)": "Terminado",
+                });
+              }
+            }
+            // if ticket status is "NaN"--------------------------------------------------------------------------------------
+            if (ticket_status === "NaN") {
+              await FirebaseFcn.firebaseRemove("/Service_collection/" + id);
+              functions.logger.info( "[odooToFirebase_ServiceTickets] Ticket removed from Firebase. Ticket status not defined", {
+                "ticket_id": id,
+                "stage_id": stage_id,
+              });
+            }
+          } else { // *********************************************************************************************************
+            // if ticket doesnt exist in firebase, then create value with params
+
+            // In case, ticket type is install, it alse updates the client type in Firebase to "cliente por instalar"---------
+            if (ticket_type === "Instalación") {
+              let client_type_old_2 = await FirebaseFcn.firebaseGet("/Data_client/"+partner_id+"/Data_client_2/Client_Type");
+              let client_type_old_3 = await FirebaseFcn.firebaseGet("/Data_client/"+partner_id+"/Data_client_3/client_type");
+              await FirebaseFcn.firebaseSet("/Data_client/"+partner_id+"/Data_client_2/Client_Type", "Cliente por instalar");
+              await FirebaseFcn.firebaseSet("/Data_client/"+partner_id+"/Data_client_3/client_type", "Cliente por instalar");
+              functions.logger.info( "[odooToFirebase_ServiceTickets] Client type updated in Firebae", {
+                "ticket_id": id,
+                "id_client": partner_id,
+                "Old Client Type (Data_client_2)": client_type_old_2,
+                "New Client Type (Data_client_2)": "Cliente por instalar",
+                "Old client type (Data_client_3)": client_type_old_3,
+                "New client type (Data_client_3)": "Cliente por instalar",
+              });
+            }
+
+            // It only creates tickes with valid ticket typer"------------------------------------------------------------------
+            if (ticket_type != "NaN") {
+              // just create if the new status is "Nuevo" or "En progreso"
+
+              // If "Nuevo"
+              if (ticket_status === "Nuevo") {
+                const servCollData = {
+                  "id_client": partner_id,
+                  "creation_timestamp": Date.parse(create_date),
+                  "ticket_commits": description,
+                  "ticket_name": name,
+                  "ticket_status": ticket_status,
+                  "ticket_type": ticket_type,
+                  "conflict_indicator": "NaN",
+                  "install_timestamp": "NaN",
+                };
+                await FirebaseFcn.firebaseUpdate("/Service_collection/" + id, servCollData);
+                functions.logger.info( "[odooToFirebase_ServiceTickets] Ticket created in Firebase. Ticket created by Odoo", {
+                  "ticket_id": id,
+                  "Info updated in Firebase": servCollData,
+                  "Ticket_status": "Nuevo",
+                });
+              }
+
+              // If "En progreso"
+              if (ticket_status === "En progreso") {
+                const servCollData = {
+                  "id_client": partner_id,
+                  "creation_timestamp": Date.parse(create_date),
+                  "ticket_commits": description,
+                  "ticket_name": name,
+                  "ticket_status": ticket_status,
+                  "ticket_type": ticket_type,
+                  "conflict_indicator": "Creado en Odoo",
+                  "install_timestamp": "NaN",
+                };
+                await FirebaseFcn.firebaseUpdate("/Service_collection/" + id, servCollData);
+                functions.logger.info( "[odooToFirebase_ServiceTickets] Ticket created in Firebase. Ticket created by Odoo", {
+                  "ticket_id": id,
+                  "Info updated in Firebase": servCollData,
+                  "Ticket_status": "En progreso",
+                });
+              }
+            } else {
+              functions.logger.info("[odooToFirebase_ServiceTickets] Ticket not read. Ticket type not defined", {
+                "ticket_id": id,
+                "tags_ids": tag_ids,
+              });
+            }
+          }
+        } catch (err) {
+          functions.logger.error("[odooToFirebase_ServiceTickets] ERROR: " + err, {"odoo_session": odoo_session} );
+        }
+      }
+    } else functions.logger.info( "[odooToFirebase_ServiceTickets] No service tickets founded in Odoo.", {"odoo_session": odoo_session});
+  } catch (err) {
+    functions.logger.error("[odooToFirebase_ServiceTickets] ERROR: " + err, {"odoo_session": odoo_session} );
+  }
+}
+
+/*
+export async function odooToFirebase_all(...){
+  odooToFirebase_Users(...)
+  odooToFirebase_ServiceTickets(...)
+}
+// */
 
 export async function firebaseToOdoo_DeleteStopLabels(odoo_session:any, idOdoo: number, partnerId: number) {
   const CustomHeaders: HeadersInit = {

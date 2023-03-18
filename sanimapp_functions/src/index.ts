@@ -11,6 +11,7 @@ export let firebaseToOdoo_Routes_create : any;// [IN PRODUCTION] if Route is cre
 
 // FROM ODOO TO FIREBASE
 export let odooToFirebase_updateUser : any;// [IN PRODUCTION] //if Route or Stop tag is changed in odoo, it changes it in firebase
+export let odooToFirebase_readServiceTickets : any;
 
 // TRIGGERS INSIDE FIREBASE
 export let firebase_Stops_UsersQuantity_update : any;// [IN PRODUCTION] it stops changed, it updates users_quantity if necesary
@@ -321,30 +322,29 @@ firebaseToOdoo_Routes_create = functions.database.ref("/Route_definition/{idRout
 });
 
 // odooToFirebase_updateUser = functions.https.onRequest(async (request, response)=> {
-odooToFirebase_updateUser = functions.pubsub.schedule("every minute")
-    .timeZone("America/Lima")
-    .onRun(async () =>{
-      // this will run with certain periodicity. This will be the stable function.
-      // Here will be everything at the moment. eventually we will separate them to test each one of these.
+odooToFirebase_updateUser = functions.pubsub.schedule("every minute").timeZone("America/Lima").onRun(async () =>{
+  // this will run with certain periodicity. This will be the stable function.
+  // Here will be everything at the moment. eventually we will separate them to test each one of these.
 
-      try {
-        const lastupdateTimestamp = await FirebaseFcn.firebaseGet("/timestamp_collection/ussersTimeStamp");
+  try {
+    const lastupdateTimestamp = await FirebaseFcn.firebaseGet("/timestamp_collection/ussersTimeStamp");
 
 
-        const odoo_session = await OdooFcn.odoo_Login();
+    const odoo_session = await OdooFcn.odoo_Login();
 
-        if (odoo_session != null) {
-          await OdooFcn.odooToFirebase_Users(odoo_session, lastupdateTimestamp);
+    if (odoo_session != null) {
+      await OdooFcn.odooToFirebase_Users(odoo_session, lastupdateTimestamp);
+      // await OdooFcn.odooToFirebase_all(...)
 
-          await OdooFcn.odoo_Logout(odoo_session);
-        }
+      await OdooFcn.odoo_Logout(odoo_session);
+    }
 
-        // response.send("odooToFirebase_updateUser. odoo_session: .." + odoo_session?.substring(odoo_session.length - 5));
+    // response.send("odooToFirebase_updateUser. odoo_session: .." + odoo_session?.substring(odoo_session.length - 5));
 
-        return true;
-      } catch (error) {
-        functions.logger.error( "[odooToFirebase_updateUser] ERROR at Start. ", error);
-        // response.send("OdooSync Error: "+error);
-        return false;
-      }
-    });
+    return true;
+  } catch (error) {
+    functions.logger.error( "[odooToFirebase_updateUser] ERROR at Start. ", error);
+    // response.send("OdooSync Error: "+error);
+    return false;
+  }
+});
