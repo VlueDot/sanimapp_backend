@@ -149,7 +149,7 @@ export async function firebaseToOdoo_ChangeStopsRoutesLabels(odoo_session:any, i
   return null;
 }
 
-export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp:any) {
+async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp:any) {
   const date = new Date(Number(lastupdateTimestamp));
   const date_str = "'"+ date.getFullYear()+"-"+("0" + (date.getMonth() + 1)).slice(-2)+"-"+("0" +date.getDate()).slice(-2)+" "+ ("0" +date.getHours()).slice(-2)+":"+("0" +date.getMinutes()).slice(-2)+":"+("0" +date.getSeconds()).slice(-2) + "'";
 
@@ -474,7 +474,7 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
   return null;
 }
 
-export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdateTimestamp: any) {
+async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdateTimestamp: any) {
   // The function reads the tickes of service created in odoo after the last update
   const serviceColletion= await FirebaseFcn.firebaseGet("/Service_collection");
   const date = new Date(Number(lastupdateTimestamp));
@@ -732,17 +732,28 @@ export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdate
         }
       }
     } else functions.logger.info( "[odooToFirebase_ServiceTickets] No service tickets founded in Odoo.", {"odoo_session": odoo_session});
+    
+    const dateTime = Date.now();
+    FirebaseFcn.firebaseSet("/timestamp_collection/tickets_timestamp", String(dateTime));
+    functions.logger.info( "[odooToFirebase_ServiceTickets] updating tickets_timestamp in Firebase", {
+      "odoo_session": odoo_session,
+      "tickets_timestamp": String(dateTime),
+    } );
+  
   } catch (err) {
     functions.logger.error("[odooToFirebase_ServiceTickets] ERROR: " + err, {"odoo_session": odoo_session} );
   }
+
+  return null;
 }
 
-/*
-export async function odooToFirebase_all(...){
-  odooToFirebase_Users(...)
-  odooToFirebase_ServiceTickets(...)
+export async function odooToFirebase_all(odoo_session:any, lastupdateTimestamp_users: any, lastupdateTimestamp_tickets: any) {
+   
+  await odooToFirebase_Users(odoo_session, lastupdateTimestamp_users);
+  await odooToFirebase_ServiceTickets(odoo_session, lastupdateTimestamp_tickets);
+  //If awaits out, it doesnt work properly
+  return null;
 }
-// */
 
 export async function firebaseToOdoo_DeleteStopLabels(odoo_session:any, idOdoo: number, partnerId: number) {
   const CustomHeaders: HeadersInit = {
