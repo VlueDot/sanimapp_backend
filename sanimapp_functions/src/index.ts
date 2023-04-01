@@ -319,10 +319,10 @@ firebaseToOdoo_Routes_create = functions.database.ref("/Route_definition/{idRout
   return null;
 });
 
-// odooToFirebase_updateUser = functions.https.onRequest(async (request, response)=> {
-odooToFirebase_updateUser = functions.pubsub.schedule("every minute")
-    .timeZone("America/Lima")
-    .onRun(async () =>{
+odooToFirebase_updateUser = functions.https.onRequest(async (request, response)=> {
+// odooToFirebase_updateUser = functions.pubsub.schedule("every minute")
+//     .timeZone("America/Lima")
+//     .onRun(async () =>{
       // this will run with certain periodicity. This will be the stable function.
       // Here will be everything at the moment. eventually we will separate them to test each one of these.
 
@@ -338,12 +338,13 @@ odooToFirebase_updateUser = functions.pubsub.schedule("every minute")
           await OdooFcn.odoo_Logout(odoo_session);
         }
 
-        // response.send("odooToFirebase_updateUser. odoo_session: .." + odoo_session?.substring(odoo_session.length - 5));
+        response.send("odooToFirebase_updateUser. odoo_session: .." + odoo_session?.substring(odoo_session.length - 5));
 
-        return true;
+        // return true; 
       } catch (error) {
         functions.logger.error( "[odooToFirebase_updateUser] ERROR at Start. ", error);
-        // response.send("OdooSync Error: "+error);
-        return false;
+        response.send("OdooSync Error: "+error);
+        // return false;
       }
+
     });
