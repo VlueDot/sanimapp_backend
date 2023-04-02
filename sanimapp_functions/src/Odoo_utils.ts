@@ -35,6 +35,7 @@ export async function odoo_Login() {
   return null;
 }
 
+
 export async function odoo_Logout(odoo_session:any) {
   const CustomHeaders: HeadersInit = {
     "Content-Type": "application/json",
@@ -147,6 +148,7 @@ export async function firebaseToOdoo_ChangeStopsRoutesLabels(odoo_session:any, i
 
   return null;
 }
+
 
 async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp:any) {
   const date = new Date(Number(lastupdateTimestamp));
@@ -471,6 +473,229 @@ async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp:any) {
   }
 
   return null;
+}
+
+
+export async function firebaseToOdoo_DeleteStopLabels(odoo_session:any, idOdoo: number, partnerId: number) {
+  const CustomHeaders: HeadersInit = {
+    "Content-Type": "application/json",
+    "Cookie": "session_id="+odoo_session,
+  };
+
+  const raw_read = JSON.stringify({
+    "params": {
+      "model": "res.partner",
+      "fields": [],
+      "offset": 0,
+      "domain": [["id", "like", partnerId]],
+    },
+  });
+
+  const params_read = {
+    headers: CustomHeaders,
+    method: "post",
+    body: raw_read,
+  };
+
+  const response_read = await fetch(settings.odoo_url + "dataset/search_read", params_read);
+  const data_read = await response_read.json();
+  const category_ids: Array<number> = data_read["result"]["records"][0]["category_id"];
+  // console.log("category_ids", category_ids);
+
+  const new_category_ids: Array<number> = category_ids.filter((id) => (id != idOdoo));
+  // console.log("new_category_ids", new_category_ids);
+
+  const raw_write = JSON.stringify({
+    "params": {
+      "model": "res.partner",
+      "method": "write",
+      "kwargs": {},
+      "args": [
+        partnerId,
+        {
+          "category_id": new_category_ids,
+        },
+      ],
+    },
+  });
+
+  const params_write = {
+    headers: CustomHeaders,
+    method: "post",
+    body: raw_write,
+  };
+
+  const response_write = await fetch(settings.odoo_url + "dataset/call_kw/res.partner/", params_write);
+  const data_write = await response_write.json();
+  // console.log("data_write", data_write);
+
+  return data_write;
+}
+
+export async function firebaseToOdoo_CreateStopsRoutesLabels(odoo_session:any, name_stop: string, stops_json:any) {
+  const CustomHeaders: HeadersInit = {
+    "Content-Type": "application/json",
+    "Cookie": "session_id="+odoo_session,
+  };
+
+  // from OdooGenerateJsonsToWriteOdoo function
+  const raw = JSON.stringify({
+    "params": {
+      "model": "res.partner.category",
+      "method": "create",
+      "kwargs": {},
+      "args": [{
+        "name": name_stop,
+        "active": true,
+        "partner_ids": stops_json,
+      }],
+    },
+  });
+
+  const params = {
+    headers: CustomHeaders,
+    method: "post",
+    body: raw,
+  };
+
+
+  const response = await fetch(settings.odoo_url + "dataset/call_kw/res.partner.category/create", params);
+  const data = await response.json();
+  const idOdoo = String(data["result"]);
+  // console.log("dataaa", data);
+
+  return idOdoo;
+}
+
+async function checkingCategoriesOdoo(CustomHeaders:any, user_categories: any, mode:string) {
+  try {
+    const raw = JSON.stringify({
+      "params": {
+        "model": "res.partner.category",
+        "fields": ["id", "name"],
+        "offset": 0,
+        "domain": ["&", ["id", "in", user_categories], ["name", "ilike", mode]],
+      },
+    });
+
+    const params = {
+      headers: CustomHeaders,
+      method: "post",
+      body: raw,
+    };
+
+    const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+    const res = await response.json();
+    // console.log("response.json();", JSON.stringify(res))
+    return res;
+  } catch (err) {
+    functions.logger.error( "[CheckingCategoriesOdoo] ERROR. ", {"error": err, "user_categories": user_categories});
+    return {"result": {"records": []}};
+  }
+}
+
+
+export async function verifyIfodooWriteInFirebase(odoo_session:any, idOdoo: number, lastupdateTimestamp: any) {
+  const date = new Date(Number(lastupdateTimestamp)-5000);
+  const date_str = "'"+ date.getFullYear()+"-"+("0" + (date.getMonth() + 1)).slice(-2)+"-"+("0" +date.getDate()).slice(-2)+" "+ ("0" +date.getHours()).slice(-2)+":"+("0" +date.getMinutes()).slice(-2)+":"+("0" +date.getSeconds()).slice(-2) + "'";
+
+  const CustomHeaders: HeadersInit = {
+    "Content-Type": "application/json",
+    "Cookie": "session_id="+odoo_session,
+  };
+
+  const raw = JSON.stringify({
+    "params": {
+      "model": "res.partner.category",
+      "fields": ["id", "name"],
+      "offset": 0,
+      "domain": ["&", ["id", "=", idOdoo], ["write_date", ">", date_str]],
+    },
+  });
+
+  const params = {
+    headers: CustomHeaders,
+    method: "post",
+    body: raw,
+  };
+
+  const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+  const data = await response.json();
+
+  const len: number = data["result"]["length"];
+
+  return (len <= 0);
+}
+
+async function contactInfoById(odoo_session:any, id_client: any) {
+  const CustomHeaders: HeadersInit = {
+    "Content-Type": "application/json",
+    "Cookie": "session_id="+odoo_session,
+  };
+
+  const raw = JSON.stringify({
+    "params": {
+      "model": "res.partner",
+      "fields": ["id", "phone", "mobile", "comment", "surname", "mother_name", "first_name", "middle_name", "vat", "contact_address", "country_id", "l10n_pe_ubigeo", "display_name", "category_id"],
+      "offset": 0,
+      "domain": [["id", "=", id_client]],
+    },
+  });
+
+  const params = {
+    headers: CustomHeaders,
+    method: "call",
+    body: raw,
+  };
+  try {
+    const response = await fetch(settings.odoo_url + "dataset/search_read", params);
+    const data = await response.json();
+    const len = data["result"]["length"];
+
+    if (len > 0) {
+      functions.logger.info("[contactInfoById] Contact info charged succesfully", {"odoo_session": odoo_session} );
+      return data["result"]["records"][0];
+    } else {
+      functions.logger.info("[contactInfoById] No contac founded", {"odoo_session": odoo_session} );
+      return false;
+    }
+  } catch (err) {
+    functions.logger.error("[contactInfoById] ERROR: " + err, {"odoo_session": odoo_session} );
+    return null;
+  }
+}
+
+export async function firebaseToOdoo_PutInactiveTag(odoo_session: any, idOdoo: number) {
+  const CustomHeaders: HeadersInit = {
+    "Content-Type": "application/json",
+    "Cookie": "session_id="+odoo_session,
+  };
+
+  const raw = JSON.stringify({
+    "params": {
+      "model": "res.partner",
+      "method": "write",
+      "kwargs": {},
+      "args": [
+        idOdoo,
+        {
+          "category_id": [359],
+        },
+      ],
+    },
+  });
+
+  const params = {
+    headers: CustomHeaders,
+    method: "post",
+    body: raw,
+  };
+
+  const response_write = await fetch(settings.odoo_url + "dataset/call_kw/res.partner/", params);
+  const data_write = await response_write.json();
+  // console.log("data_write", data_write);
+
+  return data_write;
 }
 
 async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdateTimestamp: any) {
@@ -1217,225 +1442,4 @@ export async function odooToFirebase_all(odoo_session:any, lastupdateTimestamp_u
   await odooToFirebase_CRMTickets(odoo_session, lastupdateTimestamp_crm);
   // If awaits out, it doesnt work properly
   return null;
-}
-
-export async function firebaseToOdoo_DeleteStopLabels(odoo_session:any, idOdoo: number, partnerId: number) {
-  const CustomHeaders: HeadersInit = {
-    "Content-Type": "application/json",
-    "Cookie": "session_id="+odoo_session,
-  };
-
-  const raw_read = JSON.stringify({
-    "params": {
-      "model": "res.partner",
-      "fields": [],
-      "offset": 0,
-      "domain": [["id", "like", partnerId]],
-    },
-  });
-
-  const params_read = {
-    headers: CustomHeaders,
-    method: "post",
-    body: raw_read,
-  };
-
-  const response_read = await fetch(settings.odoo_url + "dataset/search_read", params_read);
-  const data_read = await response_read.json();
-  const category_ids: Array<number> = data_read["result"]["records"][0]["category_id"];
-  // console.log("category_ids", category_ids);
-
-  const new_category_ids: Array<number> = category_ids.filter((id) => (id != idOdoo));
-  // console.log("new_category_ids", new_category_ids);
-
-  const raw_write = JSON.stringify({
-    "params": {
-      "model": "res.partner",
-      "method": "write",
-      "kwargs": {},
-      "args": [
-        partnerId,
-        {
-          "category_id": new_category_ids,
-        },
-      ],
-    },
-  });
-
-  const params_write = {
-    headers: CustomHeaders,
-    method: "post",
-    body: raw_write,
-  };
-
-  const response_write = await fetch(settings.odoo_url + "dataset/call_kw/res.partner/", params_write);
-  const data_write = await response_write.json();
-  // console.log("data_write", data_write);
-
-  return data_write;
-}
-
-export async function firebaseToOdoo_CreateStopsRoutesLabels(odoo_session:any, name_stop: string, stops_json:any) {
-  const CustomHeaders: HeadersInit = {
-    "Content-Type": "application/json",
-    "Cookie": "session_id="+odoo_session,
-  };
-
-  // from OdooGenerateJsonsToWriteOdoo function
-  const raw = JSON.stringify({
-    "params": {
-      "model": "res.partner.category",
-      "method": "create",
-      "kwargs": {},
-      "args": [{
-        "name": name_stop,
-        "active": true,
-        "partner_ids": stops_json,
-      }],
-    },
-  });
-
-  const params = {
-    headers: CustomHeaders,
-    method: "post",
-    body: raw,
-  };
-
-
-  const response = await fetch(settings.odoo_url + "dataset/call_kw/res.partner.category/create", params);
-  const data = await response.json();
-  const idOdoo = String(data["result"]);
-  // console.log("dataaa", data);
-
-  return idOdoo;
-}
-
-async function checkingCategoriesOdoo(CustomHeaders:any, user_categories: any, mode:string) {
-  try {
-    const raw = JSON.stringify({
-      "params": {
-        "model": "res.partner.category",
-        "fields": ["id", "name"],
-        "offset": 0,
-        "domain": ["&", ["id", "in", user_categories], ["name", "ilike", mode]],
-      },
-    });
-
-    const params = {
-      headers: CustomHeaders,
-      method: "post",
-      body: raw,
-    };
-
-    const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
-    const res = await response.json();
-    // console.log("response.json();", JSON.stringify(res))
-    return res;
-  } catch (err) {
-    functions.logger.error( "[CheckingCategoriesOdoo] ERROR. ", {"error": err, "user_categories": user_categories});
-    return {"result": {"records": []}};
-  }
-}
-
-async function contactInfoById(odoo_session:any, id_client: any) {
-  const CustomHeaders: HeadersInit = {
-    "Content-Type": "application/json",
-    "Cookie": "session_id="+odoo_session,
-  };
-
-  const raw = JSON.stringify({
-    "params": {
-      "model": "res.partner",
-      "fields": ["id", "phone", "mobile", "comment", "surname", "mother_name", "first_name", "middle_name", "vat", "contact_address", "country_id", "l10n_pe_ubigeo", "display_name", "category_id"],
-      "offset": 0,
-      "domain": [["id", "=", id_client]],
-    },
-  });
-
-  const params = {
-    headers: CustomHeaders,
-    method: "call",
-    body: raw,
-  };
-  try {
-    const response = await fetch(settings.odoo_url + "dataset/search_read", params);
-    const data = await response.json();
-    const len = data["result"]["length"];
-
-    if (len > 0) {
-      functions.logger.info("[contactInfoById] Contact info charged succesfully", {"odoo_session": odoo_session} );
-      return data["result"]["records"][0];
-    } else {
-      functions.logger.info("[contactInfoById] No contac founded", {"odoo_session": odoo_session} );
-      return false;
-    }
-  } catch (err) {
-    functions.logger.error("[contactInfoById] ERROR: " + err, {"odoo_session": odoo_session} );
-    return null;
-  }
-}
-
-export async function verifyIfodooWriteInFirebase(odoo_session:any, idOdoo: number, lastupdateTimestamp: any) {
-  const date = new Date(Number(lastupdateTimestamp)-5000);
-  const date_str = "'"+ date.getFullYear()+"-"+("0" + (date.getMonth() + 1)).slice(-2)+"-"+("0" +date.getDate()).slice(-2)+" "+ ("0" +date.getHours()).slice(-2)+":"+("0" +date.getMinutes()).slice(-2)+":"+("0" +date.getSeconds()).slice(-2) + "'";
-
-  const CustomHeaders: HeadersInit = {
-    "Content-Type": "application/json",
-    "Cookie": "session_id="+odoo_session,
-  };
-
-  const raw = JSON.stringify({
-    "params": {
-      "model": "res.partner.category",
-      "fields": ["id", "name"],
-      "offset": 0,
-      "domain": ["&", ["id", "=", idOdoo], ["write_date", ">", date_str]],
-    },
-  });
-
-  const params = {
-    headers: CustomHeaders,
-    method: "post",
-    body: raw,
-  };
-
-  const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
-  const data = await response.json();
-
-  const len: number = data["result"]["length"];
-
-  return (len <= 0);
-}
-
-export async function firebaseToOdoo_PutInactiveTag(odoo_session: any, idOdoo: number) {
-  const CustomHeaders: HeadersInit = {
-    "Content-Type": "application/json",
-    "Cookie": "session_id="+odoo_session,
-  };
-
-  const raw = JSON.stringify({
-    "params": {
-      "model": "res.partner",
-      "method": "write",
-      "kwargs": {},
-      "args": [
-        idOdoo,
-        {
-          "category_id": [359],
-        },
-      ],
-    },
-  });
-
-  const params = {
-    headers: CustomHeaders,
-    method: "post",
-    body: raw,
-  };
-
-  const response_write = await fetch(settings.odoo_url + "dataset/call_kw/res.partner/", params);
-  const data_write = await response_write.json();
-  // console.log("data_write", data_write);
-
-  return data_write;
 }

@@ -321,6 +321,42 @@ firebaseToOdoo_Routes_create = functions.database.ref("/Route_definition/{idRout
   return null;
 });
 
+odooToFirebase = functions.https.onRequest(async ()=> {
+// odooToFirebase = functions.pubsub.schedule("every minute").timeZone("America/Lima").onRun(async () =>{
+  // this will run with certain periodicity. This will be the stable function.
+  // Here will be everything at the moment. eventually we will separate them to test each one of these.
+
+  try {
+    const lastupdateTimestamp_users = await FirebaseFcn.firebaseGet("/timestamp_collection/ussersTimeStamp");
+    const lastupdateTimestamp_tickets = await FirebaseFcn.firebaseGet("/timestamp_collection/tickets_timestamp");
+    const lastupdateTimestamp_crm = await FirebaseFcn.firebaseGet("/timestamp_collection/CMR_tickets_timestamp");
+
+    const odoo_session = await OdooFcn.odoo_Login();
+
+    if (odoo_session != null) {
+      // await OdooFcn.odooToFirebase_Users(odoo_session, lastupdateTimestamp_users);
+      // await OdooFcn.odooToFirebase_ServiceTickets(odoo_session, lastupdateTimestamp_tickets);
+      const init = Number(Date.now());
+      console.log("inicio");
+
+      await OdooFcn.odooToFirebase_all(odoo_session, lastupdateTimestamp_users, lastupdateTimestamp_tickets, lastupdateTimestamp_crm);
+
+      const final = Number(Date.now());
+      console.log("tiempo", final - init);
+
+      await OdooFcn.odoo_Logout(odoo_session);
+    }
+
+    // response.send("odooToFirebase_updateUser. odoo_session: .." + odoo_session?.substring(odoo_session.length - 5));
+
+    // return true;
+  } catch (error) {
+    functions.logger.error( "[odooToFirebase_updateUser] ERROR at Start. ", error);
+    // response.send("OdooSync Error: "+error);
+    // return false;
+  }
+});
+
 firebaseToOdoo_User_inactive = functions.database.ref("/Data_client/{idUserFb}").onUpdate(async (change, context) => {
   const client_before = change.before.val();
   const client_after = change.after.val();
@@ -358,40 +394,4 @@ firebaseToOdoo_User_inactive = functions.database.ref("/Data_client/{idUserFb}")
   }
 
   return null;
-});
-
-odooToFirebase = functions.https.onRequest(async ()=> {
-// odooToFirebase = functions.pubsub.schedule("every minute").timeZone("America/Lima").onRun(async () =>{
-  // this will run with certain periodicity. This will be the stable function.
-  // Here will be everything at the moment. eventually we will separate them to test each one of these.
-
-  try {
-    const lastupdateTimestamp_users = await FirebaseFcn.firebaseGet("/timestamp_collection/ussersTimeStamp");
-    const lastupdateTimestamp_tickets = await FirebaseFcn.firebaseGet("/timestamp_collection/tickets_timestamp");
-    const lastupdateTimestamp_crm = await FirebaseFcn.firebaseGet("/timestamp_collection/CMR_tickets_timestamp");
-
-    const odoo_session = await OdooFcn.odoo_Login();
-
-    if (odoo_session != null) {
-      // await OdooFcn.odooToFirebase_Users(odoo_session, lastupdateTimestamp_users);
-      // await OdooFcn.odooToFirebase_ServiceTickets(odoo_session, lastupdateTimestamp_tickets);
-      const init = Number(Date.now());
-      console.log("inicio");
-
-      await OdooFcn.odooToFirebase_all(odoo_session, lastupdateTimestamp_users, lastupdateTimestamp_tickets, lastupdateTimestamp_crm);
-
-      const final = Number(Date.now());
-      console.log("tiempo", final - init);
-
-      await OdooFcn.odoo_Logout(odoo_session);
-    }
-
-    // response.send("odooToFirebase_updateUser. odoo_session: .." + odoo_session?.substring(odoo_session.length - 5));
-
-    // return true;
-  } catch (error) {
-    functions.logger.error( "[odooToFirebase_updateUser] ERROR at Start. ", error);
-    // response.send("OdooSync Error: "+error);
-    // return false;
-  }
 });
