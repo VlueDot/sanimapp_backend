@@ -325,38 +325,39 @@ firebaseToOdoo_User_inactive = functions.database.ref("/Data_client/{idUserFb}")
   const client_before = change.before.val();
   const client_after = change.after.val();
 
-  const Client_Type_old = client_before["Data_client_2"]["Client_Type"]
-  const client_type_old = client_before["Data_client_3"]["client_type"]
+  const Client_Type_old = client_before["Data_client_2"]["Client_Type"];
+  const client_type_old = client_before["Data_client_3"]["client_type"];
 
-  const Client_Type_new = client_after["Data_client_2"]["Client_Type"]
-  const client_type_new = client_after["Data_client_2"]["client_type"]
+  const Client_Type_new = client_after["Data_client_2"]["Client_Type"];
+  const client_type_new = client_after["Data_client_2"]["client_type"];
 
-  if ((client_type_new === "Cliente desinstalado") && (Client_Type_new === "Cliente desinstalado")){
-    const odoo_session = await OdooFcn.odoo_Login();
-    await OdooFcn.firebaseToOdoo_PutInactiveTag(odoo_session, Number(context.params.idUserFb));
-    functions.logger.info("[firebaseToOdoo_User_inactive]: The client will be set to <inactivo> tag.", {
-      "idUserFb": context.params.idUserFb, 
-      "Client_Type_old": Client_Type_old,
-      "client_type_old": client_type_old,
-      "Client_Type_new": Client_Type_new,
-      "client_type_new": client_type_new
-    });
-    await OdooFcn.odoo_Logout(odoo_session);
-    return null;
-  } else {
-    if (client_type_new != Client_Type_new){
-      functions.logger.error("[firebaseToOdoo_User_inactive]: Client type diferente between Data_client_2 and Data_client_3.", {
-        "idUserFb": context.params.idUserFb, 
+  if ((Client_Type_old != Client_Type_new) && (client_type_old != client_type_new)) {
+    if ((client_type_new === "Cliente desinstalado") && (Client_Type_new === "Cliente desinstalado")) {
+      const odoo_session = await OdooFcn.odoo_Login();
+      await OdooFcn.firebaseToOdoo_PutInactiveTag(odoo_session, Number(context.params.idUserFb));
+      functions.logger.info("[firebaseToOdoo_User_inactive]: The client will be set to <inactivo> tag.", {
+        "idUserFb": context.params.idUserFb,
         "Client_Type_old": Client_Type_old,
         "client_type_old": client_type_old,
         "Client_Type_new": Client_Type_new,
-        "client_type_new": client_type_new
+        "client_type_new": client_type_new,
       });
+      await OdooFcn.odoo_Logout(odoo_session);
+      return null;
     }
   }
 
-  return null;
+  if (client_type_new != Client_Type_new) {
+    functions.logger.error("[firebaseToOdoo_User_inactive]: Client type diferente between Data_client_2 and Data_client_3.", {
+      "idUserFb": context.params.idUserFb,
+      "Client_Type_old": Client_Type_old,
+      "client_type_old": client_type_old,
+      "Client_Type_new": Client_Type_new,
+      "client_type_new": client_type_new,
+    });
+  }
 
+  return null;
 });
 
 odooToFirebase = functions.https.onRequest(async ()=> {
