@@ -362,7 +362,6 @@ odooToFirebase = functions.https.onRequest(async (request, response)=> {
 firebaseToOdoo_User_inactive = functions.database.ref("/Data_client/{idUserFb}").onUpdate(async (change, context) => {
   const client_before = change.before.val();
   const client_after = change.after.val();
-  console.log("tst - 777");
 
   const Client_Type_old = client_before["Data_client_2"]["Client_Type"];
   const client_type_old = client_before["Data_client_3"]["client_type"];
