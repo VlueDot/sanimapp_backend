@@ -8,7 +8,7 @@ export let firebaseToOdoo_Stops_update : any; // [IN PRODUCTION] if stops change
 export let firebaseToOdoo_Routes_update : any;// [IN PRODUCTION] if Route change in firebase, updates partner's tag in odoo
 export let firebaseToOdoo_Stops_create : any;// [IN PRODUCTION] if stop is created in firebase, creates the tag in odoo
 export let firebaseToOdoo_Routes_create : any;// [IN PRODUCTION] if Route is created in firebase, creates the tag in odoo
-export let firebaseToOdoo_User_inactive: any;
+export let firebaseToOdoo_UserTags_update: any;
 
 // FROM ODOO TO FIREBASE
 export let odooToFirebase : any;// if users or ticket changed in odoo, it changes it in firebase
@@ -114,7 +114,6 @@ firebaseToOdoo_Stops_update = functions.database.ref("stops/{idStopFb}").onUpdat
   const partnerIds_after = change.after.val();
   let borrar = false;
   let llenar = false;
-  console.log("tst 777");
   if (partnerIds_before === partnerIds_after) return null;
   else {
     const partnerIds_deleted = [];
@@ -359,7 +358,9 @@ odooToFirebase = functions.https.onRequest(async (request, response)=> {
   }
 });
 
-firebaseToOdoo_User_inactive = functions.database.ref("/Data_client/{idUserFb}").onUpdate(async (change, context) => {
+firebaseToOdoo_UserTags_update = functions.database.ref("/Data_client/{idUserFb}").onUpdate(async (change, context) => {
+  const listOfActives = ["Cliente Nuevo", "Cliente suspendido", "Cliente por llamar", "Cliente piloto", "Cliente normal", "Cliente gold"]
+
   const client_before = change.before.val();
   const client_after = change.after.val();
 
@@ -369,11 +370,11 @@ firebaseToOdoo_User_inactive = functions.database.ref("/Data_client/{idUserFb}")
   const Client_Type_new = client_after["Data_client_2"]["Client_Type"];
   const client_type_new = client_after["Data_client_3"]["client_type"];
 
-  if ((Client_Type_old != Client_Type_new) || (client_type_old != client_type_new)) {
+  if ((Client_Type_old != Client_Type_new) && (client_type_old != client_type_new)) {
     if ((client_type_new === "Cliente desinstalado") && (Client_Type_new === "Cliente desinstalado")) {
       const odoo_session = await OdooFcn.odoo_Login();
       await OdooFcn.firebaseToOdoo_PutInactiveTag(odoo_session, Number(context.params.idUserFb));
-      functions.logger.info("[firebaseToOdoo_User_inactive]: The client will be set to <inactivo> tag.", {
+      functions.logger.info("[firebaseToOdoo_User_tags]: The client will be set to <inactivo> tag.", {
         "idUserFb": context.params.idUserFb,
         "Client_Type_old": Client_Type_old,
         "client_type_old": client_type_old,
@@ -383,6 +384,20 @@ firebaseToOdoo_User_inactive = functions.database.ref("/Data_client/{idUserFb}")
       await OdooFcn.odoo_Logout(odoo_session);
       return null;
     }
+    
+    if (listOfActives.includes(client_type_new) && listOfActives.includes(Client_Type_new)){
+      const odoo_session = await OdooFcn.odoo_Login();
+      await OdooFcn.firebaseToOdoo_ChangeStopsRoutesLabels(odoo_session, 358, [Number(context.params.idUserFb)]);
+      functions.logger.info("[firebaseToOdoo_User_tags]: The client will be set to <activo> tag.", {
+        "idUserFb": context.params.idUserFb,
+        "Client_Type_old": Client_Type_old,
+        "client_type_old": client_type_old,
+        "Client_Type_new": Client_Type_new,
+        "client_type_new": client_type_new,
+      });
+      await OdooFcn.odoo_Logout(odoo_session);
+      return null;
+    } 
   }
 
   if (client_type_new != Client_Type_new) {
