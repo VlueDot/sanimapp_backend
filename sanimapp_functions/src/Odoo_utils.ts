@@ -786,7 +786,7 @@ async function checkingCategoriesOdoo(CustomHeaders:any, user_categories: any, m
 
 
 export async function verifyIfodooWriteInFirebase(odoo_session:any, idOdoo: number, lastupdateTimestamp: any) {
-  const date = new Date(Number(lastupdateTimestamp)-10000);
+  const date = new Date(Number(lastupdateTimestamp)-15000);
   const date_str = "'"+ date.getFullYear()+"-"+("0" + (date.getMonth() + 1)).slice(-2)+"-"+("0" +date.getDate()).slice(-2)+" "+ ("0" +date.getHours()).slice(-2)+":"+("0" +date.getMinutes()).slice(-2)+":"+("0" +date.getSeconds()).slice(-2) + "'";
 
   const CustomHeaders: HeadersInit = {
@@ -1434,8 +1434,8 @@ async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: 
                   if (contactData === null) {
                     functions.logger.error("[odooToFirebase_CRMTickets] ERROR. No se cargó la información de contacto", {
                       "odoo_session": odoo_session,
-                      "ticket_id" : ticket_id,
-                      "partner_id" : partner_id
+                      "ticket_id": ticket_id,
+                      "partner_id": partner_id,
                     } );
                     // Error al cargar la información del contacto
                     // se envia al nodo de lecturas pendientes + true
@@ -1443,11 +1443,10 @@ async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: 
                   }
 
                   if (contactData === false) {
-
                     functions.logger.error("[odooToFirebase_CRMTickets] ERROR. No se encontró la información de contacto", {
                       "odoo_session": odoo_session,
-                      "ticket_id" : ticket_id,
-                      "partner_id" : partner_id
+                      "ticket_id": ticket_id,
+                      "partner_id": partner_id,
                     } );
                     // Error: no se encontró información del contacto, la lectura se hizo pero no se encontró ningun contacto con el id
                     // Se enbia al nodo de lecturas pendientes + false
@@ -1595,8 +1594,8 @@ async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: 
                   if (contactData === null) {
                     functions.logger.error("[odooToFirebase_CRMTickets] ERROR. No se cargó la información de contacto", {
                       "odoo_session": odoo_session,
-                      "ticket_id" : ticket_id,
-                      "partner_id" : partner_id
+                      "ticket_id": ticket_id,
+                      "partner_id": partner_id,
                     } );
                     // Error al cargar la información del contacto
                     // se envia al nodo de lecturas pendientes + true
@@ -1606,8 +1605,8 @@ async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: 
                   if (contactData === false) {
                     functions.logger.error("[odooToFirebase_CRMTickets] ERROR. No se encontró la información de contacto", {
                       "odoo_session": odoo_session,
-                      "ticket_id" : ticket_id,
-                      "partner_id" : partner_id
+                      "ticket_id": ticket_id,
+                      "partner_id": partner_id,
                     } );
                     // Error: no se encontró información del contacto, la lectura se hizo pero no se encontró ningun contacto con el id
                     // Se enbia al nodo de lecturas pendientes + false
@@ -1649,4 +1648,64 @@ export async function odooToFirebase_all(odoo_session:any, lastupdateTimestamp_u
   await odooToFirebase_CRMTickets(odoo_session, lastupdateTimestamp_crm);
   // If awaits out, it doesnt work properly
   return null;
+}
+
+export async function firebaseToOdoo_ActiveOrInstall(odoo_session:any, active: boolean, partnerId: number) {
+  const CustomHeaders: HeadersInit = {
+    "Content-Type": "application/json",
+    "Cookie": "session_id="+odoo_session,
+  };
+
+  const raw_read = JSON.stringify({
+    "params": {
+      "model": "res.partner",
+      "fields": [],
+      "offset": 0,
+      "domain": [["id", "like", partnerId]],
+    },
+  });
+
+  const params_read = {
+    headers: CustomHeaders,
+    method: "post",
+    body: raw_read,
+  };
+
+  const response_read = await fetch(settings.odoo_url + "dataset/search_read", params_read);
+  const data_read = await response_read.json();
+  const category_ids: Array<number> = data_read["result"]["records"][0]["category_id"];
+  //console.log("category_ids", category_ids);
+  let newTag = 358;
+  if (active === false) newTag = 453;
+
+  const aux_category_ids: Array<number> = category_ids.filter((id) => ((id != 358) && (id != 359) && (id != 453)));
+  //console.log("aux_category_ids", aux_category_ids);
+  const new_category_ids: Array<number> = aux_category_ids.concat([newTag]);
+  //console.log("new_category_ids", new_category_ids);
+
+  const raw_write = JSON.stringify({
+    "params": {
+      "model": "res.partner",
+      "method": "write",
+      "kwargs": {},
+      "args": [
+        partnerId,
+        {
+          "category_id": new_category_ids,
+        },
+      ],
+    },
+  });
+
+  const params_write = {
+    headers: CustomHeaders,
+    method: "post",
+    body: raw_write,
+  };
+
+  const response_write = await fetch(settings.odoo_url + "dataset/call_kw/res.partner/", params_write);
+  const data_write = await response_write.json();
+  // console.log("data_write", data_write);
+
+  return data_write;
 }
