@@ -676,12 +676,12 @@ async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp:any) {
           }
 
 
-          // const dateTime = Date.now();
-          // FirebaseFcn.firebaseSet("/timestamp_collection/ussersTimeStamp", String(dateTime));
-          // functions.logger.info( "[odooToFirebase_Users] updating ussersTimeStamp in Firebase", {
-          //   "odoo_session": odoo_session,
-          //   "userTimestamp": String(dateTime),
-          // } );
+          const dateTime = Date.now();
+          FirebaseFcn.firebaseSet("/timestamp_collection/ussersTimeStamp", String(dateTime));
+          functions.logger.info( "[odooToFirebase_Users] updating ussersTimeStamp in Firebase", {
+            "odoo_session": odoo_session,
+            "userTimestamp": String(dateTime),
+          } );
         } catch (error) {
           functions.logger.error( "[odooToFirebase_Users] ERROR: error updating user " + user_id, {
             "odoo_session": odoo_session,
