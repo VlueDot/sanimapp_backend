@@ -1014,7 +1014,7 @@ async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdateTimesta
               // just update if the current status is "Nuevo"
               if (serviceColletion[id]["ticket_status"] === "Nuevo") {
                 const servCollData = {
-                  "id_client": partner_id,
+                  "id_client": Number(partner_id),
                   "ticket_commits": description,
                   "ticket_name": name,
                   "ticket_type": ticket_type,
@@ -1034,7 +1034,7 @@ async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdateTimesta
               // If "Nuevo"
               if (serviceColletion[id]["ticket_status"] === "Nuevo") {
                 const servCollData = {
-                  "id_client": partner_id,
+                  "id_client": Number(partner_id),
                   "ticket_commits": description,
                   "ticket_name": name,
                   "ticket_status": ticket_status,
@@ -1053,7 +1053,7 @@ async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdateTimesta
               // If "En progreso"
               if (serviceColletion[id]["ticket_status"] === "En progreso") {
                 const servCollData = {
-                  "id_client": partner_id,
+                  "id_client": Number(partner_id),
                   "ticket_commits": description,
                   "ticket_name": name,
                 };
@@ -1072,7 +1072,7 @@ async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdateTimesta
               // If "Nuevo"
               if (serviceColletion[id]["ticket_status"] === "Nuevo") {
                 const servCollData = {
-                  "id_client": partner_id,
+                  "id_client": Number(partner_id),
                   "ticket_commits": description,
                   "ticket_name": name,
                   "ticket_status": ticket_status,
@@ -1090,7 +1090,7 @@ async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdateTimesta
               // If "En progreso"
               if (serviceColletion[id]["ticket_status"] === "En progreso") {
                 const servCollData = {
-                  "id_client": partner_id,
+                  "id_client": Number(partner_id),
                   "ticket_commits": description,
                   "ticket_name": name,
                   "ticket_status": ticket_status,
@@ -1124,7 +1124,7 @@ async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdateTimesta
               await FirebaseFcn.firebaseSet("/Data_client/"+partner_id+"/Data_client_3/client_type", "Cliente por instalar");
               functions.logger.info( "[odooToFirebase_ServiceTickets] Client type updated in Firebae", {
                 "ticket_id": id,
-                "id_client": partner_id,
+                "id_client": Number(partner_id),
                 "Old Client Type (Data_client_2)": client_type_old_2,
                 "New Client Type (Data_client_2)": "Cliente por instalar",
                 "Old client type (Data_client_3)": client_type_old_3,
@@ -1139,7 +1139,7 @@ async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdateTimesta
               // If "Nuevo"
               if (ticket_status === "Nuevo") {
                 const servCollData = {
-                  "id_client": partner_id,
+                  "id_client": Number(partner_id),
                   "creation_timestamp": Date.parse(create_date),
                   "ticket_commits": description,
                   "ticket_name": name,
@@ -1159,7 +1159,7 @@ async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdateTimesta
               // If "En progreso"
               if (ticket_status === "En progreso") {
                 const servCollData = {
-                  "id_client": partner_id,
+                  "id_client": Number(partner_id),
                   "creation_timestamp": Date.parse(create_date),
                   "ticket_commits": description,
                   "ticket_name": name,
