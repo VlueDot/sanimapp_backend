@@ -24,56 +24,6 @@ admin.initializeApp({
   databaseURL: urldatabase,
 });
 
-// FUNCTIONS
-
-// testFunction = functions.https.onRequest( async (request, response) => {
-//   // do here whatever you must
-//   try {
-//     const odoo_session = await OdooFcn.odoo_Login();
-
-//     if (odoo_session != null) {
-//       // await OdooFcn.odooToFirebase_CRM_Tickets(odoo_session);
-
-//       await OdooFcn.odoo_Logout(odoo_session);
-//     }
-
-
-//     response.send("OdooSync End: " + odoo_session);
-//   } catch (error) {
-//     functions.logger.error(error);
-
-//     response.send("OdooSync Error: "+error);
-//   }
-// });
-
-// odooToFirebase = functions.https.onRequest(async (request, response)=> {
-//   // this will run with certain periodicity. This will be the stable function.
-//   // Here will be everything at the moment. eventually we will separate them to test each one of these.
-//   try {
-//     const odoo_session = await OdooFcn.odoo_Login();
-
-//     if (odoo_session != null) {
-//       await OdooFcn.odooToFirebase_CRM_Campaigns(odoo_session);
-
-//       await OdooFcn.odoo_Logout(odoo_session);
-//     }
-
-//     response.send("OdooSync End");
-//   } catch (error) {
-//     functions.logger.error(error);
-
-//     response.send("OdooSync Error: "+error);
-//   }
-// });
-
-// firebaseToOdoo_CRM = functions.database.ref("/test").onWrite( async (change)=>{
-//   if (change.after.val() === change.before.val()) return null;
-
-//   else {
-//     const res = FirebaseFcn.updateCRMOdoo(change);
-//     return res;
-//   }
-// });
 
 firebase_Stops_UsersQuantity_update = functions.database.ref("stops/{idStopFb}").onUpdate( async (change, context)=>{
   const stopData_before = change.before.val();
@@ -372,10 +322,10 @@ firebaseToOdoo_UserTags_update = functions.database.ref("/Data_client/{idUserFb}
   const client_type_new = client_after["Data_client_3"]["client_type"];
 
   if ((Client_Type_old != Client_Type_new) || (client_type_old != client_type_new)) {
-    if (Client_Type_new === client_type_new){
+    if (Client_Type_new === client_type_new) {
       if ((client_type_new === "Cliente desinstalado") && (Client_Type_new === "Cliente desinstalado")) {
         const odoo_session = await OdooFcn.odoo_Login();
-  
+
         await OdooFcn.firebaseToOdoo_PutInactiveTag(odoo_session, user_id);
         functions.logger.info("[firebaseToOdoo_User_tags]: The client "+ user_id+" will be set to <inactivo> tag.", {
           "user_id": user_id,
@@ -387,7 +337,7 @@ firebaseToOdoo_UserTags_update = functions.database.ref("/Data_client/{idUserFb}
         await OdooFcn.odoo_Logout(odoo_session);
         return null;
       }
-  
+
       if ((client_type_new === "Cliente por instalar") && (Client_Type_new === "Cliente por instalar")) {
         const odoo_session = await OdooFcn.odoo_Login();
         await OdooFcn.firebaseToOdoo_ActiveOrInstall(odoo_session, false, Number(context.params.idUserFb));
@@ -401,7 +351,7 @@ firebaseToOdoo_UserTags_update = functions.database.ref("/Data_client/{idUserFb}
         await OdooFcn.odoo_Logout(odoo_session);
         return null;
       }
-  
+
       if (listOfActives.includes(client_type_new) && listOfActives.includes(Client_Type_new)) {
         const odoo_session = await OdooFcn.odoo_Login();
         await OdooFcn.firebaseToOdoo_ActiveOrInstall(odoo_session, true, Number(context.params.idUserFb));

@@ -228,17 +228,26 @@ async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp:any) {
 
           const initialOdoo_routeId = user_routeId;
 
-
           // ESTADO ----------------------------------------------------------------
 
           const user_status_data = await checkingCategoriesOdoo( CustomHeaders, user_categories, "estado" );
+
           let user_status_name ="Cliente con firma";
-          if (user_route_data.result.length > 0) {
-            user_status_name = user_status_data.result.records[0].name;
+          if (user_status_data.result.length > 0) {
+            if ( user_status_data.result.records[0].name == "Usuario por instalar") user_status_name = "Cliente por instalar";
+            else if ( user_status_data.result.records[0].name == "usuario activo") user_status_name = "Cliente normal"; // NEEDED TO DEFINE A DEFAULT USER STATUS
+            else if ( user_status_data.result.records[0].name == "usuario inactivo") user_status_name = "Cliente desinstalado";
+          } else {
+            functions.logger.info( "[odooToFirebase_Users] WARNING! There is no state for client " + user_id, {
+              "odoo_session": odoo_session,
+              "user_id_odoo": user_id,
+              "warning_label": true,
+            });
           }
 
 
           // ------------------------------ GET FROM FIREBASE
+
           let stop_id_odoo_fromDataClient2 = 0;
           let stop_id_firebase = 0;
           let stop_name_fromDataClient2 = "NaN";
@@ -337,9 +346,10 @@ async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp:any) {
               },
             };
 
-            functions.logger.info( "[odooToFirebase_Users] There is no user in Firebase. Creating user in Data_client/" + user_id, {
+            functions.logger.info( "[odooToFirebase_Users] WARNING! There is no user in Firebase. Creating user in Data_client/" + user_id, {
               "odoo_session": odoo_session,
               "user_id_odoo": user_id,
+              "warning_label": true,
             });
             FirebaseFcn.firebaseSet("Data_client/" + user_id, dataClient_node);
           }
@@ -396,10 +406,10 @@ async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp:any) {
 
           const ToDoList = [];
           const stops_changed = initialState.stop_id_odoo != targetState.stop_id_odoo;
-          const just_routes_changed = initialState.route_id_odoo != targetState.route_id_odoo && !stops_changed;
+          const just_routes_changed = initialOdoo_routeId != targetState.route_id_odoo && !stops_changed;
           const just_no_route = targetState.route_id_odoo == 0 && targetState.stop_id_odoo != 0 && !stops_changed;
           if (stops_changed) ToDoList.push("Stops changed: " + initialState.stop_id_odoo +" -> " + targetState.stop_id_odoo);
-          if ( just_routes_changed) ToDoList.push("Routes changed: " + initialState.route_id_odoo +" -> " + targetState.route_id_odoo);
+          if ( just_routes_changed) ToDoList.push("Routes changed: " + initialOdoo_routeId +" -> " + targetState.route_id_odoo);
           if ( just_no_route ) ToDoList.push("There is no route in odoo");
           if (!stops_changed && !just_no_route && ! just_routes_changed) ToDoList.push("Nothing to do.");
 
@@ -627,7 +637,38 @@ async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp:any) {
           }
 
           if (just_routes_changed ) {
-            console.log("just_routes_changed");
+            // -----------------------------(1)-----------------------------------
+            // First, delete the route from the categories array
+            const index_category = user_categories.indexOf(initialOdoo_routeId);
+            if (index_category != -1 ) user_categories.splice( index_category, 1);
+
+            user_categories.push(targetState.route_id_odoo);
+
+            try {
+              functions.logger.info( "[odooToFirebase_Users] updating route in Odoo.", info);
+
+              const raw = JSON.stringify({
+                "params": {
+                  "model": "res.partner",
+                  "method": "write",
+                  "kwargs": {},
+                  "args": [user_id,
+                    {
+                      "category_id": user_categories,
+                    }],
+                },
+              });
+
+              const params = {
+                headers: CustomHeaders,
+                method: "post",
+                body: raw,
+              };
+
+              await fetch(settings.odoo_url + "dataset/call_kw/res.partner/write", params);
+            } catch (err) {
+              functions.logger.error( "[odooToFirebase_Users] Error updating route in Odoo: " + err, info);
+            }
           }
 
           if (just_no_route ) {
@@ -635,12 +676,12 @@ async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp:any) {
           }
 
 
-          const dateTime = Date.now();
-          FirebaseFcn.firebaseSet("/timestamp_collection/ussersTimeStamp", String(dateTime));
-          functions.logger.info( "[odooToFirebase_Users] updating ussersTimeStamp in Firebase", {
-            "odoo_session": odoo_session,
-            "userTimestamp": String(dateTime),
-          } );
+          // const dateTime = Date.now();
+          // FirebaseFcn.firebaseSet("/timestamp_collection/ussersTimeStamp", String(dateTime));
+          // functions.logger.info( "[odooToFirebase_Users] updating ussersTimeStamp in Firebase", {
+          //   "odoo_session": odoo_session,
+          //   "userTimestamp": String(dateTime),
+          // } );
         } catch (error) {
           functions.logger.error( "[odooToFirebase_Users] ERROR: error updating user " + user_id, {
             "odoo_session": odoo_session,
@@ -1674,14 +1715,14 @@ export async function firebaseToOdoo_ActiveOrInstall(odoo_session:any, active: b
   const response_read = await fetch(settings.odoo_url + "dataset/search_read", params_read);
   const data_read = await response_read.json();
   const category_ids: Array<number> = data_read["result"]["records"][0]["category_id"];
-  //console.log("category_ids", category_ids);
+  // console.log("category_ids", category_ids);
   let newTag = 358;
   if (active === false) newTag = 453;
 
   const aux_category_ids: Array<number> = category_ids.filter((id) => ((id != 358) && (id != 359) && (id != 453)));
-  //console.log("aux_category_ids", aux_category_ids);
+  // console.log("aux_category_ids", aux_category_ids);
   const new_category_ids: Array<number> = aux_category_ids.concat([newTag]);
-  //console.log("new_category_ids", new_category_ids);
+  // console.log("new_category_ids", new_category_ids);
 
   const raw_write = JSON.stringify({
     "params": {
