@@ -89,7 +89,7 @@ firebase_Stops_UsersQuantity_update = functions.database.ref("stops/{idStopFb}")
     usersQuantity_before = Number(dict_before);
   } else {
     usersQuantity_before = -1;
-    console.log("info", "No Users_quantity in Firebase");
+    // console.log("info", "No Users_quantity in Firebase");
   }
 
   let dict_after = {};
@@ -337,13 +337,13 @@ odooToFirebase = functions.https.onRequest(async (request, response)=> {
     if (odoo_session != null) {
       // await OdooFcn.odooToFirebase_Users(odoo_session, lastupdateTimestamp_users);
       // await OdooFcn.odooToFirebase_ServiceTickets(odoo_session, lastupdateTimestamp_tickets);
-      const init = Number(Date.now());
-      console.log("inicio");
+      // const init = Number(Date.now());
+      // console.log("inicio");
 
       await OdooFcn.odooToFirebase_all(odoo_session, lastupdateTimestamp_users, lastupdateTimestamp_tickets, lastupdateTimestamp_crm);
 
-      const final = Number(Date.now());
-      console.log("tiempo", final - init);
+      // const final = Number(Date.now());
+      // console.log("tiempo", final - init);
 
       await OdooFcn.odoo_Logout(odoo_session);
     }
@@ -359,6 +359,7 @@ odooToFirebase = functions.https.onRequest(async (request, response)=> {
 });
 
 firebaseToOdoo_UserTags_update = functions.database.ref("/Data_client/{idUserFb}").onUpdate(async (change, context) => {
+  const user_id = Number(context.params.idUserFb)
   const listOfActives = ["Cliente Nuevo", "Cliente suspendido", "Cliente por llamar", "Cliente piloto", "Cliente normal", "Cliente gold"]
 
   const client_before = change.before.val();
@@ -373,9 +374,10 @@ firebaseToOdoo_UserTags_update = functions.database.ref("/Data_client/{idUserFb}
   if ((Client_Type_old != Client_Type_new) && (client_type_old != client_type_new)) {
     if ((client_type_new === "Cliente desinstalado") && (Client_Type_new === "Cliente desinstalado")) {
       const odoo_session = await OdooFcn.odoo_Login();
-      await OdooFcn.firebaseToOdoo_PutInactiveTag(odoo_session, Number(context.params.idUserFb));
-      functions.logger.info("[firebaseToOdoo_User_tags]: The client will be set to <inactivo> tag.", {
-        "idUserFb": context.params.idUserFb,
+      
+      await OdooFcn.firebaseToOdoo_PutInactiveTag(odoo_session, user_id);
+      functions.logger.info("[firebaseToOdoo_User_tags]: The client "+ user_id+" will be set to <inactivo> tag.", {
+        "user_id": user_id,
         "Client_Type_old": Client_Type_old,
         "client_type_old": client_type_old,
         "Client_Type_new": Client_Type_new,
@@ -387,9 +389,9 @@ firebaseToOdoo_UserTags_update = functions.database.ref("/Data_client/{idUserFb}
     
     if (listOfActives.includes(client_type_new) && listOfActives.includes(Client_Type_new)){
       const odoo_session = await OdooFcn.odoo_Login();
-      await OdooFcn.firebaseToOdoo_ChangeStopsRoutesLabels(odoo_session, 358, [Number(context.params.idUserFb)]);
-      functions.logger.info("[firebaseToOdoo_User_tags]: The client will be set to <activo> tag.", {
-        "idUserFb": context.params.idUserFb,
+      await OdooFcn.firebaseToOdoo_ChangeStopsRoutesLabels(odoo_session, 358, [user_id]);
+      functions.logger.info("[firebaseToOdoo_User_tags]: The client "+ user_id+" will be set to <activo> tag.", {
+        "user_id": user_id,
         "Client_Type_old": Client_Type_old,
         "client_type_old": client_type_old,
         "Client_Type_new": Client_Type_new,
@@ -401,8 +403,8 @@ firebaseToOdoo_UserTags_update = functions.database.ref("/Data_client/{idUserFb}
   }
 
   if (client_type_new != Client_Type_new) {
-    functions.logger.error("[firebaseToOdoo_User_inactive]: Client type diferente between Data_client_2 and Data_client_3.", {
-      "idUserFb": context.params.idUserFb,
+    functions.logger.error("[firebaseToOdoo_User_inactive]: Client "+ user_id+" has different type between Data_client_2 and Data_client_3.", {
+      "user_id": user_id,
       "Client_Type_old": Client_Type_old,
       "client_type_old": client_type_old,
       "Client_Type_new": Client_Type_new,
