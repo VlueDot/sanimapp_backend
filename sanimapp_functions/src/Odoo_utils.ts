@@ -215,6 +215,15 @@ async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp:any) {
             user_namestop = user_stop_data.result.records[0].name;
           }
 
+          let ubigeo = "NaN"
+          if (target_data[i].l10n_pe_ubigeo != false) ubigeo = target_data[i].l10n_pe_ubigeo 
+          
+          let phone1 = "NaN"
+          if (target_data[i].phone != false) phone1 = target_data[i].phone
+
+          let phone2 = "NaN"
+          if (target_data[i].mobile != false) phone2 = target_data[i].mobile
+
           // ROUTES ----------------------------------------------------------------
 
           const user_route_data = await checkingCategoriesOdoo( CustomHeaders, user_categories, "ruta" );
@@ -315,13 +324,13 @@ async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp:any) {
                 "Name_1": target_data[i].first_name,
                 "Name_2": target_data[i].middle_name,
                 "Name_potencial": "NaN",
-                "Phone1": target_data[i].phone,
-                "Phone2": target_data[i].mobile,
+                "Phone1": phone1,
+                "Phone2": phone2,
                 "Sales_person": "NaN",
                 "Sales_person_Commit": "NaN",
                 "Urine_preference": "NaN",
                 "Zone": "NaN",
-                "ubigeo": target_data[i].l10n_pe_ubigeo,
+                "ubigeo": ubigeo,
               },
               "Data_client_2": {
                 "Client_Type": user_status_name,
@@ -965,7 +974,7 @@ async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdateTimesta
       const tickets = data.result.records;
       functions.logger.info( "[odooToFirebase_ServiceTickets] Entries Founded:", {
         "odoo_session": odoo_session,
-        "updatedusers": tickets,
+        "target_data": tickets,
       });
 
       for (let i = 0; i < tickets.length; i++) {
@@ -1009,21 +1018,17 @@ async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdateTimesta
             // if ticket already exists in Firebase (Service_Collection) then just update some params
             // The updating depends on the current ticket status in firebase and the new ticket status from odoo
 
+            const initialState = await FirebaseFcn.firebaseGet("/Service_collection/" + id)
+            let targetState = initialState
+
             // if ticket status is "Nuevo"--------------------------------------------------------------------------------------
             if (ticket_status === "Nuevo") {
               // just update if the current status is "Nuevo"
               if (serviceColletion[id]["ticket_status"] === "Nuevo") {
-                const servCollData = {
-                  "id_client": Number(partner_id),
-                  "ticket_commits": description,
-                  "ticket_name": name,
-                  "ticket_type": ticket_type,
-                };
-                await FirebaseFcn.firebaseUpdate("/Service_collection/" + id, servCollData);
-                functions.logger.info( "[odooToFirebase_ServiceTickets] Ticket updated in Firebase.", {
-                  "ticket_id": id,
-                  "Info updated in Firebase": servCollData,
-                });
+                targetState["id_client"] = Number(partner_id);
+                targetState["ticket_commits"] = description;
+                targetState["ticket_name"] = name;
+                targetState["ticket_type"] = ticket_type;
               }
             }
 
@@ -1033,35 +1038,19 @@ async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdateTimesta
 
               // If "Nuevo"
               if (serviceColletion[id]["ticket_status"] === "Nuevo") {
-                const servCollData = {
-                  "id_client": Number(partner_id),
-                  "ticket_commits": description,
-                  "ticket_name": name,
-                  "ticket_status": ticket_status,
-                  "ticket_type": ticket_type,
-                  "conflict_indicator": "Actualizado por Odoo",
-                };
-                await FirebaseFcn.firebaseUpdate("/Service_collection/" + id, servCollData);
-                functions.logger.info( "[odooToFirebase_ServiceTickets] Ticket updated in Firebase. Ticket updated by Odoo", {
-                  "ticket_id": id,
-                  "Info updated in Firebase": servCollData,
-                  "Ticket_status in Firebase (old)": "Nuevo",
-                  "Ticket_status in Odoo (new)": "En progreso",
-                });
+                targetState["id_client"] = Number(partner_id);
+                targetState["ticket_commits"]= description;
+                targetState["ticket_name"] = name;
+                targetState["ticket_status"] = ticket_status;
+                targetState["ticket_type"] = ticket_type;
+                targetState["conflict_indicator"]= "Actualizado por Odoo";
               }
 
               // If "En progreso"
               if (serviceColletion[id]["ticket_status"] === "En progreso") {
-                const servCollData = {
-                  "id_client": Number(partner_id),
-                  "ticket_commits": description,
-                  "ticket_name": name,
-                };
-                await FirebaseFcn.firebaseUpdate("/Service_collection/" + id, servCollData);
-                functions.logger.info( "[odooToFirebase_ServiceTickets] Ticket updated in Firebase.", {
-                  "ticket_id": id,
-                  "Info updated in Firebase": servCollData,
-                });
+                targetState["id_client"] = Number(partner_id);
+                targetState["ticket_commits"] = description;
+                targetState["ticket_name"] = name;
               }
             }
 
@@ -1071,112 +1060,150 @@ async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdateTimesta
 
               // If "Nuevo"
               if (serviceColletion[id]["ticket_status"] === "Nuevo") {
-                const servCollData = {
-                  "id_client": Number(partner_id),
-                  "ticket_commits": description,
-                  "ticket_name": name,
-                  "ticket_status": ticket_status,
-                  "ticket_type": ticket_type,
-                };
-                await FirebaseFcn.firebaseUpdate("/Service_collection/" + id, servCollData);
-                functions.logger.info( "[odooToFirebase_ServiceTickets] Ticket updated in Firebase. Ticket updated by Odoo", {
-                  "ticket_id": id,
-                  "Info updated in Firebase": servCollData,
-                  "Ticket_status in Firebase (old)": "Nuevo",
-                  "Ticket_status in Odoo (new)": "Terminado",
-                });
+                targetState["id_client"] = Number(partner_id);
+                targetState["ticket_commits"] = description;
+                targetState["ticket_name"] = name;
+                targetState["ticket_status"] = ticket_status;
+                targetState["ticket_type"] = ticket_type;
               }
 
               // If "En progreso"
               if (serviceColletion[id]["ticket_status"] === "En progreso") {
-                const servCollData = {
-                  "id_client": Number(partner_id),
-                  "ticket_commits": description,
-                  "ticket_name": name,
-                  "ticket_status": ticket_status,
-                  "ticket_type": ticket_type,
-                };
-                await FirebaseFcn.firebaseUpdate("/Service_collection/" + id, servCollData);
-                functions.logger.info( "[odooToFirebase_ServiceTickets] Ticket updated in Firebase. Ticket updated by Odoo", {
-                  "ticket_id": id,
-                  "Info updated in Firebase": servCollData,
-                  "Ticket_status in Firebase (old)": "En progreso",
-                  "Ticket_status in Odoo (new)": "Terminado",
-                });
+                targetState["id_client"] = Number(partner_id);
+                targetState["ticket_commits"] = description;
+                targetState["ticket_name"] = name;
+                targetState["ticket_status"] = ticket_status;
+                targetState["ticket_type"] = ticket_type;
               }
             }
             // if ticket status is "NaN"--------------------------------------------------------------------------------------
             if (ticket_status === "NaN") {
-              await FirebaseFcn.firebaseRemove("/Service_collection/" + id);
-              functions.logger.info( "[odooToFirebase_ServiceTickets] Ticket removed from Firebase. Ticket status not defined", {
+              functions.logger.info( "[odooToFirebase_ServiceTickets] Tasks. ", {
+                "odoo_session": odoo_session,
                 "ticket_id": id,
-                "stage_id": stage_id,
+                "to-do-list": ["Remove ticket from Firebase. Ticket status not defined"],
+                "initialState": initialState,
+                "stage_id": stage_id
+              });
+              await FirebaseFcn.firebaseRemove("/Service_collection/" + id);
+              functions.logger.info( "[odooToFirebase_ServiceTickets] Ticket removed from Firebase (/Service_collection/" + id +").", {
+                "ticket_id": id,
+                "initialState": initialState,
+                "stage_id": stage_id
+              });
+            } 
+            if (initialState != targetState) {
+              functions.logger.info( "[odooToFirebase_ServiceTickets] Tasks. ", {
+                "odoo_session": odoo_session,
+                "ticket_id": id,
+                "to-do-list": ["Update ticket in firebase"],
+                "initialState": initialState,
+                "targetState": targetState,
+              });
+
+              await FirebaseFcn.firebaseUpdate("/Service_collection/" + id, targetState);
+              functions.logger.info( "[odooToFirebase_ServiceTickets] Ticket updated in Firebase (/Service_collection/" + id +").", {
+                "ticket_id": id,
+                "initialState": initialState,
+                "targetState": targetState,
+              });
+            } else {
+              functions.logger.info( "[odooToFirebase_ServiceTickets] Tasks. ", {
+                "odoo_session": odoo_session,
+                "ticket_id": id,
+                "to-do-list": ["Nothing to do."],
+                "initialState": initialState,
+                "targetState": targetState,
               });
             }
           } else { // *********************************************************************************************************
             // if ticket doesnt exist in firebase, then create value with params
+            const ToDoList = []
 
-            // In case, ticket type is install, it alse updates the client type in Firebase to "cliente por instalar"---------
-            if (ticket_type === "Instalación") {
-              let client_type_old_2 = await FirebaseFcn.firebaseGet("/Data_client/"+partner_id+"/Data_client_2/Client_Type");
-              let client_type_old_3 = await FirebaseFcn.firebaseGet("/Data_client/"+partner_id+"/Data_client_3/client_type");
-              await FirebaseFcn.firebaseSet("/Data_client/"+partner_id+"/Data_client_2/Client_Type", "Cliente por instalar");
-              await FirebaseFcn.firebaseSet("/Data_client/"+partner_id+"/Data_client_3/client_type", "Cliente por instalar");
-              functions.logger.info( "[odooToFirebase_ServiceTickets] Client type updated in Firebae", {
-                "ticket_id": id,
-                "id_client": Number(partner_id),
-                "Old Client Type (Data_client_2)": client_type_old_2,
-                "New Client Type (Data_client_2)": "Cliente por instalar",
-                "Old client type (Data_client_3)": client_type_old_3,
-                "New client type (Data_client_3)": "Cliente por instalar",
-              });
-            }
+            if (ticket_type === "Instalación") ToDoList.push("Update client type in Firebase");
 
             // It only creates tickes with valid ticket typer"------------------------------------------------------------------
             if (ticket_type != "NaN") {
+              ToDoList.push("Create ticket in Firebase");
+              
+              let targetState = {
+                "id_client": Number(partner_id),
+                "creation_timestamp": Date.parse(create_date),
+                "ticket_commits": description,
+                "ticket_name": name,
+                "ticket_status": ticket_status,
+                "ticket_type": ticket_type,
+                "conflict_indicator": "NaN",
+                "install_timestamp": "NaN",
+              };
+
               // just create if the new status is "Nuevo" or "En progreso"
 
               // If "Nuevo"
               if (ticket_status === "Nuevo") {
-                const servCollData = {
-                  "id_client": Number(partner_id),
-                  "creation_timestamp": Date.parse(create_date),
-                  "ticket_commits": description,
-                  "ticket_name": name,
-                  "ticket_status": ticket_status,
-                  "ticket_type": ticket_type,
-                  "conflict_indicator": "NaN",
-                  "install_timestamp": "NaN",
-                };
-                await FirebaseFcn.firebaseUpdate("/Service_collection/" + id, servCollData);
-                functions.logger.info( "[odooToFirebase_ServiceTickets] Ticket created in Firebase. Ticket created by Odoo", {
+                functions.logger.info( "[odooToFirebase_ServiceTickets] Tasks. ", {
+                  "odoo_session": odoo_session,
                   "ticket_id": id,
-                  "Info updated in Firebase": servCollData,
-                  "Ticket_status": "Nuevo",
+                  "to-do-list": ToDoList,
+                  "initialState": [],
+                  "targetState": targetState,
+                });
+                await FirebaseFcn.firebaseUpdate("/Service_collection/" + id, targetState);
+                functions.logger.info( "[odooToFirebase_ServiceTickets] Ticket created in Firebase (/Service_collection/" + id +").", {
+                  "odoo_session": odoo_session,
+                  "ticket_id": id,
+                  "to-do-list": ToDoList,
+                  "initialState": [],
+                  "targetState": targetState,
                 });
               }
 
               // If "En progreso"
               if (ticket_status === "En progreso") {
-                const servCollData = {
-                  "id_client": Number(partner_id),
-                  "creation_timestamp": Date.parse(create_date),
-                  "ticket_commits": description,
-                  "ticket_name": name,
-                  "ticket_status": ticket_status,
-                  "ticket_type": ticket_type,
-                  "conflict_indicator": "Creado en Odoo",
-                  "install_timestamp": "NaN",
-                };
-                await FirebaseFcn.firebaseUpdate("/Service_collection/" + id, servCollData);
-                functions.logger.info( "[odooToFirebase_ServiceTickets] Ticket created in Firebase. Ticket created by Odoo", {
+                targetState["conflict_indicator"] = "Creado en Odoo";
+                functions.logger.info( "[odooToFirebase_ServiceTickets] Tasks. ", {
+                  "odoo_session": odoo_session,
                   "ticket_id": id,
-                  "Info updated in Firebase": servCollData,
-                  "Ticket_status": "En progreso",
+                  "to-do-list": ToDoList,
+                  "initialState": [],
+                  "targetState": targetState,
+                });
+                await FirebaseFcn.firebaseUpdate("/Service_collection/" + id, targetState);
+                functions.logger.info( "[odooToFirebase_ServiceTickets] Ticket created in Firebase (/Service_collection/" + id +").", {
+                  "odoo_session": odoo_session,
+                  "ticket_id": id,
+                  "to-do-list": ToDoList,
+                  "initialState": [],
+                  "targetState": targetState,
                 });
               }
+
+              // In case, ticket type is install, it alse updates the client type in Firebase to "cliente por instalar"---------
+              if (ticket_type === "Instalación") {
+                let client_type_old_2 = await FirebaseFcn.firebaseGet("/Data_client/"+partner_id+"/Data_client_2/Client_Type");
+                let client_type_old_3 = await FirebaseFcn.firebaseGet("/Data_client/"+partner_id+"/Data_client_3/client_type");
+                await FirebaseFcn.firebaseSet("/Data_client/"+partner_id+"/Data_client_2/Client_Type", "Cliente por instalar");
+                await FirebaseFcn.firebaseSet("/Data_client/"+partner_id+"/Data_client_3/client_type", "Cliente por instalar");
+                functions.logger.info( "[odooToFirebase_ServiceTickets] Client type updated in Firebase (/Data_client/"+partner_id+")", {
+                  "ticket_id": id,
+                  "id_client": Number(partner_id),
+                  "Old Client Type (Data_client_2)": client_type_old_2,
+                  "New Client Type (Data_client_2)": "Cliente por instalar",
+                  "Old client type (Data_client_3)": client_type_old_3,
+                  "New client type (Data_client_3)": "Cliente por instalar",
+                });
+              }
+
             } else {
+              functions.logger.info( "[odooToFirebase_ServiceTickets] Tasks. ",
+              {
+                "odoo_session": odoo_session,
+                "ticket_id": id,
+                "to-do-list": ["Nothing to do."],
+
+              });
               functions.logger.info("[odooToFirebase_ServiceTickets] Ticket not read. Ticket type not defined", {
+                "odoo_session": odoo_session,
                 "ticket_id": id,
                 "tags_ids": tag_ids,
               });
@@ -1243,7 +1270,7 @@ async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: 
       const tickets = data.result.records;
       functions.logger.info( "[odooToFirebase_ServiceTickets] Entries Founded:", {
         "odoo_session": odoo_session,
-        "updatedusers": tickets,
+        "target_data": tickets,
       });
 
       // for every ticket to write in firebase
@@ -1327,77 +1354,122 @@ async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: 
           ticketIdToPartnerId.set(val, key);
         }
 
+        const ToDoList = []
+
         // Write in firebase depending on case++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         if (keys_potentials.includes(ticket_id)) {
           // ****************************************************************************************
+          const potentialAddress = "/notRegisteredUsers/" + ticket_id
+          const initialState = await FirebaseFcn.firebaseGet(potentialAddress);
+          let targetState = initialState
+
           if (ticket_status === "Cliente Potencial") {
-            const potentialData = {
-              "Campaign_month": campaign_id,
-              "How_know_us": medium_id,
-              "How_know_us_method": source_id,
-              "How_know_us_referals": referred,
-              "Name_potencial": name,
-              "Phone1": phone,
-              "Phone2": mobile,
-              "Sales_person": create_uid,
-              "Zone": ticket_type,
-            };
-            await FirebaseFcn.firebaseUpdate("/notRegisteredUsers/" + ticket_id, potentialData);
-            functions.logger.info( "[odooToFirebase_CRMTickets] Ticket updated in Firebase.", {
-              "ticket_id": ticket_id,
-              "Info updated in Firebase": potentialData,
-              "Actions": ["Client updated in notRegisteredUsers"],
+            ToDoList.push("Update notRegisteredUsers data")
+            targetState["Campaign_month"] = campaign_id;
+            targetState["How_know_us"] = medium_id;
+            targetState["How_know_us_method"] = source_id;
+            targetState["How_know_us_referals"] = referred;
+            targetState["Name_potencial"] = name;
+            targetState["Phone1"] = phone;
+            targetState["Phone2"] = mobile;
+            targetState["Sales_person"] = create_uid;
+            targetState["Zone"] = ticket_type;
+
+            functions.logger.info( "[odooToFirebase_CRMTickets] Tasks. ", {
+              "odoo_session": odoo_session,
+              "crm_id": ticket_id,
+              "to-do-list": ToDoList,
+              "initialState": initialState,
+              "targetState": targetState,
+            });
+
+            await FirebaseFcn.firebaseSet("/notRegisteredUsers/" + ticket_id, targetState);
+            functions.logger.info( "[odooToFirebase_CRMTickets] Ticket updated in Firebase (/notRegisteredUsers/"+ ticket_id +").", {
+              "odoo_session": odoo_session,
+              "targetState": targetState,
             });
             update = true;
           } else {
           // ****************************************************************************************
             if (partner_id === "NaN") {
               // ----------------------------------------------------------------------------------
-              const potentialData = {
-                "Campaign_month": campaign_id,
-                "How_know_us": medium_id,
-                "How_know_us_method": source_id,
-                "How_know_us_referals": referred,
-                "Name_potencial": name,
-                "Phone1": phone,
-                "Phone2": mobile,
-                "Sales_person": create_uid,
-                "Zone": ticket_type,
-
-              };
-              await FirebaseFcn.firebaseUpdate("/notRegisteredUsers/" + ticket_id, potentialData);
-              functions.logger.info( "[odooToFirebase_CRMTickets] Ticket updated in Firebase.", {
-                "ticket_id": ticket_id,
-                "Info updated in Firebase": potentialData,
-                "Actions": ["Client updated in notRegisteredUsers"],
+              ToDoList.push("Update notRegisteredUsers data")
+              targetState["Campaign_month"] = campaign_id;
+              targetState["How_know_us"] = medium_id;
+              targetState["How_know_us_method"] = source_id;
+              targetState["How_know_us_referals"] = referred;
+              targetState["Name_potencial"] = name;
+              targetState["Phone1"] = phone;
+              targetState["Phone2"] = mobile;
+              targetState["Sales_person"] = create_uid;
+              targetState["Zone"] = ticket_type;
+              functions.logger.info( "[odooToFirebase_CRMTickets] Tasks. ", {
+                "odoo_session": odoo_session,
+                "crm_id": ticket_id,
+                "to-do-list": ToDoList,
+                "initialState": initialState,
+                "targetState": targetState,
+              });
+  
+              await FirebaseFcn.firebaseSet("/notRegisteredUsers/" + ticket_id, targetState);
+              functions.logger.info( "[odooToFirebase_CRMTickets] Ticket updated in Firebase (/notRegisteredUsers/"+ ticket_id +").", {
+                "targetState": targetState,
+                "odoo_session": odoo_session
               });
               update = true;
             } else {
               // --------------------------------------------------------------------------------------------
               if (keys_clients.includes(partner_id)) {
                 // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+                ToDoList.push("Delete notRegisteredUsers node in firebase");
+                ToDoList.push("Update client type in firebase");
+
+                const contact_type2 = await FirebaseFcn.firebaseGet("/Data_client/"+partner_id+"/Data_client_2/Client_Type")
+                const contact_type3 = await FirebaseFcn.firebaseGet("/Data_client/"+partner_id+"/Data_client_3/client_type")
+
+                const init = {
+                  "Client_Type": contact_type2,
+                  "client_type": contact_type3
+                }
+
+                const targ = {
+                  "Client_Type": ticket_status,
+                  "client_type": ticket_status
+                }
+
+                functions.logger.info( "[odooToFirebase_CRMTickets] Tasks. ", {
+                  "odoo_session": odoo_session,
+                  "crm_id": ticket_id,
+                  "user_id": partner_id,
+                  "to-do-list": ToDoList,
+                  "initialState": init,
+                  "targetState": targ,
+                });
+
                 await FirebaseFcn.firebaseRemove("/notRegisteredUsers/" + ticket_id);
+                functions.logger.info("[odooToFirebase_CRMTickets] notRegisteredUsers deleted from firebase (/notRegisteredUsers/"+ ticket_id +").", {
+                  "odoo_session": odoo_session
+                });
 
                 await FirebaseFcn.firebaseSet("/Data_client/"+partner_id+"/Data_client_2/Client_Type", ticket_status);
+                functions.logger.info("[odooToFirebase_CRMTickets] client type updated in Firebase (/Data_client/"+partner_id+"/Data_client_2/Client_Type).", {
+                  "odoo_session": odoo_session,
+                  "ticket_status":ticket_status
+                });
                 await FirebaseFcn.firebaseSet("/Data_client/"+partner_id+"/Data_client_3/client_type", ticket_status);
-
-                functions.logger.info( "[odooToFirebase_CRMTickets] Ticket updated in Firebase.", {
-                  "ticket_id": ticket_id,
-                  "partner_id": partner_id,
-                  "ticket status from odoo": ticket_status,
-                  "Actions": [
-                    "notRegisteredUsers node removed in firebase",
-                    "Update client type in Data_client",
-                  ],
+                functions.logger.info("[odooToFirebase_CRMTickets] client type updated in Firebase (/Data_client/"+partner_id+"/Data_client_3/client_type).", {
+                  "odoo_session": odoo_session,
+                  "ticket_status": ticket_status
                 });
 
                 update = true;
               } else {
                 // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                 const contactData = await contactInfoById(odoo_session, partner_id);
-                if (contactData != null) {
-                  await FirebaseFcn.firebaseRemove("/notRegisteredUsers/" + ticket_id);
-                  await FirebaseFcn.firebaseSet("/CRM_tickets_not_archived/" + partner_id, ticket_id);
+                if ((contactData != null) && (contactData != false)) {
+                  ToDoList.push("Delete notRegisteredUsers node in firebase");
+                  ToDoList.push("Create CRM_tickets_not_archived node in firebase");
+                  ToDoList.push("Create Data_client node in firebase");
 
                   let phone1 = "NaN";
                   if (contactData["phone"] != false) phone1 = contactData["phone"];
@@ -1454,21 +1526,43 @@ async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: 
                     "Phone2": phone2,
                     "client_type": ticket_status,
                   };
+
+                  const targ = {
+                    "CRM_tickets_not_archived": {partner_id: ticket_id},
+                    "Data_client_1": Data_client_1,
+                    "Data_client_2": Data_client_2,
+                    "Data_client_3": Data_client_3,
+                  }
+
+                  functions.logger.info( "[odooToFirebase_CRMTickets] Tasks. ", {
+                    "odoo_session": odoo_session,
+                    "crm_id": ticket_id,
+                    "to-do-list": ToDoList,
+                    "initialState": [],
+                    "targetState": targ,
+                  });
+
+                  await FirebaseFcn.firebaseRemove("/notRegisteredUsers/" + ticket_id);
+                  functions.logger.info("[odooToFirebase_CRMTickets] notRegisteredUsers deleted from firebase (/notRegisteredUsers/"+ ticket_id +").", {
+                    "odoo_session": odoo_session
+                  });
+
+                  await FirebaseFcn.firebaseSet("/CRM_tickets_not_archived/" + partner_id, ticket_id);
+                  functions.logger.info("[odooToFirebase_CRMTickets] CRM_tickets_not_archived created in firebase (CRM_tickets_not_archived/" + partner_id +").", {
+                    "odoo_session": odoo_session,
+                    "targetState": ticket_id
+                  });
+
                   const clientData = {
                     "Data_client_1": Data_client_1,
                     "Data_client_2": Data_client_2,
                     "Data_client_3": Data_client_3,
                   };
                   await FirebaseFcn.firebaseSet("/Data_client/" + partner_id, clientData);
-                  functions.logger.info( "[odooToFirebase_CRMTickets] Ticket updated in Firebase.", {
-                    "ticket_id": ticket_id,
-                    "partner_id": partner_id,
-                    "Info updated in Firebase": clientData,
-                    "Actions": [
-                      "notRegisteredUsers node removed in firebase",
-                      "CRM_tickets_not_archived created in firebase",
-                      "Data_client node created in firebase",
-                    ],
+                  functions.logger.info( "[odooToFirebase_CRMTickets] Data_client created in firebase (/Data_client/" + partner_id + ").", {
+                    "crm_id": ticket_id,
+                    "user_id": partner_id,
+                    "targetState": clientData,
                   });
                   update = true;
                 } else {
@@ -1506,15 +1600,40 @@ async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: 
           // **********************************************************************************************
           if (Object.keys(ticketIdToPartnerId).includes(ticket_id)) {
             // ------------------------------------------------------------------------------------------
+            ToDoList.push("Update client type in firebase");
+
+            const contact_type2 = await FirebaseFcn.firebaseGet("/Data_client/"+partner_id+"/Data_client_2/Client_Type")
+            const contact_type3 = await FirebaseFcn.firebaseGet("/Data_client/"+partner_id+"/Data_client_3/client_type")
+
+            const init = {
+              "Client_Type": contact_type2,
+              "client_type": contact_type3
+            }
+
+            const targ = {
+              "Client_Type": ticket_status,
+              "client_type": ticket_status
+            }
+
+            functions.logger.info( "[odooToFirebase_CRMTickets] Tasks. ", {
+              "odoo_session": odoo_session,
+              "crm_id": ticket_id,
+              "user_id": partner_id,
+              "to-do-list": ToDoList,
+              "initialState": init,
+              "targetState": targ,
+            });
+
             const id_client = ticketIdToPartnerId.get(ticket_id);
             await FirebaseFcn.firebaseSet("/Data_client/"+id_client+"/Data_client_2/Client_Type", ticket_status);
+            functions.logger.info("[odooToFirebase_CRMTickets] client type updated in Firebase (/Data_client/"+id_client+"/Data_client_2/Client_Type).", {
+              "odoo_session": odoo_session,
+              "ticket_status":ticket_status
+            });
             await FirebaseFcn.firebaseSet("/Data_client/"+id_client+"/Data_client_3/client_type", ticket_status);
-
-            functions.logger.info( "[odooToFirebase_CRMTickets] Ticket " + ticket_id +" updated in Firebase.", {
-              "ticket_id": ticket_id,
-              "partner_id": partner_id,
-              "ticket status from odoo": ticket_status,
-              "Actions": ["Update client type in Data_client"],
+            functions.logger.info("[odooToFirebase_CRMTickets] client type updated in Firebase (/Data_client/"+id_client+"/Data_client_3/client_type).", {
+              "odoo_session": odoo_session,
+              "ticket_status": ticket_status
             });
 
             update = true;
@@ -1522,7 +1641,9 @@ async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: 
             // ------------------------------------------------------------------------------------------
             if (partner_id === "NaN") {
               // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-              const potentialData = {
+              ToDoList.push("Create notRegisteredUsers node in Firebase");
+
+              const targetState = {
                 "Campaign_month": campaign_id,
                 "How_know_us": medium_id,
                 "How_know_us_method": source_id,
@@ -1538,46 +1659,91 @@ async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: 
                 "Long": 0,
                 "Client_Type": ticket_status,
                 "Client_Community": "NaN",
-
               };
-              await FirebaseFcn.firebaseUpdate("/notRegisteredUsers/" + ticket_id, potentialData);
-              functions.logger.info( "[odooToFirebase_CRMTickets] Ticket " + ticket_id +" updated in Firebase.", {
-                "ticket_id": ticket_id,
-                "Info updated in Firebase": potentialData,
-                "Actions": ["Ticket created in notRegisteredUsers"],
+
+              functions.logger.info( "[odooToFirebase_CRMTickets] Tasks. ", {
+                "odoo_session": odoo_session,
+                "crm_id": ticket_id,
+                "to-do-list": ToDoList,
+                "initialState": [],
+                "targetState": targetState,
               });
+  
+              await FirebaseFcn.firebaseSet("/notRegisteredUsers/" + ticket_id, targetState);
+              functions.logger.info( "[odooToFirebase_CRMTickets] Ticket updated in Firebase (/notRegisteredUsers/"+ ticket_id +").", {
+                "targetState": targetState,
+                "odoo_session": odoo_session
+              });
+
               update = true;
             } else {
               // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
               // await FirebaseFcn.firebaseSet("/CRM_tickets_not_archived/" + partner_id, id);
               if (keys_clients.includes(partner_id)) {
                 // -------------------------------------------------------------------------------------------------
-                await FirebaseFcn.firebaseSet("/Data_client/"+partner_id+"/Data_client_2/Client_Type", ticket_status);
-                await FirebaseFcn.firebaseSet("/Data_client/"+partner_id+"/Data_client_3/client_type", ticket_status);
+                ToDoList.push("Update client type in firebase");
 
-                functions.logger.info( "[odooToFirebase_CRMTickets] Ticket " + ticket_id +" updated in Firebase.", {
-                  "ticket_id": ticket_id,
-                  "partner_id": partner_id,
-                  "ticket status from odoo": ticket_status,
-                  "Actions": ["Update client type in Data_client"],
+                const contact_type2 = await FirebaseFcn.firebaseGet("/Data_client/"+partner_id+"/Data_client_2/Client_Type")
+                const contact_type3 = await FirebaseFcn.firebaseGet("/Data_client/"+partner_id+"/Data_client_3/client_type")
+    
+                const init = {
+                  "Client_Type": contact_type2,
+                  "client_type": contact_type3
+                }
+    
+                const targ = {
+                  "Client_Type": ticket_status,
+                  "client_type": ticket_status
+                }
+    
+                functions.logger.info( "[odooToFirebase_CRMTickets] Tasks. ", {
+                  "odoo_session": odoo_session,
+                  "crm_id": ticket_id,
+                  "user_id": partner_id,
+                  "to-do-list": ToDoList,
+                  "initialState": init,
+                  "targetState": targ,
                 });
+    
+                await FirebaseFcn.firebaseSet("/Data_client/"+partner_id+"/Data_client_2/Client_Type", ticket_status);
+                functions.logger.info("[odooToFirebase_CRMTickets] client type updated in Firebase (/Data_client/"+partner_id+"/Data_client_2/Client_Type).", {
+                  "odoo_session": odoo_session,
+                  "ticket_status":ticket_status
+                });
+                await FirebaseFcn.firebaseSet("/Data_client/"+partner_id+"/Data_client_3/client_type", ticket_status);
+                functions.logger.info("[odooToFirebase_CRMTickets] client type updated in Firebase (/Data_client/"+partner_id+"/Data_client_3/client_type).", {
+                  "odoo_session": odoo_session,
+                  "ticket_status": ticket_status
+                });
+
                 update = true;
               } else {
                 // ------------------------------------------------------------------------------------------------
                 const contactData = await contactInfoById(odoo_session, partner_id);
                 if ((contactData != null) && (contactData != false)) {
-                  let phone1 = contactData["phone"];
-                  if (phone1 === "false") phone1 = "NaN";
+                  
+                  ToDoList.push("Create CRM_tickets_not_archived node in firebase");
+                  ToDoList.push("Create Data_client node in firebase");
 
-                  let phone2 = contactData["mobile"];
-                  if (phone2 === "false") phone2 = "NaN";
+                  let phone1 = "NaN";
+                  if (contactData["phone"] != false) phone1 = contactData["phone"];
+
+                  let phone2 = "NaN";
+                  if (contactData["phone"] != false) phone2 = contactData["phone"];
+
+                  let country = "NaN";
+                  if (contactData["country_id"] != false) country = contactData["country_id"][1];
+
+                  let ubigeo = "NaN";
+                  if (contactData["l10n_pe_ubigeo"] != false) ubigeo = contactData["l10n_pe_ubigeo"];
+
                   const Data_client_1 = {
                     "Addr_reference": "NaN",
                     "Address": contactData["contact_address"],
                     "Birth_date": "NaN",
                     "Campaign_month": campaign_id,
                     "Client_Community": "NaN",
-                    "Country": contactData["country_id"][1],
+                    "Country": country,
                     "DNI": contactData["vat"],
                     "How_know_us": medium_id,
                     "How_know_us_method": source_id,
@@ -1594,7 +1760,7 @@ async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: 
                     "Sales_person_Commit": "NaN",
                     "Urine_preference": "NaN",
                     "Zone": ticket_type,
-                    "ubigeo": contactData["l10n_pe_ubigeo"],
+                    "ubigeo": ubigeo,
                   };
                   const Data_client_2 = {
                     "Route": "NaN",
@@ -1614,21 +1780,38 @@ async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: 
                     "Phone2": phone2,
                     "client_type": ticket_status,
                   };
+
+                  const targ = {
+                    "CRM_tickets_not_archived": {partner_id: ticket_id},
+                    "Data_client_1": Data_client_1,
+                    "Data_client_2": Data_client_2,
+                    "Data_client_3": Data_client_3,
+                  }
+
+                  functions.logger.info( "[odooToFirebase_CRMTickets] Tasks. ", {
+                    "odoo_session": odoo_session,
+                    "crm_id": ticket_id,
+                    "to-do-list": ToDoList,
+                    "initialState": [],
+                    "targetState": targ,
+                  });
+
+                  await FirebaseFcn.firebaseSet("/CRM_tickets_not_archived/" + partner_id, ticket_id);
+                  functions.logger.info("[odooToFirebase_CRMTickets] CRM_tickets_not_archived created in firebase (CRM_tickets_not_archived/" + partner_id +").", {
+                    "odoo_session": odoo_session,
+                    "targetState": ticket_id
+                  });
+
                   const clientData = {
                     "Data_client_1": Data_client_1,
                     "Data_client_2": Data_client_2,
                     "Data_client_3": Data_client_3,
                   };
                   await FirebaseFcn.firebaseSet("/Data_client/" + partner_id, clientData);
-                  await FirebaseFcn.firebaseSet("/CRM_tickets_not_archived/" + partner_id, ticket_id);
-                  functions.logger.info( "[odooToFirebase_CRMTickets] Ticket " + ticket_id +" updated in Firebase.", {
-                    "ticket_id": ticket_id,
-                    "partner_id": partner_id,
-                    "Info updated in Firebase": clientData,
-                    "Actions": [
-                      "CRM_tickets_not_archived created in firebase",
-                      "Data_client node created in firebase",
-                    ],
+                  functions.logger.info( "[odooToFirebase_CRMTickets] Data_client created in firebase (/Data_client/" + partner_id + ").", {
+                    "crm_id": ticket_id,
+                    "user_id": partner_id,
+                    "targetState": clientData,
                   });
                   update = true;
                 } else {

@@ -118,7 +118,16 @@ firebaseToOdoo_Stops_update = functions.database.ref("stops/{idStopFb}").onUpdat
       const odooWrite = await OdooFcn.verifyIfodooWriteInFirebase(odoo_session, partnerIds_after["idOdoo"], lastupdateTimestamp);
 
       if (!odooWrite) {
-        functions.logger.info("[firebaseToOdoo_Stops_update]: Stops will update partners in odoo.", {"idRouteFb": context.params.idStopFb, "Deleted": JSON.stringify(partnerIds_deleted), "Added": JSON.stringify(partnerIds_added)});
+        functions.logger.info("[firebaseToOdoo_Stops_update]: Stops will update partners in odoo.", {
+          "odoo_session": odoo_session,
+          "stop_name": partnerIds_after["Stops_name"],
+          "stop_id_firebase": context.params.idStopFb,
+          "stop_id_odoo": partnerIds_after["idOdoo"],
+          "initialState": JSON.stringify(list_before),
+          "targetState": JSON.stringify(partnerIds_after_array), 
+          "users_deleted": JSON.stringify(partnerIds_deleted), 
+          "users_added": JSON.stringify(partnerIds_added)
+        });
         await OdooFcn.firebaseToOdoo_ChangeStopsRoutesLabels(odoo_session, Number(partnerIds_after["idOdoo"]), partnerIds_after_array);
         if (borrar) await OdooFcn.firebaseToOdoo_DeleteStopLabels(odoo_session, Number(partnerIds_after["idOdoo"]), partnerIds_after_array[0]);
       } else functions.logger.info("[firebaseToOdoo_Stops_update]: Odoo write in Firebase. Doing nothing");
@@ -184,11 +193,19 @@ firebaseToOdoo_Routes_update = functions.database.ref("/Route_definition/{idRout
 
     if (borrar && !llenar) partnerIds_after_array.push(Number(partnerIds_deleted[0]));
 
-    functions.logger.info("[firebaseToOdoo_Routes_update]: Routes will update partners in odoo.", {"idRouteFb": context.params.idRouteFb, "Deleted": JSON.stringify(partnerIds_deleted), "Added": JSON.stringify(partnerIds_added)});
-
     const odoo_session = await OdooFcn.odoo_Login();
     if (odoo_session != null) {
       await OdooFcn.firebaseToOdoo_ChangeStopsRoutesLabels(odoo_session, Number(partnerIds_after["idOdoo"]), partnerIds_after_array);
+      functions.logger.info("[firebaseToOdoo_Routes_update]: Routes will update partners in odoo.", {
+        "odoo_session": odoo_session,
+        "route_name": partnerIds_after["Nom_ruta"],
+        "route_id_firebase": context.params.idRouteFb,
+        "route_id_odoo": partnerIds_after["idOdoo"],
+        "initialState": JSON.stringify(list_before),
+        "targetState": JSON.stringify(partnerIds_after_array), 
+        "users_deleted": JSON.stringify(partnerIds_deleted), 
+        "users_added": JSON.stringify(partnerIds_added)
+      });
       if (borrar && !llenar) {
         await OdooFcn.firebaseToOdoo_DeleteStopLabels(odoo_session, Number(partnerIds_after["idOdoo"]), partnerIds_after_array[0]);
       }
@@ -222,13 +239,18 @@ firebaseToOdoo_Stops_create = functions.database.ref("/stops/{idStopFb}").onCrea
 
   const idFirebase = context.params.idStopFb;
 
-  functions.logger.info("[firebaseToOdoo_Stops_create]: Stops will be created with partners in odoo.", {"idStopFb": idFirebase, "Created": JSON.stringify(partnerIds_toCreate)});
-
   const odoo_session = await OdooFcn.odoo_Login();
   if (odoo_session != null) {
     const idOdoo = await OdooFcn.firebaseToOdoo_CreateStopsRoutesLabels(odoo_session, partnersId_new["Stops_name"], partnerIds_toCreate);
     await OdooFcn.odoo_Logout(odoo_session);
     FirebaseFcn.firebaseSet("stops/" + idFirebase + "/idOdoo", idOdoo);
+    functions.logger.info("[firebaseToOdoo_Stops_create]: Stop created with partners in odoo.", {
+      "odoo_session": odoo_session,
+      "stop_name": partnersId_new["Stops_name"],
+      "stop_id_firebase": context.params.idStopFb,
+      "stop_id_odoo": idOdoo, 
+      "users_to_assign": JSON.stringify(partnerIds_toCreate)
+    });
     return true;
   }
   // si la respuesta del servidor es afirmativa devuelve un ok. Sino regresa el valor original y manda error
@@ -257,13 +279,18 @@ firebaseToOdoo_Routes_create = functions.database.ref("/Route_definition/{idRout
 
   const idFirebase = context.params.idRouteFb;
 
-  functions.logger.info("[firebaseToOdoo_Routes_create]: Routes will be created with partners in odoo.", {"idStopFb": idFirebase, "Created": JSON.stringify(partnerIds_toCreate)});
-
   const odoo_session = await OdooFcn.odoo_Login();
   if (odoo_session != null) {
     const idOdoo = await OdooFcn.firebaseToOdoo_CreateStopsRoutesLabels(odoo_session, partnersId_new["Nom_ruta"], partnerIds_toCreate);
     await OdooFcn.odoo_Logout(odoo_session);
     FirebaseFcn.firebaseSet("Route_definition/" + idFirebase + "/idOdoo", idOdoo);
+    functions.logger.info("[firebaseToOdoo_Routes_create]: Route created with partners in odoo.", {
+      "route_name": partnersId_new["Nom_ruta"], 
+      "route_id_firebase": idFirebase,
+      "route_id_odoo": idOdoo,
+      "users_to_assign": JSON.stringify(partnerIds_toCreate)
+    });
+
     return true;
   }
   // si la respuesta del servidor es afirmativa devuelve un ok. Sino regresa el valor original y manda error
@@ -326,7 +353,8 @@ firebaseToOdoo_UserTags_update = functions.database.ref("/Data_client/{idUserFb}
         const odoo_session = await OdooFcn.odoo_Login();
 
         await OdooFcn.firebaseToOdoo_PutInactiveTag(odoo_session, user_id);
-        functions.logger.info("[firebaseToOdoo_User_tags]: The client "+ user_id+" will be set to <inactivo> tag.", {
+        functions.logger.info("[firebaseToOdoo_UserTags_update]: The client "+ user_id+" will be set to <inactivo> tag.", {
+          "odoo_session": odoo_session,
           "user_id": user_id,
           "Client_Type_old": Client_Type_old,
           "client_type_old": client_type_old,
@@ -340,8 +368,9 @@ firebaseToOdoo_UserTags_update = functions.database.ref("/Data_client/{idUserFb}
       if ((client_type_new === "Cliente por instalar") && (Client_Type_new === "Cliente por instalar")) {
         const odoo_session = await OdooFcn.odoo_Login();
         await OdooFcn.firebaseToOdoo_ActiveOrInstall(odoo_session, false, Number(context.params.idUserFb));
-        functions.logger.info("[firebaseToOdoo_User_tags]: The client will be set to <usuario por instalar> tag.", {
-          "idUserFb": context.params.idUserFb,
+        functions.logger.info("[firebaseToOdoo_UserTags_update]: The client will be set to <usuario por instalar> tag.", {
+          "odoo_session": odoo_session,
+          "user_id": context.params.idUserFb,
           "Client_Type_old": Client_Type_old,
           "client_type_old": client_type_old,
           "Client_Type_new": Client_Type_new,
@@ -354,8 +383,9 @@ firebaseToOdoo_UserTags_update = functions.database.ref("/Data_client/{idUserFb}
       if (listOfActives.includes(client_type_new) && listOfActives.includes(Client_Type_new)) {
         const odoo_session = await OdooFcn.odoo_Login();
         await OdooFcn.firebaseToOdoo_ActiveOrInstall(odoo_session, true, Number(context.params.idUserFb));
-        functions.logger.info("[firebaseToOdoo_User_tags]: The client will be set to <activo> tag.", {
-          "idUserFb": context.params.idUserFb,
+        functions.logger.info("[firebaseToOdoo_UserTags_update]: The client will be set to <activo> tag.", {
+          "odoo_session": odoo_session,
+          "user_id": context.params.idUserFb,
           "Client_Type_old": Client_Type_old,
           "client_type_old": client_type_old,
           "Client_Type_new": Client_Type_new,
@@ -368,7 +398,7 @@ firebaseToOdoo_UserTags_update = functions.database.ref("/Data_client/{idUserFb}
   }
 
   if (client_type_new != Client_Type_new) {
-    functions.logger.error("[firebaseToOdoo_User_inactive]: Client "+ user_id+" has different type between Data_client_2 and Data_client_3.", {
+    functions.logger.info("[firebaseToOdoo_UserTags_update]: Client "+ user_id+" has different type between Data_client_2 and Data_client_3.", {
       "user_id": user_id,
       "Client_Type_old": Client_Type_old,
       "client_type_old": client_type_old,
