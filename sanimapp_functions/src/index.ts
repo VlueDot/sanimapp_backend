@@ -124,9 +124,9 @@ firebaseToOdoo_Stops_update = functions.database.ref("stops/{idStopFb}").onUpdat
           "stop_id_firebase": context.params.idStopFb,
           "stop_id_odoo": partnerIds_after["idOdoo"],
           "initialState": JSON.stringify(list_before),
-          "targetState": JSON.stringify(partnerIds_after_array), 
-          "users_deleted": JSON.stringify(partnerIds_deleted), 
-          "users_added": JSON.stringify(partnerIds_added)
+          "targetState": JSON.stringify(partnerIds_after_array),
+          "users_deleted": JSON.stringify(partnerIds_deleted),
+          "users_added": JSON.stringify(partnerIds_added),
         });
         await OdooFcn.firebaseToOdoo_ChangeStopsRoutesLabels(odoo_session, Number(partnerIds_after["idOdoo"]), partnerIds_after_array);
         if (borrar) await OdooFcn.firebaseToOdoo_DeleteStopLabels(odoo_session, Number(partnerIds_after["idOdoo"]), partnerIds_after_array[0]);
@@ -202,9 +202,9 @@ firebaseToOdoo_Routes_update = functions.database.ref("/Route_definition/{idRout
         "route_id_firebase": context.params.idRouteFb,
         "route_id_odoo": partnerIds_after["idOdoo"],
         "initialState": JSON.stringify(list_before),
-        "targetState": JSON.stringify(partnerIds_after_array), 
-        "users_deleted": JSON.stringify(partnerIds_deleted), 
-        "users_added": JSON.stringify(partnerIds_added)
+        "targetState": JSON.stringify(partnerIds_after_array),
+        "users_deleted": JSON.stringify(partnerIds_deleted),
+        "users_added": JSON.stringify(partnerIds_added),
       });
       if (borrar && !llenar) {
         await OdooFcn.firebaseToOdoo_DeleteStopLabels(odoo_session, Number(partnerIds_after["idOdoo"]), partnerIds_after_array[0]);
@@ -248,8 +248,8 @@ firebaseToOdoo_Stops_create = functions.database.ref("/stops/{idStopFb}").onCrea
       "odoo_session": odoo_session,
       "stop_name": partnersId_new["Stops_name"],
       "stop_id_firebase": context.params.idStopFb,
-      "stop_id_odoo": idOdoo, 
-      "users_to_assign": JSON.stringify(partnerIds_toCreate)
+      "stop_id_odoo": idOdoo,
+      "users_to_assign": JSON.stringify(partnerIds_toCreate),
     });
     return true;
   }
@@ -285,10 +285,10 @@ firebaseToOdoo_Routes_create = functions.database.ref("/Route_definition/{idRout
     await OdooFcn.odoo_Logout(odoo_session);
     FirebaseFcn.firebaseSet("Route_definition/" + idFirebase + "/idOdoo", idOdoo);
     functions.logger.info("[firebaseToOdoo_Routes_create]: Route created with partners in odoo.", {
-      "route_name": partnersId_new["Nom_ruta"], 
+      "route_name": partnersId_new["Nom_ruta"],
       "route_id_firebase": idFirebase,
       "route_id_odoo": idOdoo,
-      "users_to_assign": JSON.stringify(partnerIds_toCreate)
+      "users_to_assign": JSON.stringify(partnerIds_toCreate),
     });
 
     return true;
