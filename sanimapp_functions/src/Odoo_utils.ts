@@ -165,7 +165,7 @@ async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp:any) {
       "offset": 0,
       "fields": [
         "id", "phone", "mobile", "surname", "mother_name", "first_name", "middle_name",
-        "vat", "street", "display_name", "category_id", "l10n_pe_ubigeo"],
+        "vat", "street", "display_name", "category_id", "l10n_pe_ubigeo", "write_date"],
       "domain": [["write_date", ">", date_str]],
     },
   });
@@ -971,7 +971,7 @@ async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdateTimesta
     "params": {
       "model": "helpdesk.ticket",
       "offset": 0,
-      "fields": ["create_date", "partner_id", "description", "name", "stage_id", "tag_ids"],
+      "fields": ["create_date", "partner_id", "description", "name", "stage_id", "tag_ids", "write_date"],
       "domain": [["write_date", ">", date_str]],
     },
   });
@@ -1229,6 +1229,14 @@ async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdateTimesta
               });
             }
           }
+
+          const write_date = ticket["write_date"];
+          const writing_date = Date.parse(write_date);
+          FirebaseFcn.firebaseSet("/timestamp_collection/tickets_timestamp", String(writing_date));
+          functions.logger.info( "[odooToFirebase_ServiceTickets] updating tickets_timestamp in Firebase", {
+            "odoo_session": odoo_session,
+            "tickets_timestamp": String(writing_date),
+          });
         } catch (err) {
           functions.logger.error("[odooToFirebase_ServiceTickets] ERROR: " + err, {"odoo_session": odoo_session} );
         }
@@ -1266,7 +1274,7 @@ async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: 
       "offset": 0,
       "fields": [
         "partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
-        "name", "phone", "mobile", "tag_ids", "create_uid", "create_date",
+        "name", "phone", "mobile", "tag_ids", "create_uid", "create_date", "write_date",
       ],
       "domain": [["write_date", ">", date_str]],
     },
@@ -1901,6 +1909,14 @@ async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: 
             }
           }
         }
+
+        const write_date = ticket["write_date"];
+        const writing_date = Date.parse(write_date);
+        FirebaseFcn.firebaseSet("/timestamp_collection/CMR_tickets_timestamp", String(writing_date));
+        functions.logger.info( "[odooToFirebase_ServiceTickets] updating CMR_tickets_timestamp in Firebase", {
+          "odoo_session": odoo_session,
+          "CMR_tickets_timestamp": String(writing_date),
+        });
       }
     } else functions.logger.info("[odooToFirebase_CRMTickets] No CRM tickets founded in Odoo.", {"odoo_session": odoo_session});
 
