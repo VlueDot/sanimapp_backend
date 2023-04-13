@@ -224,6 +224,24 @@ async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp:any) {
           let phone2 = "NaN";
           if (target_data[i].mobile != false) phone2 = target_data[i].mobile;
 
+          let name_1 = "NaN";
+          if (target_data[i].first_name != false) name_1 = target_data[i].first_name;
+
+          let name_2 = "NaN";
+          if (target_data[i].middle_name != false) name_2 = target_data[i].middle_name;
+
+          let address = "NaN";
+          if (target_data[i].street != false) address = target_data[i].street;
+
+          let dni = "NaN";
+          if (target_data[i].vat != false) dni = target_data[i].vat;
+
+          let last_name_1 = "NaN";
+          if (target_data[i].surname != false) last_name_1 = target_data[i].surname;
+
+          let last_name_2 = "NaN";
+          if (target_data[i].mother_name != false) last_name_2 = target_data[i].mother_name;
+
           // ROUTES ----------------------------------------------------------------
 
           const user_route_data = await checkingCategoriesOdoo( CustomHeaders, user_categories, "ruta" );
@@ -309,20 +327,20 @@ async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp:any) {
             const dataClient_node = {
               "Data_client_1": {
                 "Addr_reference": "NaN",
-                "Address": target_data[i].street,
+                "Address": address,
                 "Birth_date": "000000", // Created in app
                 "Campaign_month": "NaN", // Created in app
                 "Client_Community": "NaN",
                 "Country": "Perú",
-                "DNI": target_data[i].vat,
+                "DNI": dni,
                 "How_know_us": "NaN", // Created in app
                 "How_know_us_method": "NaN", // Created in Odoo
                 "How_know_us_referals": "NaN",
-                "Last_name_1": target_data[i].surname,
-                "Last_name_2": target_data[i].mother_name,
+                "Last_name_1": last_name_1,
+                "Last_name_2": last_name_2,
                 "Lost_client_reason": "NaN",
-                "Name_1": target_data[i].first_name,
-                "Name_2": target_data[i].middle_name,
+                "Name_1": name_1,
+                "Name_2": name_2,
                 "Name_potencial": "NaN",
                 "Phone1": phone1,
                 "Phone2": phone2,
@@ -348,8 +366,8 @@ async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp:any) {
                 "Addr": target_data[i].street,
                 "Addr_reference": "NaN",
                 "Name_complete": target_data[i].display_name,
-                "Phone1": target_data[i].phone,
-                "Phone2": target_data[i].mobile,
+                "Phone1": phone1,
+                "Phone2": phone2,
                 "client_coment_OPE": "NaN",
                 "client_type": user_status_name,
               },
@@ -1482,22 +1500,40 @@ async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: 
                   let ubigeo = "NaN";
                   if (contactData["l10n_pe_ubigeo"] != false) ubigeo = contactData["l10n_pe_ubigeo"];
 
+                  let address = "NaN";
+                  if (contactData["contact_address"] != false) address = contactData["contact_address"]
+
+                  let name_1 = "NaN";
+                  if (contactData["first_name"] != false) name_1 = contactData["first_name"];
+
+                  let name_2 = "NaN";
+                  if (contactData["middle_name"] != false) name_2 = contactData["middle_name"];
+
+                  let dni = "NaN";
+                  if (contactData["vat"] != false) dni = contactData["vat"];
+
+                  let last_name_1 = "NaN";
+                  if (contactData["surname"] != false) last_name_1 = contactData["surname"];
+
+                  let last_name_2 = "NaN";
+                  if (contactData["mother_name"] != false) last_name_2 = contactData["mother_name"];
+
                   const Data_client_1 = {
                     "Addr_reference": "NaN",
-                    "Address": contactData["contact_address"],
-                    "Birth_date": "NaN",
+                    "Address": address,
+                    "Birth_date": "000000",
                     "Campaign_month": campaign_id,
                     "Client_Community": "NaN",
                     "Country": country,
-                    "DNI": contactData["vat"],
+                    "DNI": dni,
                     "How_know_us": medium_id,
                     "How_know_us_method": source_id,
                     "How_know_us_referals": referred,
-                    "Last_name_1": contactData["surname"],
-                    "Last_name_2": contactData["mother_name"],
+                    "Last_name_1": last_name_1,
+                    "Last_name_2": last_name_2,
                     "Lost_client_reason": "NaN",
-                    "Name_1": contactData["first_name"],
-                    "Name_2": contactData["middle_name"],
+                    "Name_1": name_1,
+                    "Name_2": name_2,
                     "Name_potencial": name,
                     "Phone1": phone1,
                     "Phone2": phone2,
@@ -1735,22 +1771,40 @@ async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: 
                   let ubigeo = "NaN";
                   if (contactData["l10n_pe_ubigeo"] != false) ubigeo = contactData["l10n_pe_ubigeo"];
 
+                  let address = "NaN";
+                  if (contactData["contact_address"] != false) address = contactData["contact_address"]
+
+                  let name_1 = "NaN";
+                  if (contactData["first_name"] != false) name_1 = contactData["first_name"];
+
+                  let name_2 = "NaN";
+                  if (contactData["middle_name"] != false) name_2 = contactData["middle_name"];
+
+                  let dni = "NaN";
+                  if (contactData["vat"] != false) dni = contactData["vat"];
+
+                  let last_name_1 = "NaN";
+                  if (contactData["surname"] != false) last_name_1 = contactData["surname"];
+
+                  let last_name_2 = "NaN";
+                  if (contactData["mother_name"] != false) last_name_2 = contactData["mother_name"];
+
                   const Data_client_1 = {
                     "Addr_reference": "NaN",
-                    "Address": contactData["contact_address"],
-                    "Birth_date": "NaN",
+                    "Address": address,
+                    "Birth_date": "000000",
                     "Campaign_month": campaign_id,
                     "Client_Community": "NaN",
                     "Country": country,
-                    "DNI": contactData["vat"],
+                    "DNI": dni,
                     "How_know_us": medium_id,
                     "How_know_us_method": source_id,
                     "How_know_us_referals": referred,
-                    "Last_name_1": contactData["surname"],
-                    "Last_name_2": contactData["mother_name"],
+                    "Last_name_1": last_name_1,
+                    "Last_name_2": last_name_2,
                     "Lost_client_reason": "NaN",
-                    "Name_1": contactData["first_name"],
-                    "Name_2": contactData["middle_name"],
+                    "Name_1": name_1,
+                    "Name_2": name_2,
                     "Name_potencial": name,
                     "Phone1": phone1,
                     "Phone2": phone2,
