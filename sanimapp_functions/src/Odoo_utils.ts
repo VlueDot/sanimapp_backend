@@ -1002,6 +1002,9 @@ async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdateTimesta
         try {
           // save the data readed from odoo, organizing it to write in Firebase
           const create_date = ticket["create_date"];
+          const creation_date = new Date(Number(create_date)-18000000);
+          const create_date_str = creation_date.getFullYear()+"-"+("0" + (creation_date.getMonth() + 1)).slice(-2)+"-"+("0" +creation_date.getDate()).slice(-2)+" "+ ("0" +creation_date.getHours()).slice(-2)+":"+("0" +creation_date.getMinutes()).slice(-2)+":"+("0" +creation_date.getSeconds()).slice(-2);
+
           const partner_id = String(ticket["partner_id"][0]);
           const description = ticket["description"];
           const name = ticket["name"];
@@ -1146,7 +1149,7 @@ async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdateTimesta
 
               let targetState = {
                 "id_client": Number(partner_id),
-                "creation_timestamp": Date.parse(create_date),
+                "creation_timestamp": create_date_str,
                 "ticket_commits": description,
                 "ticket_name": name,
                 "ticket_status": ticket_status,
@@ -1920,8 +1923,8 @@ async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: 
 
 export async function odooToFirebase_all(odoo_session:any, lastupdateTimestamp_users: any, lastupdateTimestamp_tickets: any, lastupdateTimestamp_crm: any) {
   await odooToFirebase_Users(odoo_session, lastupdateTimestamp_users);
-  await odooToFirebase_ServiceTickets(odoo_session, lastupdateTimestamp_tickets);
   await odooToFirebase_CRMTickets(odoo_session, lastupdateTimestamp_crm);
+  await odooToFirebase_ServiceTickets(odoo_session, lastupdateTimestamp_tickets);
   // If awaits out, it doesnt work properly
   return null;
 }
