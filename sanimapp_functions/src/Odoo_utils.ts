@@ -1501,7 +1501,7 @@ async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: 
                   if (contactData["l10n_pe_ubigeo"] != false) ubigeo = contactData["l10n_pe_ubigeo"];
 
                   let address = "NaN";
-                  if (contactData["contact_address"] != false) address = contactData["contact_address"]
+                  if (contactData["contact_address"] != false) address = contactData["contact_address"];
 
                   let name_1 = "NaN";
                   if (contactData["first_name"] != false) name_1 = contactData["first_name"];
@@ -1772,7 +1772,7 @@ async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: 
                   if (contactData["l10n_pe_ubigeo"] != false) ubigeo = contactData["l10n_pe_ubigeo"];
 
                   let address = "NaN";
-                  if (contactData["contact_address"] != false) address = contactData["contact_address"]
+                  if (contactData["contact_address"] != false) address = contactData["contact_address"];
 
                   let name_1 = "NaN";
                   if (contactData["first_name"] != false) name_1 = contactData["first_name"];
