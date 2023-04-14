@@ -363,7 +363,7 @@ async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp:any) {
                 "stop_id_firebase": 0,
               },
               "Data_client_3": {
-                "Addr": target_data[i].street,
+                "Addr": address,
                 "Addr_reference": "NaN",
                 "Name_complete": target_data[i].display_name,
                 "Phone1": phone1,
@@ -1296,7 +1296,7 @@ async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: 
     // Only works if there is at least a new ticket
     if (len > 0) {
       const tickets = data.result.records;
-      functions.logger.info( "[odooToFirebase_ServiceTickets] Entries Founded:", {
+      functions.logger.info( "[odooToFirebase_CRMTickets] Entries Founded:", {
         "odoo_session": odoo_session,
         "target_data": tickets,
       });
@@ -1563,7 +1563,7 @@ async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: 
                   };
                   const Data_client_3 = {
                     "Name_complete": contactData["display_name"],
-                    "Addr": contactData["contact_address"],
+                    "Addr": address,
                     "Addr_reference": "NaN",
                     "client_coment_OPE": "NaN",
                     "client_coment_OPE2": "NaN",
@@ -1834,7 +1834,7 @@ async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: 
                   };
                   const Data_client_3 = {
                     "Name_complete": contactData["display_name"],
-                    "Addr": contactData["contact_address"],
+                    "Addr": address,
                     "Addr_reference": "NaN",
                     "client_coment_OPE": "NaN",
                     "client_coment_OPE2": "NaN",

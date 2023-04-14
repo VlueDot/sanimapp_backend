@@ -9,6 +9,7 @@ export let firebaseToOdoo_Routes_update : any;// [IN PRODUCTION] if Route change
 export let firebaseToOdoo_Stops_create : any;// [IN PRODUCTION] if stop is created in firebase, creates the tag in odoo
 export let firebaseToOdoo_Routes_create : any;// [IN PRODUCTION] if Route is created in firebase, creates the tag in odoo
 export let firebaseToOdoo_UserTags_update: any;
+export let firebaseToOdoo_Tickets_update: any;
 
 // FROM ODOO TO FIREBASE
 export let odooToFirebase : any;// if users or ticket changed in odoo, it changes it in firebase
