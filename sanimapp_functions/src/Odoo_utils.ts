@@ -894,7 +894,9 @@ async function contactInfoById(odoo_session:any, id_client: any) {
   const raw = JSON.stringify({
     "params": {
       "model": "res.partner",
-      "fields": ["id", "phone", "mobile", "comment", "surname", "mother_name", "first_name", "middle_name", "vat", "contact_address", "country_id", "l10n_pe_ubigeo", "display_name", "category_id"],
+      "fields": ["id", "phone", "mobile", "comment", "surname",
+        "mother_name", "first_name", "middle_name", "vat", "street",
+        "country_id", "l10n_pe_ubigeo", "display_name", "category_id"],
       "offset": 0,
       "domain": [["id", "=", id_client]],
     },
