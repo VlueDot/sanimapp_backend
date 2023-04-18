@@ -412,6 +412,24 @@ firebaseToOdoo_UserTags_update = functions.database.ref("/Data_client/{idUserFb}
   return null;
 });
 
+
+export let Odoo_Contact_createUser = functions.https.onRequest( (request, response)=> {
+  console.log(request.body);
+  let request_str = JSON.stringify(request.body);
+  console.log(request_str);
+  let res = 30900; // 0 > error
+  response.send(res);
+}
+);
+
+export let Odoo_CRM_createUser = functions.https.onRequest( (request, response)=> {
+  console.log(request.body);
+  let request_str = JSON.stringify(request.body);
+  console.log(request_str);
+  let res = 30900; // 0 > error
+  response.send(res);
+});
+
 firebaseToOdoo_Tickets_update = functions.database.ref("/Service_collection/{idTicketFb}").onUpdate(async (change, context) => {
   const ticket_before = change.before.val();
   const ticket_after = change.after.val();
