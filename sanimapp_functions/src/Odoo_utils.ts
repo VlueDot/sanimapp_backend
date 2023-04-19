@@ -379,7 +379,7 @@ async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp:any) {
               "warning_label": true,
             });
             FirebaseFcn.firebaseSet("Data_client/" + user_id, dataClient_node);
-            
+
             stop_id_odoo_fromDataClient2 = 0;
             stop_id_firebase = 0;
             stop_name_fromDataClient2 = "NaN";
@@ -1371,7 +1371,7 @@ async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: 
         let create_uid = "NaN";
         if (ticket["create_uid"][1] != undefined) create_uid = ticket["create_uid"][1];
 
-        const create_date = ticket["create_date"];
+        const create_date = Date.parse(ticket["create_date"]);
 
         // Writing in firebase with the info saved--------------------------------------------------------------------------------------
 
@@ -1709,7 +1709,7 @@ async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: 
                 "Phone2": mobile,
                 "Sales_person": create_uid,
                 "Zone": ticket_type,
-                "timeStampCreate": create_date, // line 1510
+                "timeStampCreate": String(create_date), // line 1510
                 "Sales_person_Commit": "NaN",
                 "Lat": 0,
                 "Long": 0,
@@ -2031,8 +2031,8 @@ export async function firebaseToOdoo_updateTickets(odoo_session:any, idTicket: n
         idTicket,
         {
           "stage_id": 2,
-          "description": description
-        }
+          "description": description,
+        },
       ],
     },
   });
@@ -2068,8 +2068,8 @@ export async function firebaseToOdoo_approveTicket(odoo_session:any, idTicket: n
       "args": [
         idTicket,
         {
-          "stage_id": stage_id
-        }
+          "stage_id": stage_id,
+        },
       ],
     },
   });
@@ -2088,7 +2088,6 @@ export async function firebaseToOdoo_approveTicket(odoo_session:any, idTicket: n
 }
 
 export async function firebaseToOdoo_stock(odoo_session:any, partner_id: number, listOfInv: any, ticket_id: any) {
-
   const itemsCollection = {
     "Baño completo": 793,
     "Tubo de Vent. 3\"": 865,
@@ -2116,9 +2115,9 @@ export async function firebaseToOdoo_stock(odoo_session:any, partner_id: number,
     "Ganchos amarillos": 796,
     "Manual de uso y\nmantenimiento": 1034,
     "Ventilador": 255,
-    "Tapa asiento": 239
-  }
-  const InventoryCollection = new Map<string,  Number>(Object.entries(itemsCollection));
+    "Tapa asiento": 239,
+  };
+  const InventoryCollection = new Map<string, number>(Object.entries(itemsCollection));
 
   const CustomHeaders: HeadersInit = {
     "Content-Type": "application/json",
@@ -2138,7 +2137,7 @@ export async function firebaseToOdoo_stock(odoo_session:any, partner_id: number,
         "location_dest_id": 5,
         "show_operations": true,
         "show_validate": true,
-        "immediate_transfer": true
+        "immediate_transfer": true,
       }],
     },
   });
@@ -2149,11 +2148,11 @@ export async function firebaseToOdoo_stock(odoo_session:any, partner_id: number,
     body: raw_create,
   };
 
-  try{
+  try {
     const response_create = await fetch(settings.odoo_url + "dataset/call_kw/stock.picking/create", params_create);
     const data_create = await response_create.json();
-    const idOdoo = data_create["result"]
-  
+    const idOdoo = data_create["result"];
+
     const raw_update = JSON.stringify({
       "params": {
         "model": "stock.picking",
@@ -2162,28 +2161,28 @@ export async function firebaseToOdoo_stock(odoo_session:any, partner_id: number,
         "args": [
           Number(idOdoo),
           {
-          "state": "done",
-          "priority": "1",
-          "show_validate": false
-        }],
+            "state": "done",
+            "priority": "1",
+            "show_validate": false,
+          }],
       },
     });
-  
+
     const params_update = {
       headers: CustomHeaders,
       method: "call",
       body: raw_update,
     };
-    
+
     try {
       const response_update = await fetch(settings.odoo_url + "dataset/call_kw/stock.picking/write", params_update);
       const data_update = await response_update.json();
 
-      if (data_update["result"] === true){
+      if (data_update["result"] === true) {
         const keys = Object.keys(listOfInv);
-        for (let i = 0; i< keys.length; i++){
-          const key = String(keys[i])
-          if (InventoryCollection.get(key)!= null){
+        for (let i = 0; i< keys.length; i++) {
+          const key = String(keys[i]);
+          if (InventoryCollection.get(key)!= null) {
             const raw_item = JSON.stringify({
               "params": {
                 "model": "stock.move.line",
@@ -2199,35 +2198,110 @@ export async function firebaseToOdoo_stock(odoo_session:any, partner_id: number,
                   "location_id": 18,
                   "location_dest_id": 5,
                   "reference": false,
-                  "is_locked": false
-                }]
-              }
+                  "is_locked": false,
+                }],
+              },
             });
-        
+
             const params_item = {
               headers: CustomHeaders,
               method: "call",
               body: raw_item,
             };
-            try{
+            try {
               await fetch(settings.odoo_url + "dataset/call_kw/stock.move.line/create", params_item);
-            } catch (err2){
+            } catch (err2) {
               functions.logger.error("[firebaseToOdoo_stock] ERROR: " + err2, {
                 "odoo_session": odoo_session,
-                "ticket_id": ticket_id, 
-                "product_id": InventoryCollection.get(key)
+                "ticket_id": ticket_id,
+                "product_id": InventoryCollection.get(key),
               });
             }
           }
         }
       }
-
-    } catch (err1){
+    } catch (err1) {
       functions.logger.error("[firebaseToOdoo_stock] ERROR: " + err1, {"odoo_session": odoo_session, "ticket_id": ticket_id} );
     }
-  }catch (err){
+  } catch (err) {
     functions.logger.error("[firebaseToOdoo_stock] ERROR: " + err, {"odoo_session": odoo_session, "ticket_id": ticket_id} );
   }
 
   return null;
+}
+
+export async function createTicketCRM(odoo_session: any, args: any) {
+  const CustomHeaders: HeadersInit = {
+    "Content-Type": "application/json",
+    "Cookie": "session_id="+odoo_session,
+  };
+
+  // from OdooGenerateJsonsToWriteOdoo function
+  const raw = JSON.stringify({
+    "params": {
+      "model": "crm.lead",
+      "method": "create",
+      "kwargs": {},
+      "args": [args],
+    },
+  });
+
+  const params = {
+    headers: CustomHeaders,
+    method: "post",
+    body: raw,
+  };
+
+  try {
+    const response = await fetch(settings.odoo_url + "dataset/call_kw/crm.lead/create", params);
+    const data = await response.json();
+    const idOdoo = String(data["result"]);
+
+    let request_str = JSON.stringify(args);
+    functions.logger.info("[Odoo_CRM_createUser]: Ticket CRM created in odoo.", {
+      "odoo_session": odoo_session,
+      "user_id": idOdoo,
+      "targetState": request_str,
+    });
+
+    return idOdoo;
+  } catch (err) {
+    functions.logger.error( "[Odoo_CRM_createUser] ERROR: ", err);
+    return null;
+  }
+}
+
+export async function firebaseToOdoo_updateCRM(odoo_session:any, partner_id: number, idTicket: number) {
+  const CustomHeaders: HeadersInit = {
+    "Content-Type": "application/json",
+    "Cookie": "session_id="+odoo_session,
+  };
+
+  // from OdooGenerateJsonsToWriteOdoo function
+  const raw = JSON.stringify({
+    "params": {
+      "model": "crm.lead",
+      "method": "write",
+      "kwargs": {},
+      "args": [
+        idTicket,
+        {
+          "stage_id": 2,
+          "partner_id": partner_id,
+        },
+      ],
+    },
+  });
+
+  const params = {
+    headers: CustomHeaders,
+    method: "post",
+    body: raw,
+  };
+
+
+  const response = await fetch(settings.odoo_url + "dataset/call_kw/crm.lead/write", params);
+  const data = await response.json();
+
+  return data;
 }

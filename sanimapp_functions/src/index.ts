@@ -10,7 +10,8 @@ export let firebaseToOdoo_Stops_create : any;// [IN PRODUCTION] if stop is creat
 export let firebaseToOdoo_Routes_create : any;// [IN PRODUCTION] if Route is created in firebase, creates the tag in odoo
 export let firebaseToOdoo_UserTags_update: any;
 export let firebaseToOdoo_Tickets_update: any;
-export let firebaseToOdoo_Act_approve: any;
+export let firebaseToOdoo_Act_approve: any; 7;
+export let firebaseToOdoo_CRM_update: any;
 
 // FROM ODOO TO FIREBASE
 export let odooToFirebase : any;// if users or ticket changed in odoo, it changes it in firebase
@@ -422,45 +423,99 @@ export let Odoo_Contact_createUser = functions.https.onRequest( (request, respon
 }
 );
 
-export let Odoo_CRM_createUser = functions.https.onRequest( (request, response)=> {
-  console.log(request.body);
-  let request_str = JSON.stringify(request.body);
-  console.log(request_str);
+export let Odoo_CRM_createUser = functions.https.onRequest( async (request, response)=> {
+  // console.log(request.body);
+  // let request_str = JSON.stringify(request.body);
+  /* console.log(request_str);
   let res = 30900; // 0 > error
-  response.send(res);
+  response.send(res); // */
+
+  const odoo_session = await OdooFcn.odoo_Login();
+  const idOdoo = OdooFcn.createTicketCRM(odoo_session, request.body.args);
+  // functions.logger.info("[Odoo_CRM_createUser]: Test odoo", request.body.args);
+  await OdooFcn.odoo_Logout(odoo_session);
+
+  if (idOdoo != null) {
+    let referred = "";
+    referred = request.body.args["referred"];
+    if (referred === undefined) referred = "NaN";
+
+    let phone = "";
+    phone = request.body.args["phone"];
+    if (phone === undefined) phone = "NaN";
+
+    let mobile = "";
+    mobile = request.body.args["mobile"];
+    if (mobile === undefined) mobile = "NaN";
+
+    let comunity = request.body.args["function"];
+    if (comunity === "") comunity = "NaN";
+
+    const date = Date.now();
+
+    const targetState = {
+      "Campaign_month": request.body.data.Campaign_month,
+      "How_know_us": request.body.data.How_know_us,
+      "How_know_us_method": request.body.data.How_know_us_method,
+      "How_know_us_referals": referred,
+      "Name_potencial": request.body.args.name,
+      "Phone1": phone,
+      "Phone2": mobile,
+      "Sales_person": request.body.data.Sales_person,
+      "Zone": request.body.data.Zone,
+      "timeStampCreate": String(date),
+      "Sales_person_Commit": request.body.data.Sales_person_Commit,
+      "Lat": 0,
+      "Long": 0,
+      "Client_Type": "Cliente Potencial",
+      "Client_Community": comunity,
+    };
+
+    /* functions.logger.info("[Odoo_CRM_createUser]: Test firebase", {
+      "targetState": targetState,
+    }); // */
+
+    await FirebaseFcn.firebaseSet("/notRegisteredUsers/" + idOdoo, targetState);
+    functions.logger.info( "[odooToFirebase_CRMTickets] Ticket created in Firebase (/notRegisteredUsers/"+ idOdoo +").", {
+      "targetState": targetState,
+      "odoo_session": odoo_session,
+    }); // */
+
+    response.sendStatus(500);
+  }
 });
 
 firebaseToOdoo_Tickets_update = functions.database.ref("/Service_collection/{idTicketFb}").onUpdate(async (change, context) => {
   const ticket_before = change.before.val();
   const ticket_after = change.after.val();
 
-  const status_before = ticket_before["ticket_status"]
-  const status_after = ticket_after["ticket_status"]
+  const status_before = ticket_before["ticket_status"];
+  const status_after = ticket_after["ticket_status"];
 
   if (status_after === status_before) return null;
   else {
-    if (status_before === "Nuevo"){
-      if (status_after === "En progreso"){
-        const description_before = ticket_before["ticket_commits"]
-        const description_after = ticket_after["ticket_commits"]
+    if (status_before === "Nuevo") {
+      if (status_after === "En progreso") {
+        const description_before = ticket_before["ticket_commits"];
+        const description_after = ticket_after["ticket_commits"];
 
         const initialState = {
           "ticket_status": status_before,
-          "ticket_commits": description_before
-        }
+          "ticket_commits": description_before,
+        };
 
         const targetlState = {
           "ticket_status": status_after,
-          "ticket_commits": description_after
-        }
+          "ticket_commits": description_after,
+        };
 
         const odoo_session = await OdooFcn.odoo_Login();
-        await OdooFcn.firebaseToOdoo_updateTickets(odoo_session, Number(context.params.idTicketFb), description_after)
+        await OdooFcn.firebaseToOdoo_updateTickets(odoo_session, Number(context.params.idTicketFb), description_after);
         functions.logger.info("[firebaseToOdoo_Tickets_update]: Ticket updated in Odoo.", {
           "odoo_session": odoo_session,
           "ticket_id": context.params.idTicketFb,
           "initialState": initialState,
-          "targetState": targetlState
+          "targetState": targetlState,
         });
         await OdooFcn.odoo_Logout(odoo_session);
         return true;
@@ -475,7 +530,7 @@ firebaseToOdoo_Act_approve = functions.database.ref("/ServiceData_AprovPendant/{
   const service_definition = ServiceData["Service_definition"];
   const Inventory = ServiceData["Inventory"];
 
-  let listOfInv: Map<String, Number> = new Map([])
+  let listOfInv: Map<string, number> = new Map([]);
 
   let list = Object.keys(Inventory);
 
@@ -485,67 +540,67 @@ firebaseToOdoo_Act_approve = functions.database.ref("/ServiceData_AprovPendant/{
     const group = Inventory[id_group];
     let items = Object.keys(group);
 
-    for (let j = 0; j < items.length; j++){
-      const id_item = items[i]
+    for (let j = 0; j < items.length; j++) {
+      const id_item = items[i];
       try {
-        const item = group[id_item]
-        if (id_item != "group_name"){
+        const item = group[id_item];
+        if (id_item != "group_name") {
           const art_name = item["art_name"];
           const art_qtty = item["art_qtty"];
-          
+
           const cond1 = (art_name != "Otros:");
           const cond2 = ((art_qtty!=null) && ((art_qtty != "")));
 
-          if (cond1 && cond2){
-            if (Number(art_qtty) > 0.001){
+          if (cond1 && cond2) {
+            if (Number(art_qtty) > 0.001) {
               listOfInv.set(art_name, Number(art_qtty));
-              if(art_name === "Bolsa con aserrín") listOfInv.set("Bolsa con aserrín_extra", Number(art_qtty));
+              if (art_name === "Bolsa con aserrín") listOfInv.set("Bolsa con aserrín_extra", Number(art_qtty));
             }
           }
         }
       } catch (err) {
         functions.logger.error("[firebaseToOdoo_Act_approve] Error while reading inventory. ERROR: " + err, {
           "ticket_id": context.params.idTicketFb,
-          "item_id": id_item
+          "item_id": id_item,
         });
       }
     }
   }
 
-  if (service_definition["ticket_status"] === "Terminado"){
+  if (service_definition["ticket_status"] === "Terminado") {
     const odoo_session = await OdooFcn.odoo_Login();
 
     await OdooFcn.firebaseToOdoo_approveTicket(odoo_session, Number(context.params.idTicketFb), true);
     functions.logger.info("[firebaseToOdoo_Act_approve]: Ticket finalized in Odoo.", {
       "odoo_session": odoo_session,
       "ticket_id": context.params.idTicketFb,
-      "stage_id" : 14
+      "stage_id": 14,
     });
 
-    if (service_definition["ticket_type"] != "Desinstalación"){
+    if (service_definition["ticket_type"] != "Desinstalación") {
       functions.logger.info("[firebaseToOdoo_Act_approve]: Creating inventory in Odoo.", {
         "odoo_session": odoo_session,
         "ticket_id": context.params.idTicketFb,
-        "listOfInv" : listOfInv
+        "listOfInv": listOfInv,
       });
       await OdooFcn.firebaseToOdoo_stock(odoo_session, Number(service_definition["id_client"]), listOfInv, context.params.idTicketFb);
     }
 
     await OdooFcn.odoo_Logout(odoo_session);
     return true;
-  };
+  }
 
-  if (service_definition["ticket_status"] === "Nuevo"){
+  if (service_definition["ticket_status"] === "Nuevo") {
     const odoo_session = await OdooFcn.odoo_Login();
     await OdooFcn.firebaseToOdoo_approveTicket(odoo_session, Number(context.params.idTicketFb), false);
     functions.logger.info("[firebaseToOdoo_Act_approve]: Ticket restarted in Odoo.", {
       "odoo_session": odoo_session,
       "ticket_id": context.params.idTicketFb,
-      "stage_id" : 1
+      "stage_id": 1,
     });
     await OdooFcn.odoo_Logout(odoo_session);
     return true;
-  };
+  }
 
   return null;
 });
