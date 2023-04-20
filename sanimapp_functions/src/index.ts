@@ -10,7 +10,7 @@ export let firebaseToOdoo_Stops_create : any;// [IN PRODUCTION] if stop is creat
 export let firebaseToOdoo_Routes_create : any;// [IN PRODUCTION] if Route is created in firebase, creates the tag in odoo
 export let firebaseToOdoo_UserTags_update: any;
 export let firebaseToOdoo_Tickets_update: any;
-export let firebaseToOdoo_Act_approve: any; 7;
+export let firebaseToOdoo_Act_approve: any;
 export let firebaseToOdoo_CRM_update: any;
 
 // FROM ODOO TO FIREBASE
@@ -21,6 +21,7 @@ export let firebase_Stops_UsersQuantity_update : any;// [IN PRODUCTION] it stops
 
 // Odoo
 export let Odoo_Contact_createUser: any;//  create user in Odoo and Dataclient in firebase
+export let Odoo_CRM_createUser: any; //  create user in Odoo and notRegisteredUsers in firebase
 
 // Firebase Connection Settings
 const serviceAccount = require("./service-account.json");
@@ -417,9 +418,9 @@ firebaseToOdoo_UserTags_update = functions.database.ref("/Data_client/{idUserFb}
 });
 
 
-export let Odoo_CRM_createUser = functions.https.onRequest( async (request, response)=> {
+Odoo_CRM_createUser = functions.https.onRequest( async (request, response)=> {
   const odoo_session = await OdooFcn.odoo_Login();
-  const idOdoo = OdooFcn.createTicketCRM(odoo_session, request.body.args);
+  const idOdoo = await OdooFcn.createTicketCRM(odoo_session, request.body.args);
   // functions.logger.info("[Odoo_CRM_createUser]: Test odoo", request.body.args);
   await OdooFcn.odoo_Logout(odoo_session);
 
@@ -469,8 +470,8 @@ export let Odoo_CRM_createUser = functions.https.onRequest( async (request, resp
       "odoo_session": odoo_session,
     }); // */
 
-    response.sendStatus(500);
-  }
+    response.send(true);
+  } else response.send(true);
 });
 
 firebaseToOdoo_Tickets_update = functions.database.ref("/Service_collection/{idTicketFb}").onUpdate(async (change, context) => {
@@ -592,7 +593,6 @@ firebaseToOdoo_Act_approve = functions.database.ref("/ServiceData_AprovPendant/{
 
   return null;
 });
-
 
 Odoo_Contact_createUser = functions.https.onRequest( async (request, response)=> {
   try {

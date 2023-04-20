@@ -1339,7 +1339,7 @@ async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: 
 
         let partner_id = "NaN";
         if (stage_id != 0) {
-          partner_id = String(ticket["partner_id"][0]);
+          if (ticket["partner_id"] != false) partner_id = String(ticket["partner_id"][0]);
         }
 
         let campaign_id = "NaN";
