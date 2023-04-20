@@ -20,7 +20,7 @@ export let odooToFirebase : any;// if users or ticket changed in odoo, it change
 export let firebase_Stops_UsersQuantity_update : any;// [IN PRODUCTION] it stops changed, it updates users_quantity if necesary
 
 //Odoo
-export let Odoo_Contact_createUser: any;// [IN PRODUCTION] create user in Odoo and Dataclient in firebase
+export let Odoo_Contact_createUser: any;//  create user in Odoo and Dataclient in firebase
 
 // Firebase Connection Settings
 const serviceAccount = require("./service-account.json");
@@ -417,35 +417,7 @@ firebaseToOdoo_UserTags_update = functions.database.ref("/Data_client/{idUserFb}
 });
 
 
-Odoo_Contact_createUser = functions.https.onRequest( async (request, response)=> {
-  try {
-
-    const odoo_session = await OdooFcn.odoo_Login();
-
-    if (odoo_session != null) {
-
-      console.log(request.body);
-      await OdooFcn.createUser_Odoo_firebase(odoo_session,request.body);
-      await OdooFcn.odoo_Logout(odoo_session);
-      response.send(response);
-    }
-
-  } catch (error) {
-    functions.logger.error( "[odooToFirebase] ERROR at Start. ", error);
-    response.send("OdooSync Error: "+error);
-    
-  }
-});
-
-
-
-
 export let Odoo_CRM_createUser = functions.https.onRequest( async (request, response)=> {
-  // console.log(request.body);
-  // let request_str = JSON.stringify(request.body);
-  /* console.log(request_str);
-  let res = 30900; // 0 > error
-  response.send(res); // */
 
   const odoo_session = await OdooFcn.odoo_Login();
   const idOdoo = OdooFcn.createTicketCRM(odoo_session, request.body.args);
@@ -620,4 +592,24 @@ firebaseToOdoo_Act_approve = functions.database.ref("/ServiceData_AprovPendant/{
   }
 
   return null;
+});
+
+
+Odoo_Contact_createUser = functions.https.onRequest( async (request, response)=> {
+  try {
+
+    const odoo_session = await OdooFcn.odoo_Login();
+
+    if (odoo_session != null) {
+      
+      let res = await OdooFcn.createUser_Odoo_firebase(odoo_session, request.body.contact_json, request.body.id_ticket_crm);
+      await OdooFcn.odoo_Logout(odoo_session);
+      response.send(res);
+    }
+
+  } catch (error) {
+    functions.logger.error( "[Odoo_Contact_createUser] ERROR ", error);
+    response.send("Error");
+    
+  }
 });

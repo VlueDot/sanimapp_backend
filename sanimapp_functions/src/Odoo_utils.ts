@@ -2271,7 +2271,7 @@ export async function createTicketCRM(odoo_session: any, args: any) {
   }
 }
 
-export async function firebaseToOdoo_updateCRM(odoo_session:any, partner_id: number, idTicket: number) {
+async function firebaseToOdoo_updateCRM(odoo_session:any, partner_id: number, idTicket: number) {
   const CustomHeaders: HeadersInit = {
     "Content-Type": "application/json",
     "Cookie": "session_id="+odoo_session,
@@ -2302,12 +2302,75 @@ export async function firebaseToOdoo_updateCRM(odoo_session:any, partner_id: num
 
   const response = await fetch(settings.odoo_url + "dataset/call_kw/crm.lead/write", params);
   const data = await response.json();
+  
+  try {
+    let res = data.result;
+    functions.logger.info("[firebaseToOdoo_updateCRM] CRM succesfully updated in Odoo ("+partner_id+")",{
+      "odoo_session": odoo_session,
+      "id_user": partner_id,
+      "id_ticket_crm": idTicket
+    });
+    return res
 
-  return data;
+  } catch (error) {
+    functions.logger.info("[firebaseToOdoo_updateCRM] ERROR updated CRM in Odoo ("+partner_id+")",{
+      "odoo_session": odoo_session,
+      "id_user": partner_id,
+      "id_ticket_crm": idTicket
+    });
+    return false
+    
+  }
+  
 }
 
 
-export async function createUser_Odoo_firebase(odoo_session: any, data_json: any){
+export async function createUser_Odoo_firebase(odoo_session: any, contact_data_json: any, id_ticket_crm: any) {
+
+  // 1. Get id_odoo
+  try  {
+
+    const CustomHeaders: HeadersInit = {
+      "Content-Type": "application/json",
+      "Cookie": "session_id="+odoo_session,
+    };
   
-  return null
+    // from OdooGenerateJsonsToWriteOdoo function
+    const raw = JSON.stringify({
+      "params": contact_data_json.params,
+    });
+  
+    const params = {
+      headers: CustomHeaders,
+      method: "post",
+      body: raw,
+    };
+  
+    const response = await fetch(settings.odoo_url + "dataset/call_kw/res.partner/create", params);
+    const data = await response.json();
+    
+    functions.logger.info("[createUser_Odoo_firebase] User ("+ contact_data_json.params.args[0].name+") succesfully created in Odoo ("+ data.result+")",{
+      "odoo_session": odoo_session,
+      "id_user": data.result
+    });
+
+      
+    //2. update crm
+    await firebaseToOdoo_updateCRM(odoo_session, data.result, id_ticket_crm)
+    
+    
+  } catch (error) {
+
+    functions.logger.error("[createUser_Odoo_firebase] Error creating user in Odoo", {
+      "odoo_session": odoo_session,
+      "params": contact_data_json.params
+    });
+
+    return false
+    
+  }
+
+
+
+  return true
 }
