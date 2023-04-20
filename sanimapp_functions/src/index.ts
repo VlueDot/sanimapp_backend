@@ -469,9 +469,16 @@ Odoo_CRM_createUser = functions.https.onRequest( async (request, response)=> {
       "targetState": targetState,
       "odoo_session": odoo_session,
     }); // */
-
-    response.send(true);
-  } else response.send(true);
+    const res = {
+      "res": true,
+    };
+    response.send(res);
+  } else {
+    const res = {
+      "res": false,
+    };
+    response.send(res);
+  }
 });
 
 firebaseToOdoo_Tickets_update = functions.database.ref("/Service_collection/{idTicketFb}").onUpdate(async (change, context) => {

@@ -2357,10 +2357,14 @@ export async function createUser_Odoo_firebase(odoo_session: any, contact_data_j
       "odoo_session": odoo_session,
       "params": contact_data_json.params,
     });
-
-    return false;
+    const res = {
+      "res": false,
+    };
+    return res;
   }
 
-
-  return true;
+  const res = {
+    "res": true,
+  };
+  return res;
 }
