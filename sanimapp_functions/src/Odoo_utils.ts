@@ -2006,3 +2006,9 @@ export async function firebaseToOdoo_ActiveOrInstall(odoo_session:any, active: b
 
   return data_write;
 }
+
+
+export async function createUser_Odoo_firebase(odoo_session: any, data_json: any){
+  
+  return null
+}
