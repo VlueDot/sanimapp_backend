@@ -470,12 +470,12 @@ Odoo_CRM_createUser = functions.https.onRequest( async (request, response)=> {
       "odoo_session": odoo_session,
     }); // */
     const res = {
-      "res": true,
+      "result": idOdoo,
     };
     response.send(res);
   } else {
     const res = {
-      "res": false,
+      "result": false,
     };
     response.send(res);
   }
@@ -612,6 +612,6 @@ Odoo_Contact_createUser = functions.https.onRequest( async (request, response)=>
     }
   } catch (error) {
     functions.logger.error( "[Odoo_Contact_createUser] ERROR ", error);
-    response.send("Error");
+    response.send({"Error": error});
   }
 });
