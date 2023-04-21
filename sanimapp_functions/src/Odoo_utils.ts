@@ -2271,7 +2271,25 @@ export async function createTicketCRM(odoo_session: any, args: any) {
   }
 }
 
-async function firebaseToOdoo_updateCRM(odoo_session:any, partner_id: number, idTicket: number) {
+export async function firebaseToOdoo_updateCRM(odoo_session:any, partner_id: number, idTicket: number, venta: boolean) {
+  const args = [];
+  let stage_id = 2;
+
+  args.push(idTicket);
+
+  if (venta === true) {
+    args.push({
+      "stage_id": 2,
+      "partner_id": partner_id,
+    });
+  } else {
+    args.push({
+      "stage_id": 3,
+    });
+    stage_id = 3;
+  }
+
+
   const CustomHeaders: HeadersInit = {
     "Content-Type": "application/json",
     "Cookie": "session_id="+odoo_session,
@@ -2283,13 +2301,7 @@ async function firebaseToOdoo_updateCRM(odoo_session:any, partner_id: number, id
       "model": "crm.lead",
       "method": "write",
       "kwargs": {},
-      "args": [
-        idTicket,
-        {
-          "stage_id": 2,
-          "partner_id": partner_id,
-        },
-      ],
+      "args": args,
     },
   });
 
@@ -2309,6 +2321,7 @@ async function firebaseToOdoo_updateCRM(odoo_session:any, partner_id: number, id
       "odoo_session": odoo_session,
       "id_user": partner_id,
       "id_ticket_crm": idTicket,
+      "stage_id": stage_id,
     });
     return res;
   } catch (error) {
@@ -2316,6 +2329,7 @@ async function firebaseToOdoo_updateCRM(odoo_session:any, partner_id: number, id
       "odoo_session": odoo_session,
       "id_user": partner_id,
       "id_ticket_crm": idTicket,
+      "stage_id": stage_id,
     });
     return false;
   }
@@ -2350,7 +2364,7 @@ export async function createUser_Odoo_firebase(odoo_session: any, contact_data_j
     });
 
     // 2. update crm
-    await firebaseToOdoo_updateCRM(odoo_session, data.result, id_ticket_crm);
+    await firebaseToOdoo_updateCRM(odoo_session, data.result, id_ticket_crm, true);
 
     const res = {
       "result": Number(data.result),

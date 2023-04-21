@@ -401,6 +401,23 @@ firebaseToOdoo_UserTags_update = functions.database.ref("/Data_client/{idUserFb}
         await OdooFcn.odoo_Logout(odoo_session);
         return null;
       }
+
+      if ((client_type_new === "Cliente con Venta perdida") && (Client_Type_new === "Cliente con Venta perdida")) {
+        const ticket_id = await FirebaseFcn.firebaseGet("/CRM_tickets_not_archived/"+ context.params.idUserFb);
+        const odoo_session = await OdooFcn.odoo_Login();
+        await OdooFcn.firebaseToOdoo_updateCRM(odoo_session, 0, ticket_id, false);
+        functions.logger.info("[firebaseToOdoo_UserTags_update]: The ticket will be set to Cliente con Venta perdida.", {
+          "odoo_session": odoo_session,
+          "user_id": context.params.idUserFb,
+          "ticket_id": ticket_id,
+          "Client_Type_old": Client_Type_old,
+          "client_type_old": client_type_old,
+          "Client_Type_new": Client_Type_new,
+          "client_type_new": client_type_new,
+        });
+        await OdooFcn.odoo_Logout(odoo_session);
+        return null;
+      }
     }
   }
 
@@ -610,5 +627,30 @@ Odoo_Contact_createUser = functions.https.onRequest( async (request, response)=>
   } catch (error) {
     functions.logger.error( "[Odoo_Contact_createUser] ERROR ", error);
     response.send("Error");
+  }
+});
+
+firebaseToOdoo_CRM_update = functions.database.ref("/notRegisteredUsers/{idTicketFb}").onUpdate(async (change, context) => {
+  const ticket_id = Number(context.params.idTicketFb);
+
+  const ticket_before = change.before.val();
+  const ticket_after = change.after.val();
+
+  const Client_Type_old = ticket_before["Client_Type"];
+  const Client_Type_new = ticket_after["Client_Type"];
+
+  if (Client_Type_new != Client_Type_old) {
+    if (Client_Type_new === "Client_Type_new") {
+      const odoo_session = await OdooFcn.odoo_Login();
+
+      await OdooFcn.firebaseToOdoo_updateCRM(odoo_session, 0, ticket_id, false);
+      functions.logger.info("[firebaseToOdoo_CRM_update]: The CRM ticket "+ ticket_id+" will be set to Cliente con Venta perdida.", {
+        "odoo_session": odoo_session,
+        "ticket_id": ticket_id,
+        "Client_Type_old": Client_Type_old,
+        "Client_Type_new": Client_Type_new,
+      });
+      await OdooFcn.odoo_Logout(odoo_session);
+    }
   }
 });
