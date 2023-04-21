@@ -2349,22 +2349,21 @@ export async function createUser_Odoo_firebase(odoo_session: any, contact_data_j
       "id_user": data.result,
     });
 
-
     // 2. update crm
     await firebaseToOdoo_updateCRM(odoo_session, data.result, id_ticket_crm);
+
+    const res = {
+      "result": Number(data.result),
+    };
+    return res;
   } catch (error) {
     functions.logger.error("[createUser_Odoo_firebase] Error creating user in Odoo", {
       "odoo_session": odoo_session,
       "params": contact_data_json.params,
     });
     const res = {
-      "res": false,
+      "result": false,
     };
     return res;
   }
-
-  const res = {
-    "res": true,
-  };
-  return res;
 }
