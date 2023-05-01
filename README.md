@@ -14,6 +14,7 @@
   npm i firebase-tools -g
   npm i typescript -g
   npm i firebase-functions
+  npm i @types/node-fetch
   npm i -f
   npm install --save firebase-functions@latest
   npm audit fix --force
