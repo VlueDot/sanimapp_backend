@@ -1,4 +1,4 @@
-firebase deploy firebase.cmd deploy ﻿# Sanimapp Backend
+# Sanimapp Backend
 
 ## Initialize
 
