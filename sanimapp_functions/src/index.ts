@@ -2,6 +2,7 @@ import * as functions from "firebase-functions";
 import * as OdooFcn from "./Odoo_utils";
 import * as FirebaseFcn from "./Firebase_utils";
 import * as admin from "firebase-admin";
+import * as settings from "./GlobalSetting";
 
 // FROM FIREBASE TO ODOO
 export let firebaseToOdoo_Stops_update : any; // [IN PRODUCTION] if stops change in firebase, updates partner's tag in odoo
@@ -24,8 +25,8 @@ export let Odoo_Contact_createUser: any;//  create user in Odoo and Dataclient i
 export let Odoo_CRM_createUser: any; //  create user in Odoo and notRegisteredUsers in firebase
 
 // Firebase Connection Settings
-const serviceAccount = require("./service-account.json");
-export const urldatabase = "https://sanimappdev-default-rtdb.firebaseio.com";
+const serviceAccount = require(settings.get_serviceAccount());
+export const urldatabase = settings.get_urldatabase()
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   databaseURL: urldatabase,
@@ -653,4 +654,12 @@ firebaseToOdoo_CRM_update = functions.database.ref("/notRegisteredUsers/{idTicke
       await OdooFcn.odoo_Logout(odoo_session);
     }
   }
+});
+
+
+exports.test = functions.https.onRequest( async (request, response)=> {
+  const odoo_session = await OdooFcn.odoo_Login();
+  console.log(odoo_session)
+  console.log(settings.odoo_url);
+
 });

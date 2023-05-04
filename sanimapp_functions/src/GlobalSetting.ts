@@ -1,7 +1,7 @@
 
 
-const odoo_db = "oxe360-ooc-sanisol-staging-13-0-7921785";
-export const odoo_url = "https://"+ odoo_db +".dev.odoo.com/web/";
+const odoo_db = get_odoo_db()
+export const odoo_url = get_odoo_url()
 
 export const odoo_access = {
   headers: {"Content-Type": "application/json"},
@@ -14,3 +14,52 @@ export const odoo_access = {
           "login": "pablo@sanima.pe",
           "password": "Sanima2021",
         }})};
+
+
+function get_odoo_url() {
+
+  if ( process.env.GCLOUD_PROJECT == "sanimapp-prod"){
+    return "https://oxe360-ooc-sanisol.odoo.com/web/"
+  }
+  else if (process.env.GCLOUD_PROJECT === "sanimappdev") {
+    return "https://"+ odoo_db +".dev.odoo.com/web/";
+  } else {
+    return "https://"+ odoo_db +".dev.odoo.com/web/";
+  }
+}
+
+function get_odoo_db() {
+
+  if ( process.env.GCLOUD_PROJECT == "sanimapp-prod"){
+    return "oxe360-ooc-sanisol-prd-13-0-2554002"
+  }
+  else if (process.env.GCLOUD_PROJECT === "sanimappdev") {
+    return "oxe360-ooc-sanisol-staging-13-0-7921785";
+  } else {
+    return "oxe360-ooc-sanisol-staging-13-0-7921785";
+  }
+}
+
+export function get_serviceAccount() {
+
+  if ( process.env.GCLOUD_PROJECT == "sanimapp-prod"){
+    return "./service-account-prod.json"
+  }
+  else if (process.env.GCLOUD_PROJECT === "sanimappdev") {
+    return "./service-account.json"
+  } else {
+    return "./service-account.json"
+  }
+}
+
+export function get_urldatabase() {
+
+  if ( process.env.GCLOUD_PROJECT == "sanimapp-prod"){
+    return "https://sanimapp-prod-default-rtdb.firebaseio.com"
+  }
+  else if (process.env.GCLOUD_PROJECT === "sanimappdev") {
+    return "https://sanimappdev-default-rtdb.firebaseio.com"
+  } else {
+    return "https://sanimappdev-default-rtdb.firebaseio.com"
+  }
+}

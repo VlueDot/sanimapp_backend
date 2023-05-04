@@ -1,5 +1,10 @@
 {
   "projects": {
-    "default": "sanimappdev"
-  }
+    "default": "sanimappdev",
+    "test": "testany-1fce8",
+    "prod": "sanimapp-prod",
+    "dev": "sanimappdev"
+  },
+  "targets": {},
+  "etags": {}
 }
