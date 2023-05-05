@@ -1,5 +1,6 @@
 
-
+const dev = "oxe360-ooc-sanisol-staging-13-0-8158533"
+const prod = "oxe360-ooc-sanisol-prd-13-0-2554002"
 const odoo_db = get_odoo_db()
 export const odoo_url = get_odoo_url()
 
@@ -31,12 +32,12 @@ function get_odoo_url() {
 function get_odoo_db() {
 
   if ( process.env.GCLOUD_PROJECT == "sanimapp-prod"){
-    return "oxe360-ooc-sanisol-prd-13-0-2554002"
+    return prod
   }
   else if (process.env.GCLOUD_PROJECT === "sanimappdev") {
-    return "oxe360-ooc-sanisol-staging-13-0-7921785";
+    return dev;
   } else {
-    return "oxe360-ooc-sanisol-staging-13-0-7921785";
+    return dev;
   }
 }
 
