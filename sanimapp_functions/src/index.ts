@@ -1,8 +1,8 @@
 import * as functions from "firebase-functions";
 import * as OdooFcn from "./Odoo_utils";
 import * as FirebaseFcn from "./Firebase_utils";
-import * as admin from "firebase-admin";
 import * as settings from "./GlobalSetting";
+import * as admin from "firebase-admin";
 
 // FROM FIREBASE TO ODOO
 export let firebaseToOdoo_Stops_update : any; // [IN PRODUCTION] if stops change in firebase, updates partner's tag in odoo
@@ -25,8 +25,9 @@ export let Odoo_Contact_createUser: any;//  create user in Odoo and Dataclient i
 export let Odoo_CRM_createUser: any; //  create user in Odoo and notRegisteredUsers in firebase
 
 // Firebase Connection Settings
-const serviceAccount = require(settings.get_serviceAccount());
+const serviceAccount = require( settings.get_serviceAccount() );
 export const urldatabase = settings.get_urldatabase();
+
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   databaseURL: urldatabase,
@@ -663,3 +664,13 @@ exports.test = functions.https.onRequest( async (request, response)=> {
   console.log(settings.odoo_url);
   response.send(settings.odoo_url);
 });
+
+
+// export const firebase_test_update = functions.database.ref("test/update").onUpdate( async (change, context)=>{
+//   const stopData_after = change.after.val();
+//   console.log(stopData_after);
+//   console.log(context);
+//   let res = await FirebaseFcn.firebaseSet("test/update2", stopData_after);
+//   console.log(res);
+//   return res;
+// });

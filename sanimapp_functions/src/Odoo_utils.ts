@@ -25,7 +25,7 @@ export async function odoo_Login() {
 
   if (response.status === 200) {
     try {
-      functions.logger.info("[odoo_Login] Odoo Authentication Succeeded.", {"odoo_session": odoo_session});
+      functions.logger.info("[odoo_Login] Odoo Authentication Succeeded.", {"odoo_session": odoo_session, "db": settings.odoo_access});
       return odoo_session;
     } catch (error) {
       functions.logger.error("[odoo_Login] Odoo Authentication Failed: " + data["error"]["message"] );
