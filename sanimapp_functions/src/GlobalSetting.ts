@@ -1,8 +1,8 @@
 
-const dev = "oxe360-ooc-sanisol-staging-13-0-8158533"
-const prod = "oxe360-ooc-sanisol-prd-13-0-2554002"
-const odoo_db = get_odoo_db()
-export const odoo_url = get_odoo_url()
+const dev = "oxe360-ooc-sanisol-staging-13-0-8158533";
+const prod = "oxe360-ooc-sanisol-prd-13-0-2554002";
+const odoo_db = get_odoo_db();
+export const odoo_url = get_odoo_url();
 
 export const odoo_access = {
   headers: {"Content-Type": "application/json"},
@@ -18,11 +18,9 @@ export const odoo_access = {
 
 
 function get_odoo_url() {
-
-  if ( process.env.GCLOUD_PROJECT == "sanimapp-prod"){
-    return "https://oxe360-ooc-sanisol.odoo.com/web/"
-  }
-  else if (process.env.GCLOUD_PROJECT === "sanimappdev") {
+  if ( process.env.GCLOUD_PROJECT == "sanimapp-prod") {
+    return "https://oxe360-ooc-sanisol.odoo.com/web/";
+  } else if (process.env.GCLOUD_PROJECT === "sanimappdev") {
     return "https://"+ odoo_db +".dev.odoo.com/web/";
   } else {
     return "https://"+ odoo_db +".dev.odoo.com/web/";
@@ -30,11 +28,9 @@ function get_odoo_url() {
 }
 
 function get_odoo_db() {
-
-  if ( process.env.GCLOUD_PROJECT == "sanimapp-prod"){
-    return prod
-  }
-  else if (process.env.GCLOUD_PROJECT === "sanimappdev") {
+  if ( process.env.GCLOUD_PROJECT == "sanimapp-prod") {
+    return prod;
+  } else if (process.env.GCLOUD_PROJECT === "sanimappdev") {
     return dev;
   } else {
     return dev;
@@ -42,25 +38,21 @@ function get_odoo_db() {
 }
 
 export function get_serviceAccount() {
-
-  if ( process.env.GCLOUD_PROJECT == "sanimapp-prod"){
-    return "./service-account-prod.json"
-  }
-  else if (process.env.GCLOUD_PROJECT === "sanimappdev") {
-    return "./service-account.json"
+  if ( process.env.GCLOUD_PROJECT == "sanimapp-prod") {
+    return "./service-account-prod.json";
+  } else if (process.env.GCLOUD_PROJECT === "sanimappdev") {
+    return "./service-account.json";
   } else {
-    return "./service-account.json"
+    return "./service-account.json";
   }
 }
 
 export function get_urldatabase() {
-
-  if ( process.env.GCLOUD_PROJECT == "sanimapp-prod"){
-    return "https://sanimapp-prod-default-rtdb.firebaseio.com"
-  }
-  else if (process.env.GCLOUD_PROJECT === "sanimappdev") {
-    return "https://sanimappdev-default-rtdb.firebaseio.com"
+  if ( process.env.GCLOUD_PROJECT == "sanimapp-prod") {
+    return "https://sanimapp-prod-default-rtdb.firebaseio.com";
+  } else if (process.env.GCLOUD_PROJECT === "sanimappdev") {
+    return "https://sanimappdev-default-rtdb.firebaseio.com";
   } else {
-    return "https://sanimappdev-default-rtdb.firebaseio.com"
+    return "https://sanimappdev-default-rtdb.firebaseio.com";
   }
 }

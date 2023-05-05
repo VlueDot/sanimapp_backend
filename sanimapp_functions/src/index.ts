@@ -26,7 +26,7 @@ export let Odoo_CRM_createUser: any; //  create user in Odoo and notRegisteredUs
 
 // Firebase Connection Settings
 const serviceAccount = require(settings.get_serviceAccount());
-export const urldatabase = settings.get_urldatabase()
+export const urldatabase = settings.get_urldatabase();
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   databaseURL: urldatabase,
@@ -541,15 +541,15 @@ firebaseToOdoo_Act_approve = functions.database.ref("/ServiceData_AprovPendant/{
   const service_definition = ServiceData["Service_definition"];
   const Inventory = ServiceData["Inventory"];
 
-  let listOfInv: Map<string, number> = new Map([]);
+  const listOfInv: Map<string, number> = new Map([]);
 
-  let list = Object.keys(Inventory);
+  const list = Object.keys(Inventory);
 
   for (let i = 0; i < list.length; i++) {
     const id_group = list[i];
 
     const group = Inventory[id_group];
-    let items = Object.keys(group);
+    const items = Object.keys(group);
 
     for (let j = 0; j < items.length; j++) {
       const id_item = items[i];
@@ -621,7 +621,7 @@ Odoo_Contact_createUser = functions.https.onRequest( async (request, response)=>
     const odoo_session = await OdooFcn.odoo_Login();
 
     if (odoo_session != null) {
-      let res = await OdooFcn.createUser_Odoo_firebase(odoo_session, request.body.contact_json, request.body.id_ticket_crm);
+      const res = await OdooFcn.createUser_Odoo_firebase(odoo_session, request.body.contact_json, request.body.id_ticket_crm);
       await OdooFcn.odoo_Logout(odoo_session);
       response.send(res);
     }
@@ -659,7 +659,7 @@ firebaseToOdoo_CRM_update = functions.database.ref("/notRegisteredUsers/{idTicke
 
 exports.test = functions.https.onRequest( async (request, response)=> {
   const odoo_session = await OdooFcn.odoo_Login();
-  console.log(odoo_session)
+  console.log(odoo_session);
   console.log(settings.odoo_url);
-
+  response.send(settings.odoo_url);
 });

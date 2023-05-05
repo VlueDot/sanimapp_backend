@@ -1050,7 +1050,7 @@ async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdateTimesta
             // The updating depends on the current ticket status in firebase and the new ticket status from odoo
 
             const initialState = await FirebaseFcn.firebaseGet("/Service_collection/" + id);
-            let targetState = initialState;
+            const targetState = initialState;
 
             // if ticket status is "Nuevo"--------------------------------------------------------------------------------------
             if (ticket_status === "Nuevo") {
@@ -1157,7 +1157,7 @@ async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdateTimesta
             if (ticket_type != "NaN") {
               ToDoList.push("Create ticket in Firebase");
 
-              let targetState = {
+              const targetState = {
                 "id_client": Number(partner_id),
                 "creation_timestamp": create_date_str,
                 "ticket_commits": description,
@@ -1211,8 +1211,8 @@ async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdateTimesta
 
               // In case, ticket type is install, it alse updates the client type in Firebase to "cliente por instalar"---------
               if (ticket_type === "Instalación") {
-                let client_type_old_2 = await FirebaseFcn.firebaseGet("/Data_client/"+partner_id+"/Data_client_2/Client_Type");
-                let client_type_old_3 = await FirebaseFcn.firebaseGet("/Data_client/"+partner_id+"/Data_client_3/client_type");
+                const client_type_old_2 = await FirebaseFcn.firebaseGet("/Data_client/"+partner_id+"/Data_client_2/Client_Type");
+                const client_type_old_3 = await FirebaseFcn.firebaseGet("/Data_client/"+partner_id+"/Data_client_3/client_type");
                 await FirebaseFcn.firebaseSet("/Data_client/"+partner_id+"/Data_client_2/Client_Type", "Cliente por instalar");
                 await FirebaseFcn.firebaseSet("/Data_client/"+partner_id+"/Data_client_3/client_type", "Cliente por instalar");
                 functions.logger.info( "[odooToFirebase_ServiceTickets] Client type updated in Firebase (/Data_client/"+partner_id+")", {
@@ -1354,7 +1354,7 @@ async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: 
         let referred = ticket["referred"];
         if (referred === false) referred = "NaN";
 
-        let name = ticket["name"];
+        const name = ticket["name"];
 
         let phone = ticket["phone"];
         if (phone === false) phone = "NaN";
@@ -1399,7 +1399,7 @@ async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: 
           // ****************************************************************************************
           const potentialAddress = "/notRegisteredUsers/" + ticket_id;
           const initialState = await FirebaseFcn.firebaseGet(potentialAddress);
-          let targetState = initialState;
+          const targetState = initialState;
 
           if (ticket_status === "Cliente Potencial") {
             ToDoList.push("Update notRegisteredUsers data");
@@ -2257,7 +2257,7 @@ export async function createTicketCRM(odoo_session: any, args: any) {
     const data = await response.json();
     const idOdoo = String(data["result"]);
 
-    let request_str = JSON.stringify(args);
+    const request_str = JSON.stringify(args);
     functions.logger.info("[Odoo_CRM_createUser]: Ticket CRM created in odoo.", {
       "odoo_session": odoo_session,
       "user_id": idOdoo,
@@ -2316,7 +2316,7 @@ export async function firebaseToOdoo_updateCRM(odoo_session:any, partner_id: num
   const data = await response.json();
 
   try {
-    let res = data.result;
+    const res = data.result;
     functions.logger.info("[firebaseToOdoo_updateCRM] CRM succesfully updated in Odoo ("+partner_id+")", {
       "odoo_session": odoo_session,
       "id_user": partner_id,
