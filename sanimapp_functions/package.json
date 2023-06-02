@@ -18,9 +18,9 @@
   },
   "main": "lib/index.js",
   "dependencies": {
-    "@types/node-fetch": "^2.6.2",
+    "@types/node-fetch": "^2.6.4",
     "firebase-admin": "^11.5.0",
-    "firebase-functions": "^4.3.1",
+    "firebase-functions": "^4.4.0",
     "http-crud": "^4.0.0"
   },
   "devDependencies": {

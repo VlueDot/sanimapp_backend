@@ -33,7 +33,7 @@ export async function firebaseUpdate(ref: string, data:any) {
     await messageRef.update(data);
     return true;
   } catch (error) {
-    return error;
+    return false;
   }
 }
 

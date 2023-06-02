@@ -317,6 +317,7 @@ odooToFirebase = functions.pubsub.schedule("every minute")
         const lastupdateTimestamp_users = await FirebaseFcn.firebaseGet("/timestamp_collection/ussersTimeStamp");
         const lastupdateTimestamp_tickets = await FirebaseFcn.firebaseGet("/timestamp_collection/tickets_timestamp");
         const lastupdateTimestamp_crm = await FirebaseFcn.firebaseGet("/timestamp_collection/CMR_tickets_timestamp");
+        const lastupdateTimestamp_campaigns = await FirebaseFcn.firebaseGet("/timestamp_collection/CMR_campaings_timestamp");
 
         const odoo_session = await OdooFcn.odoo_Login();
 
@@ -326,7 +327,7 @@ odooToFirebase = functions.pubsub.schedule("every minute")
           // const init = Number(Date.now());
           // console.log("inicio");
 
-          await OdooFcn.odooToFirebase_all(odoo_session, lastupdateTimestamp_users, lastupdateTimestamp_tickets, lastupdateTimestamp_crm);
+          await OdooFcn.odooToFirebase_all(odoo_session, lastupdateTimestamp_users, lastupdateTimestamp_tickets, lastupdateTimestamp_crm, lastupdateTimestamp_campaigns);
 
           // const final = Number(Date.now());
           // console.log("tiempo", final - init);
@@ -660,9 +661,15 @@ firebaseToOdoo_CRM_update = functions.database.ref("/notRegisteredUsers/{idTicke
 
 exports.test = functions.https.onRequest( async (request, response)=> {
   const odoo_session = await OdooFcn.odoo_Login();
+
+
+  const lastupdateTimestamp_campaigns = await FirebaseFcn.firebaseGet("/timestamp_collection/CMR_campaings_timestamp");
+  OdooFcn.odooToFirebase_Campaigns(odoo_session, lastupdateTimestamp_campaigns)
+
+  
   console.log(odoo_session);
   console.log(settings.odoo_url);
-  response.send(settings.odoo_url);
+  response.send("<p>odoo url: "+settings.odoo_url +"</p><p>odoo session: "+odoo_session +"</p><p>Everything's working fine</p>");
 });
 
 

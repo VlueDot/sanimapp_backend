@@ -20,6 +20,19 @@
   npm audit fix --force
   clear
   ```  
+- REMEMBER TO RUN OUTSIDE sanimapp_function folder: 
+``` 
+firebase.cmd login
+firebase.cmd use dev
+``` 
+- Test inside sanimapp_function 
+``` 
+  npm run build
+  npm run s
+``` 
+- Test: http://127.0.0.1:5001/sanimappdev/us-central1/test
+
+# USE
 - Build: npm run build
 - Emulate: npm run serve
 - but you can also: use npm run s  and just build
@@ -27,6 +40,8 @@
 - Shell: npm run shell
 - fix code: npm run lint-fix
 - Deploy: firebase deploy --only functions
+
+
 
 
 ## Fork
