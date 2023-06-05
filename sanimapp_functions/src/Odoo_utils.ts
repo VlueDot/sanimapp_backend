@@ -64,19 +64,19 @@ export async function odooToFirebase_Campaigns(odoo_session:any, lastupdateTimes
   const date_str = "'"+ date.getFullYear()+"-"+("0" + (date.getMonth() + 1)).slice(-2)+"-"+("0" +date.getDate()).slice(-2)+" "+ ("0" +date.getHours()).slice(-2)+":"+("0" +date.getMinutes()).slice(-2)+":"+("0" +date.getSeconds()).slice(-2) + "'";
 
   console.log(date_str);
-  
+
   const CustomHeaders: HeadersInit = {
     "Content-Type": "application/json",
     "Cookie": "session_id="+odoo_session,
   };
 
   const raw = JSON.stringify({
-    "params":{
+    "params": {
       "model": "utm.campaign",
-          "offset": 0,
-          "fields": ["display_name" ],
-          "domain": [["write_date", ">", date_str]]
-    }
+      "offset": 0,
+      "fields": ["display_name"],
+      "domain": [["write_date", ">", date_str]],
+    },
   });
 
   const params = {
@@ -88,97 +88,83 @@ export async function odooToFirebase_Campaigns(odoo_session:any, lastupdateTimes
   let response;
   let data;
   let target_data;
-  let odoo_res = false
+  let odoo_res = false;
 
   try {
     response = await fetch(settings.odoo_url + "dataset/search_read", params);
     data = await response.json();
-    target_data = data["result"]["records"]
+    target_data = data["result"]["records"];
     odoo_res = true;
- 
   } catch (error) {
     functions.logger.error("[odooToFirebase_Campaigns] Odoo request Error: ", {
-      "odoo_session": odoo_session
+      "odoo_session": odoo_session,
     });
     odoo_res = false;
-    
   }
 
   let res = false;
 
   try {
-    if(odoo_res) {
-
+    if (odoo_res) {
       if (response?.status == 200) {
-
         const map = new Map();
-          let id : any;
-          let name : string;
-    
-    
-          for (let i = 0, len = target_data.length; i < len; i++) {
-            id = target_data[i]["id"];
-            name = target_data[i]["display_name"];
-    
-            map.set(id, name);
-          }
-    
-          const firebase_json = Object.fromEntries(map);
-          res = await FirebaseFcn.firebaseUpdate("campaign_names", firebase_json);
-  
-          if (!res)  {
-            functions.logger.error("[odooToFirebase_Campaigns] Campaings : Firebase failure updating " + target_data.length + " records.", {
-              "odoo_session": odoo_session,
-              "target_data": target_data});
-          }
-  
-  
-      }
-      else {
+        let id : any;
+        let name : string;
+
+
+        for (let i = 0, len = target_data.length; i < len; i++) {
+          id = target_data[i]["id"];
+          name = target_data[i]["display_name"];
+
+          map.set(id, name);
+        }
+
+        const firebase_json = Object.fromEntries(map);
+        res = await FirebaseFcn.firebaseUpdate("campaign_names", firebase_json);
+
+        if (!res) {
+          functions.logger.error("[odooToFirebase_Campaigns] Campaings : Firebase failure updating " + target_data.length + " records.", {
+            "odoo_session": odoo_session,
+            "target_data": target_data});
+        }
+      } else {
         functions.logger.error("[odooToFirebase_Campaigns] Odoo request Error: " + response?.status, {
           "odoo_session": odoo_session,
-          "target_data": target_data
+          "target_data": target_data,
         });
       }
-
     }
-
   } catch (error) {
     functions.logger.error( "[odooToFirebase_Campaigns] No Firebase updated so any campaign updated", {
       "odoo_session": odoo_session,
-      "target_data": target_data
+      "target_data": target_data,
     });
-    
   }
 
   try {
-
-    if(res){
+    if (res) {
       const dateTime = Date.now();
       FirebaseFcn.firebaseSet("/timestamp_collection/CMR_campaings_timestamp", String(dateTime));
 
       const new_date = new Date(Number(dateTime));
       const new_date_str = "'"+ new_date.getFullYear()+"-"+("0" + (new_date.getMonth() + 1)).slice(-2)+"-"+("0" +new_date.getDate()).slice(-2)+" "+ ("0" +new_date.getHours()).slice(-2)+":"+("0" +new_date.getMinutes()).slice(-2)+":"+("0" +new_date.getSeconds()).slice(-2) + "'";
-    
+
 
       functions.logger.info( "[odooToFirebase_Users] Campaings succesful updated.", {
         "odoo_session": odoo_session,
         "target_data": target_data,
-        "CMR_campaings_timestamp" : lastupdateTimestamp,
-        "CMR_campaings_timestamp_str" : date_str,
+        "CMR_campaings_timestamp": lastupdateTimestamp,
+        "CMR_campaings_timestamp_str": date_str,
         "New CMR_campaings_timestamp": String(dateTime),
-        "New CMR_campaings_timestamp_str" : new_date_str,
+        "New CMR_campaings_timestamp_str": new_date_str,
       } );
     }
-    
   } catch (error) {
     functions.logger.error( "[odooToFirebase_Campaigns] No CMR_campaings_timestamp updated", {
       "odoo_session": odoo_session,
-      "target_data": target_data
+      "target_data": target_data,
     });
-    
   }
-
 }
 
 export async function firebaseToOdoo_ChangeStopsRoutesLabels(odoo_session:any, idOdoo: number, stopsOrRoutes_json:any) {
@@ -1346,7 +1332,7 @@ async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: 
       "offset": 0,
       "fields": [
         "partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
-        "name", "phone", "mobile", "tag_ids", "create_uid", "create_date", "write_date",
+        "name", "phone", "mobile", "tag_ids", "user_id", "create_date", "write_date",
       ],
       "domain": [["write_date", ">", date_str]],
     },
@@ -1430,8 +1416,8 @@ async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: 
         if (tag_ids.includes(2)) ticket_type = "Ventas-Pamplona";
         if (tag_ids.includes(3)) ticket_type = "Ventas-Accu";
 
-        let create_uid = "NaN";
-        if (ticket["create_uid"][1] != undefined) create_uid = ticket["create_uid"][1];
+        let sales_person_name = "NaN";
+        if (ticket["user_id"][1] != undefined) sales_person_name = ticket["user_id"][1];
 
         const create_date = Date.parse(ticket["create_date"]);
 
@@ -1459,6 +1445,7 @@ async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: 
         // Write in firebase depending on case++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         if (keys_potentials.includes(ticket_id)) {
           // ****************************************************************************************
+          sales_person_name = notRegisteredUsers[ticket_id]["Sales_person"];
           const potentialAddress = "/notRegisteredUsers/" + ticket_id;
           const initialState = await FirebaseFcn.firebaseGet(potentialAddress);
           const targetState = initialState;
@@ -1472,7 +1459,7 @@ async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: 
             targetState["Name_potencial"] = name;
             targetState["Phone1"] = phone;
             targetState["Phone2"] = mobile;
-            targetState["Sales_person"] = create_uid;
+            targetState["Sales_person"] = sales_person_name;
             targetState["Zone"] = ticket_type;
 
             functions.logger.info( "[odooToFirebase_CRMTickets] Tasks. ", {
@@ -1501,7 +1488,7 @@ async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: 
               targetState["Name_potencial"] = name;
               targetState["Phone1"] = phone;
               targetState["Phone2"] = mobile;
-              targetState["Sales_person"] = create_uid;
+              targetState["Sales_person"] = sales_person_name;
               targetState["Zone"] = ticket_type;
               functions.logger.info( "[odooToFirebase_CRMTickets] Tasks. ", {
                 "odoo_session": odoo_session,
@@ -1620,7 +1607,7 @@ async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: 
                     "Name_potencial": name,
                     "Phone1": phone1,
                     "Phone2": phone2,
-                    "Sales_person": create_uid,
+                    "Sales_person": sales_person_name,
                     "Sales_person_Commit": "NaN",
                     "Urine_preference": "NaN",
                     "Zone": ticket_type,
@@ -1769,7 +1756,7 @@ async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: 
                 "Name_potencial": name,
                 "Phone1": phone,
                 "Phone2": mobile,
-                "Sales_person": create_uid,
+                "Sales_person": sales_person_name,
                 "Zone": ticket_type,
                 "timeStampCreate": String(create_date), // line 1510
                 "Sales_person_Commit": "NaN",
@@ -1891,7 +1878,7 @@ async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: 
                     "Name_potencial": name,
                     "Phone1": phone1,
                     "Phone2": phone2,
-                    "Sales_person": create_uid,
+                    "Sales_person": sales_person_name,
                     "Sales_person_Commit": "NaN",
                     "Urine_preference": "NaN",
                     "Zone": ticket_type,
@@ -2010,8 +1997,7 @@ async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: 
 }
 
 export async function odooToFirebase_all(odoo_session:any, lastupdateTimestamp_users: any,
-   lastupdateTimestamp_tickets: any, lastupdateTimestamp_crm: any, lastupdateTimestamp_campaigns : any) {
-
+    lastupdateTimestamp_tickets: any, lastupdateTimestamp_crm: any, lastupdateTimestamp_campaigns : any) {
   await odooToFirebase_CRMTickets(odoo_session, lastupdateTimestamp_crm);
   await odooToFirebase_Users(odoo_session, lastupdateTimestamp_users);
   await odooToFirebase_ServiceTickets(odoo_session, lastupdateTimestamp_tickets);
@@ -2323,7 +2309,7 @@ export async function createTicketCRM(odoo_session: any, args: any) {
     const idOdoo = String(data["result"]);
 
     const request_str = JSON.stringify(args);
-    functions.logger.info("[Odoo_CRM_createUser]: Ticket CRM created in odoo.", {
+    functions.logger.info("[createTicketCRM]: Ticket CRM created in odoo.", {
       "odoo_session": odoo_session,
       "user_id": idOdoo,
       "targetState": request_str,
@@ -2331,7 +2317,7 @@ export async function createTicketCRM(odoo_session: any, args: any) {
 
     return idOdoo;
   } catch (err) {
-    functions.logger.error( "[Odoo_CRM_createUser] ERROR: ", err);
+    functions.logger.error( "[createTicketCRM] ERROR: ", err);
     return null;
   }
 }

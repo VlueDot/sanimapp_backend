@@ -440,8 +440,10 @@ firebaseToOdoo_UserTags_update = functions.database.ref("/Data_client/{idUserFb}
 
 Odoo_CRM_createUser = functions.https.onRequest( async (request, response)=> {
   const odoo_session = await OdooFcn.odoo_Login();
+
+  // functions.logger.info("[Odoo_CRM_createUser]: Test odoo 2", request.body);
+
   const idOdoo = await OdooFcn.createTicketCRM(odoo_session, request.body.args);
-  // functions.logger.info("[Odoo_CRM_createUser]: Test odoo", request.body.args);
   await OdooFcn.odoo_Logout(odoo_session);
 
   if (idOdoo != null) {
@@ -485,7 +487,7 @@ Odoo_CRM_createUser = functions.https.onRequest( async (request, response)=> {
     }); // */
 
     await FirebaseFcn.firebaseSet("/notRegisteredUsers/" + idOdoo, targetState);
-    functions.logger.info( "[odooToFirebase_CRMTickets] Ticket created in Firebase (/notRegisteredUsers/"+ idOdoo +").", {
+    functions.logger.info( "[Odoo_CRM_createUser] Ticket created in Firebase (/notRegisteredUsers/"+ idOdoo +").", {
       "targetState": targetState,
       "odoo_session": odoo_session,
     }); // */
@@ -524,7 +526,7 @@ firebaseToOdoo_Tickets_update = functions.database.ref("/Service_collection/{idT
 
         const odoo_session = await OdooFcn.odoo_Login();
         await OdooFcn.firebaseToOdoo_updateTickets(odoo_session, Number(context.params.idTicketFb), description_after);
-        functions.logger.info("[firebaseToOdoo_Tickets_update]: Ticket updated in Odoo.", {
+        functions.logger.info("[Odoo_CRM_createUser]: Ticket updated in Odoo.", {
           "odoo_session": odoo_session,
           "ticket_id": context.params.idTicketFb,
           "initialState": initialState,
@@ -663,10 +665,10 @@ exports.test = functions.https.onRequest( async (request, response)=> {
   const odoo_session = await OdooFcn.odoo_Login();
 
 
-  const lastupdateTimestamp_campaigns = await FirebaseFcn.firebaseGet("/timestamp_collection/CMR_campaings_timestamp");
-  OdooFcn.odooToFirebase_Campaigns(odoo_session, lastupdateTimestamp_campaigns)
+  // const lastupdateTimestamp_campaigns = await FirebaseFcn.firebaseGet("/timestamp_collection/CMR_campaings_timestamp");
+  // OdooFcn.odooToFirebase_Campaigns(odoo_session, lastupdateTimestamp_campaigns);
 
-  
+
   console.log(odoo_session);
   console.log(settings.odoo_url);
   response.send("<p>odoo url: "+settings.odoo_url +"</p><p>odoo session: "+odoo_session +"</p><p>Everything's working fine</p>");
