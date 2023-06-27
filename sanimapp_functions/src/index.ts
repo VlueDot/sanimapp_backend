@@ -443,31 +443,31 @@ Odoo_CRM_createUser = functions.https.onRequest( async (request, response)=> {
 
   // functions.logger.info("[Odoo_CRM_createUser]: Test odoo 2", request.body);
   let date = Date.now();
-  const entry_exist= await OdooFcn.readTicketCRM(odoo_session, date, request.body.args)
-  let idOdoo
-  if (entry_exist == false )  {
+  const entry_exist= await OdooFcn.readTicketCRM(odoo_session, date, request.body.args);
+  let idOdoo;
+  if (entry_exist == false ) {
     idOdoo = await OdooFcn.createTicketCRM(odoo_session, request.body.args);
-    
-  
+
+
     await OdooFcn.odoo_Logout(odoo_session);
     if (idOdoo != null) {
       let referred = "";
       referred = request.body.args["referred"];
       if (referred === undefined) referred = "NaN";
-  
+
       let phone = "";
       phone = request.body.args["phone"];
       if (phone === undefined) phone = "NaN";
-  
+
       let mobile = "";
       mobile = request.body.args["mobile"];
       if (mobile === undefined) mobile = "NaN";
-  
+
       let comunity = request.body.args["function"];
       if (comunity === "") comunity = "NaN";
-  
+
       date = Date.now();
-  
+
       const targetState = {
         "Campaign_month": request.body.data.Campaign_month,
         "How_know_us": request.body.data.How_know_us,
@@ -485,11 +485,11 @@ Odoo_CRM_createUser = functions.https.onRequest( async (request, response)=> {
         "Client_Type": "Cliente Potencial",
         "Client_Community": comunity,
       };
-  
+
       /* functions.logger.info("[Odoo_CRM_createUser]: Test firebase", {
         "targetState": targetState,
       }); // */
-  
+
       await FirebaseFcn.firebaseSet("/notRegisteredUsers/" + idOdoo, targetState);
       functions.logger.info( "[Odoo_CRM_createUser] Ticket created in Firebase (/notRegisteredUsers/"+ idOdoo +").", {
         "targetState": targetState,
@@ -502,20 +502,14 @@ Odoo_CRM_createUser = functions.https.onRequest( async (request, response)=> {
     } else {
       response.send("Error");
     }
-  }
-  else {
-
+  } else {
     await OdooFcn.odoo_Logout(odoo_session);
     functions.logger.info( "[Odoo_CRM_createUser] Skipping. User already exists", {
       "odoo_session": odoo_session,
-      "request" : request.body
+      "request": request.body,
     });
     response.send("Skipping. Already exists");
   }
-  
-
-
-
 });
 
 firebaseToOdoo_Tickets_update = functions.database.ref("/Service_collection/{idTicketFb}").onUpdate(async (change, context) => {

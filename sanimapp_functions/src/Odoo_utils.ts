@@ -1314,7 +1314,7 @@ async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdateTimesta
   return null;
 }
 
-async function  odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: any) {
+async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: any) {
   // The function reads the tickes CRM created in odoo after the last update
   const date = new Date(Number(lastupdateTimestamp));
   const date_str = "'"+ date.getFullYear()+"-"+("0" + (date.getMonth() + 1)).slice(-2)+"-"+("0" +date.getDate()).slice(-2)+" "+ ("0" +date.getHours()).slice(-2)+":"+("0" +date.getMinutes()).slice(-2)+":"+("0" +date.getSeconds()).slice(-2) + "'";
@@ -2282,7 +2282,7 @@ export async function firebaseToOdoo_stock(odoo_session:any, partner_id: number,
 }
 
 export async function createTicketCRM(odoo_session: any, args: any) {
-  //check odoo user after create it
+  // check odoo user after create it
 
 
   const CustomHeaders: HeadersInit = {
@@ -2327,9 +2327,9 @@ export async function createTicketCRM(odoo_session: any, args: any) {
 
 
 export async function readTicketCRM(odoo_session:any, lastupdateTimestamp: any, args:any) {
-  //The function reads the tickes CRM created in odoo after the last update
-  
-  lastupdateTimestamp = lastupdateTimestamp -60000
+  // The function reads the tickes CRM created in odoo after the last update
+
+  lastupdateTimestamp = lastupdateTimestamp -60000;
   const date = new Date(Number(lastupdateTimestamp));
   const date_str = "'"+ date.getFullYear()+"-"+("0" + (date.getMonth() + 1)).slice(-2)+"-"+("0" +date.getDate()).slice(-2)+" "+ ("0" +date.getHours()).slice(-2)+":"+("0" +date.getMinutes()).slice(-2)+":"+("0" +date.getSeconds()).slice(-2) + "'";
 
@@ -2346,9 +2346,9 @@ export async function readTicketCRM(odoo_session:any, lastupdateTimestamp: any, 
       "offset": 0,
       "fields": [
         "partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
-        "name", "phone", "mobile", "tag_ids", "user_id", "create_date", "write_date","color"
+        "name", "phone", "mobile", "tag_ids", "user_id", "create_date", "write_date", "color",
       ],
-      "domain": ["&", ["name", "=" , args.name], ["write_date",">", date_str], ["user_id", "=", args.user_id]],
+      "domain": ["&", ["name", "=", args.name], ["write_date", ">", date_str], ["user_id", "=", args.user_id]],
     },
   });
 
@@ -2362,18 +2362,17 @@ export async function readTicketCRM(odoo_session:any, lastupdateTimestamp: any, 
     const response = await fetch(settings.odoo_url + "dataset/search_read", params);
     const data = await response.json();
     const len = data.result.length;
-    if (len == 0 ) return false
+    if (len == 0 ) return false;
     else {
-
-    return true}
-    
+      return true;
+    }
   } catch (err) {
-    functions.logger.error("[odooToFirebase_CRMTickets] ERROR: " + err, {"odoo_session": odoo_session} )
+    functions.logger.error("[odooToFirebase_CRMTickets] ERROR: " + err, {"odoo_session": odoo_session} );
     return true
     ;
   }
 
-  return true 
+  return true;
 }
 
 
