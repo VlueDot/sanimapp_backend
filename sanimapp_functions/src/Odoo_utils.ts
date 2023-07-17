@@ -198,7 +198,7 @@ export async function firebaseToOdoo_ChangeStopsRoutesLabels(odoo_session:any, i
 }
 
 
-async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp:any) {
+export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp:any) {
   const date = new Date(Number(lastupdateTimestamp));
   const date_str = "'"+ date.getFullYear()+"-"+("0" + (date.getMonth() + 1)).slice(-2)+"-"+("0" +date.getDate()).slice(-2)+" "+ ("0" +date.getHours()).slice(-2)+":"+("0" +date.getMinutes()).slice(-2)+":"+("0" +date.getSeconds()).slice(-2) + "'";
 
@@ -227,7 +227,9 @@ async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp:any) {
   try {
     const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
     const data = await response.json();
-
+    console.log("1: ",data)
+    console.log("2: ", params)
+    
     const qtty_users = data.result.length;
     if (qtty_users > 0) {
       const fb_stops = await FirebaseFcn.firebaseGet("stops");

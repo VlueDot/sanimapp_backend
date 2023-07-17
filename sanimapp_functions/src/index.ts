@@ -679,7 +679,9 @@ exports.test = functions.https.onRequest( async (request, response)=> {
 
   // const lastupdateTimestamp_campaigns = await FirebaseFcn.firebaseGet("/timestamp_collection/CMR_campaings_timestamp");
   // OdooFcn.odooToFirebase_Campaigns(odoo_session, lastupdateTimestamp_campaigns);
-
+  const lastupdateTimestamp_users = await FirebaseFcn.firebaseGet("/timestamp_collection/ussersTimeStamp");
+  console.log(lastupdateTimestamp_users)
+  await OdooFcn.odooToFirebase_Users(odoo_session, lastupdateTimestamp_users);
 
   console.log(odoo_session);
   console.log(settings.odoo_url);
