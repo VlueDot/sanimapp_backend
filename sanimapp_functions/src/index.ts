@@ -672,8 +672,13 @@ firebaseToOdoo_CRM_update = functions.database.ref("/notRegisteredUsers/{idTicke
   }
 });
 
+const runtimeOpts = {
+  timeoutSeconds: 540
+ }
 
-exports.test = functions.https.onRequest( async (request, response)=> {
+exports.test = functions
+.runWith(runtimeOpts)
+.https.onRequest( async (request, response)=> {
   const odoo_session = await OdooFcn.odoo_Login();
 
 
@@ -681,8 +686,8 @@ exports.test = functions.https.onRequest( async (request, response)=> {
   // OdooFcn.odooToFirebase_Campaigns(odoo_session, lastupdateTimestamp_campaigns);
   const lastupdateTimestamp_users = await FirebaseFcn.firebaseGet("/timestamp_collection/ussersTimeStamp");
   console.log(lastupdateTimestamp_users)
-  await OdooFcn.odooToFirebase_Users(odoo_session, lastupdateTimestamp_users);
-
+  let success = OdooFcn.odooToFirebase_Users(odoo_session, lastupdateTimestamp_users);
+  console.log("success: ", success)
   console.log(odoo_session);
   console.log(settings.odoo_url);
   response.send("<p>odoo url: "+settings.odoo_url +"</p><p>odoo session: "+odoo_session +"</p><p>Everything's working fine</p>");
@@ -697,3 +702,15 @@ exports.test = functions.https.onRequest( async (request, response)=> {
 //   console.log(res);
 //   return res;
 // });
+
+
+exports.test2 = functions
+.https.onRequest( async (request, response)=> {
+  const odoo_session = await OdooFcn.odoo_Login();
+
+  let success = await OdooFcn.GetCategories(odoo_session);
+  console.log("success: ", success)
+  console.log(odoo_session);
+  console.log(settings.odoo_url);
+  response.send("<p>odoo url: "+settings.odoo_url +"</p><p>odoo session: "+odoo_session +"</p><p>Everything's working fine</p>");
+});

@@ -63,7 +63,7 @@ export async function odooToFirebase_Campaigns(odoo_session:any, lastupdateTimes
   const date = new Date(Number(lastupdateTimestamp));
   const date_str = "'"+ date.getFullYear()+"-"+("0" + (date.getMonth() + 1)).slice(-2)+"-"+("0" +date.getDate()).slice(-2)+" "+ ("0" +date.getHours()).slice(-2)+":"+("0" +date.getMinutes()).slice(-2)+":"+("0" +date.getSeconds()).slice(-2) + "'";
 
-  console.log(date_str);
+  //console.log(date_str);
 
   const CustomHeaders: HeadersInit = {
     "Content-Type": "application/json",
@@ -197,38 +197,154 @@ export async function firebaseToOdoo_ChangeStopsRoutesLabels(odoo_session:any, i
   return null;
 }
 
+export async function GetCategories(odoo_session:any){
+
+  let list = [];
+
+  try {
+
+    const CustomHeaders: HeadersInit = {
+      "Content-Type": "application/json",
+      "Cookie": "session_id="+odoo_session,
+    };
+
+    const raw = JSON.stringify({
+      "params": {
+        "model":"res.partner.category",
+        "fields":["id", "name"],
+        "offset":0,
+        "domain":[]
+      },
+    });
+
+    let params = {
+      headers: CustomHeaders,
+      method: "post",
+      body: raw,
+    };
+
+    let response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+    
+    let data = await response.json();
+    list = data.result.records
+    let stops_list: Array<number> = list.filter((e:any) => e.name.includes("Paradero:"))
+    let routes_list: Array<number> = list.filter((e:any) => e.name.includes("Ruta:"))
+    let states_list: Array<number> = list.filter((e:any) => e.name.includes("usuario activo") || e.name.includes("usuario inactivo") || e.name.includes("Usuario por instalar")  )
+    return {
+      stops : stops_list,
+      routes: routes_list,
+      states: states_list
+    }
+
+    
+      
+   
+    
+  } catch (error) {
+    return false;
+  }
+
+
+  
+}
 
 export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp:any) {
+  if(lastupdateTimestamp==null) lastupdateTimestamp = 0
   const date = new Date(Number(lastupdateTimestamp));
   const date_str = "'"+ date.getFullYear()+"-"+("0" + (date.getMonth() + 1)).slice(-2)+"-"+("0" +date.getDate()).slice(-2)+" "+ ("0" +date.getHours()).slice(-2)+":"+("0" +date.getMinutes()).slice(-2)+":"+("0" +date.getSeconds()).slice(-2) + "'";
-
+  console.log(date_str);
   const CustomHeaders: HeadersInit = {
     "Content-Type": "application/json",
     "Cookie": "session_id="+odoo_session,
   };
 
-  const raw = JSON.stringify({
-    "params": {
-      "model": "res.partner",
-      "offset": 0,
-      "fields": [
-        "id", "phone", "mobile", "surname", "mother_name", "first_name", "middle_name",
-        "vat", "street", "display_name", "category_id", "l10n_pe_ubigeo", "write_date"],
-      "domain": [["write_date", ">", date_str]],
-    },
-  });
+  let stops_list = [];
+  let routes_list = [];
 
-  const params = {
-    headers: CustomHeaders,
-    method: "post",
-    body: raw,
-  };
+  //first obtain all categories
+  try {
+    const raw_stops = JSON.stringify({
+      "params": {
+        "model":"res.partner.category",
+        "fields":["id", "name"],
+        "offset":0,
+        "domain":[[ "name","ilike", "Paradero:"] ]
+      },
+    });
+
+    let params = {
+      headers: CustomHeaders,
+      method: "post",
+      body: raw_stops,
+    };
+
+    let response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+    
+    let data = await response.json();
+    stops_list = data.result.records
+
+    console.log("all stops readed")
+    
+  } catch (error) {
+    console.log("not  stops readed. so skip...");
+    return false;
+  }
 
   try {
+    const raw_route = JSON.stringify({
+      "params": {
+        "model":"res.partner.category",
+        "fields":["id", "name"],
+        "offset":0,
+        "domain":[[ "name","ilike", "Ruta:"] ]
+      },
+    });
+
+    let params = {
+      headers: CustomHeaders,
+      method: "post",
+      body: raw_route,
+    };
+
+    let response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+    
+    let data = await response.json();
+    routes_list = data.result.records
+
+    console.log("all routes readed")
+    
+  } catch (error) {
+    console.log("not routes readed. so skip...");
+    return false;
+  }
+
+
+
+  console.log(stops_list, routes_list)
+
+
+
+  try {
+    const raw = JSON.stringify({
+      "params": {
+        "model": "res.partner",
+        "offset": 0,
+        "fields": [
+          "id",  "name", "phone", "mobile",
+          "vat", "street", "display_name", "category_id", "write_date"],
+        "domain": [["write_date", ">", date_str]],
+      },
+    });
+  
+    const params = {
+      headers: CustomHeaders,
+      method: "post",
+      body: raw,
+    };
     const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
-    const data = await response.json();
-    console.log("1: ",data)
-    console.log("2: ", params)
+    
+    let data
+    data = await response.json();
     
     const qtty_users = data.result.length;
     if (qtty_users > 0) {
@@ -244,6 +360,7 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
             "target_data": target_data,
           } );
 
+     
 
       for (let i= 0; i<qtty_users; i++) {
         const user_id = target_data[i].id;
@@ -780,11 +897,13 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
         }
       }
     } else functions.logger.info( "[odooToFirebase_Users] No update founded in Odoo.", {"odoo_session": odoo_session});
+    
   } catch (err) {
     functions.logger.error( "[odooToFirebase_Users] ERROR: " + err, {"odoo_session": odoo_session} );
+    return false;
   }
 
-  return null;
+  return true;
 }
 
 
