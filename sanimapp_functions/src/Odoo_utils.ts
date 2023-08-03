@@ -199,7 +199,7 @@ export async function firebaseToOdoo_ChangeStopsRoutesLabels(odoo_session:any, i
 
 export async function GetCategories(odoo_session:any){
 
-  let list = [];
+  let list;
 
   try {
 
@@ -227,21 +227,17 @@ export async function GetCategories(odoo_session:any){
     
     let data = await response.json();
     list = data.result.records
-    let stops_list: Array<number> = list.filter((e:any) => e.name.includes("Paradero:"))
-    let routes_list: Array<number> = list.filter((e:any) => e.name.includes("Ruta:"))
-    let states_list: Array<number> = list.filter((e:any) => e.name.includes("usuario activo") || e.name.includes("usuario inactivo") || e.name.includes("Usuario por instalar")  )
-    return {
-      stops : stops_list,
-      routes: routes_list,
-      states: states_list
-    }
+    // let stops_list: Array<number> = list.filter((e:any) => e.name.includes("Paradero:"))
+    // let routes_list: Array<number> = list.filter((e:any) => e.name.includes("Ruta:"))
+    // let states_list: Array<number> = list.filter((e:any) => e.name.includes("usuario activo") || e.name.includes("usuario inactivo") || e.name.includes("Usuario por instalar")  )
+    return list
 
     
       
    
     
   } catch (error) {
-    return false;
+    return [];
   }
 
 
@@ -258,70 +254,21 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
     "Cookie": "session_id="+odoo_session,
   };
 
-  let stops_list = [];
-  let routes_list = [];
+  let categories_list
 
   //first obtain all categories
-  try {
-    const raw_stops = JSON.stringify({
-      "params": {
-        "model":"res.partner.category",
-        "fields":["id", "name"],
-        "offset":0,
-        "domain":[[ "name","ilike", "Paradero:"] ]
-      },
-    });
-
-    let params = {
-      headers: CustomHeaders,
-      method: "post",
-      body: raw_stops,
-    };
-
-    let response = await fetch(settings.odoo_url + "dataset/search_read/", params);
-    
-    let data = await response.json();
-    stops_list = data.result.records
-
-    console.log("all stops readed")
-    
-  } catch (error) {
-    console.log("not  stops readed. so skip...");
-    return false;
+try {
+  let categories_list = await GetCategories(odoo_session);
+  if (categories_list.length == 0){
+    functions.logger.error( "[odooToFirebase_Users] ERROR No categories: ", {"odoo_session": odoo_session} );
+    return false
   }
 
-  try {
-    const raw_route = JSON.stringify({
-      "params": {
-        "model":"res.partner.category",
-        "fields":["id", "name"],
-        "offset":0,
-        "domain":[[ "name","ilike", "Ruta:"] ]
-      },
-    });
-
-    let params = {
-      headers: CustomHeaders,
-      method: "post",
-      body: raw_route,
-    };
-
-    let response = await fetch(settings.odoo_url + "dataset/search_read/", params);
-    
-    let data = await response.json();
-    routes_list = data.result.records
-
-    console.log("all routes readed")
-    
-  } catch (error) {
-    console.log("not routes readed. so skip...");
-    return false;
-  }
-
-
-
-  console.log(stops_list, routes_list)
-
+} catch (error) {
+  functions.logger.error( "[odooToFirebase_Users] ERROR No categories: " + error, {"odoo_session": odoo_session} );
+  return false
+  
+}
 
 
   try {
@@ -330,7 +277,7 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
         "model": "res.partner",
         "offset": 0,
         "fields": [
-          "id",  "name", "phone", "mobile",
+          "id",  "name", "phone", "mobile", "zip",
           "vat", "street", "display_name", "category_id", "write_date"],
         "domain": [["write_date", ">", date_str]],
       },
@@ -373,35 +320,36 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
           // STOPS ----------------------------------------------------------------
 
 
-          const user_stop_data = await checkingCategoriesOdoo( CustomHeaders, user_categories, "paradero" );
+          //const user_stop_data = await checkingCategoriesOdoo( CustomHeaders, user_categories, "paradero" );
+          const user_categories_filtered = await search_categories_Odoo( user_categories, categories_list );
+          console.log("user_categories_filtered: ", user_categories_filtered)
+
+          const user_stop_data = user_categories_filtered.filter( (e:any) => e.name.includes("Paradero:"))
+          console.log("user_stop_data: ", user_stop_data)
+
 
           let user_stopId = 0; let user_namestop = "NaN";
 
-          if (user_stop_data.result.length > 0) {
-            user_stopId = user_stop_data.result.records[0].id;
-            user_namestop = user_stop_data.result.records[0].name;
+          if (user_stop_data.length > 0) {
+            user_stopId = user_stop_data[0].id;
+            user_namestop = user_stop_data[0].name;
           }
 
           let ubigeo = "NaN";
-          if (target_data[i].l10n_pe_ubigeo != false) ubigeo = target_data[i].l10n_pe_ubigeo;
+          //l10n_pe_ubigeo is deprecated. Please use zip instead
+          if (target_data[i].zip != false) ubigeo = target_data[i].zip;
 
           let phone1 = "NaN";
           if (target_data[i].phone != false) phone1 = target_data[i].phone;
 
           let phone2 = "NaN";
           if (target_data[i].mobile != false) phone2 = target_data[i].mobile;
-
+/*
           let name_1 = "NaN";
           if (target_data[i].first_name != false) name_1 = target_data[i].first_name;
 
           let name_2 = "NaN";
           if (target_data[i].middle_name != false) name_2 = target_data[i].middle_name;
-
-          let address = "NaN";
-          if (target_data[i].street != false) address = target_data[i].street;
-
-          let dni = "NaN";
-          if (target_data[i].vat != false) dni = target_data[i].vat;
 
           let last_name_1 = "NaN";
           if (target_data[i].surname != false) last_name_1 = target_data[i].surname;
@@ -409,9 +357,21 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
           let last_name_2 = "NaN";
           if (target_data[i].mother_name != false) last_name_2 = target_data[i].mother_name;
 
-          // ROUTES ----------------------------------------------------------------
+*/
+          let name_1 = "NaN";
+          if (target_data[i].first_name != false) name_1 = target_data[i].name;
 
-          const user_route_data = await checkingCategoriesOdoo( CustomHeaders, user_categories, "ruta:" );
+          let address = "NaN";
+          if (target_data[i].street != false) address = target_data[i].street;
+
+          let dni = "NaN";
+          if (target_data[i].vat != false) dni = target_data[i].vat;
+
+          
+
+          // ROUTES ----------------------------------------------------------------
+          let user_route_data = user_categories_filtered.filter( (e:any) => e.name.includes("Ruta:"))
+
           let user_routeId = 0; let user_nameroute = "NaN";
 
 
@@ -1027,6 +987,21 @@ async function checkingCategoriesOdoo(CustomHeaders:any, user_categories: any, m
     functions.logger.error( "[CheckingCategoriesOdoo] ERROR. ", {"error": err, "user_categories": user_categories});
     return {"result": {"records": []}};
   }
+}
+
+export async function search_categories_Odoo(user_categories: any, categories_list: any){
+  let filtered_element
+  let filtered_list = []
+  for (var each_id in user_categories){
+
+    
+    filtered_element = categories_list.filter((e:any) => e.id == user_categories[each_id])
+    filtered_list.push(filtered_element[0])
+
+    
+  }
+  return filtered_list
+
 }
 
 

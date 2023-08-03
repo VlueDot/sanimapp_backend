@@ -708,8 +708,24 @@ exports.test2 = functions
 .https.onRequest( async (request, response)=> {
   const odoo_session = await OdooFcn.odoo_Login();
 
-  let success = await OdooFcn.GetCategories(odoo_session);
-  console.log("success: ", success)
+  let categories_list = await OdooFcn.GetCategories(odoo_session);
+  if (categories_list.length == 0)
+  {
+  console.log("Error: No categories")
+  }
+  else console.log(categories_list)
+
+  let user_categories = [809, 453, 646]
+  
+  let user_categories_filtered = await OdooFcn.search_categories_Odoo( user_categories, categories_list );
+
+  console.log("user_categories_filtered: ", user_categories_filtered)
+
+  let user_stop_data = user_categories_filtered.filter( (e:any) => e.name.includes("Paradero:"))
+  console.log("user_stop_data: ", user_stop_data)
+  console.log("user_stop_data.name: ", user_stop_data[0].name)
+
+
   console.log(odoo_session);
   console.log(settings.odoo_url);
   response.send("<p>odoo url: "+settings.odoo_url +"</p><p>odoo session: "+odoo_session +"</p><p>Everything's working fine</p>");
