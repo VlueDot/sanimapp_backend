@@ -676,9 +676,7 @@ const runtimeOpts = {
   timeoutSeconds: 540
  }
 
-exports.test = functions
-.runWith(runtimeOpts)
-.https.onRequest( async (request, response)=> {
+exports.test = functions.runWith(runtimeOpts).https.onRequest( async (request, response)=> {
   const odoo_session = await OdooFcn.odoo_Login();
 
 
@@ -686,7 +684,7 @@ exports.test = functions
   // OdooFcn.odooToFirebase_Campaigns(odoo_session, lastupdateTimestamp_campaigns);
   const lastupdateTimestamp_users = await FirebaseFcn.firebaseGet("/timestamp_collection/ussersTimeStamp");
   console.log(lastupdateTimestamp_users)
-  let success = OdooFcn.odooToFirebase_Users(odoo_session, lastupdateTimestamp_users);
+  let success = await OdooFcn.odooToFirebase_Users(odoo_session, lastupdateTimestamp_users);
   console.log("success: ", success)
   console.log(odoo_session);
   console.log(settings.odoo_url);
@@ -713,17 +711,25 @@ exports.test2 = functions
   {
   console.log("Error: No categories")
   }
-  else console.log(categories_list)
+  // else console.log(categories_list)
 
-  let user_categories = [809, 453, 646]
+  let user_categories = [809, 453, 646, 867, 506]
   
   let user_categories_filtered = await OdooFcn.search_categories_Odoo( user_categories, categories_list );
 
-  console.log("user_categories_filtered: ", user_categories_filtered)
+  // console.log("user_categories_filtered: ", user_categories_filtered)
 
   let user_stop_data = user_categories_filtered.filter( (e:any) => e.name.includes("Paradero:"))
   console.log("user_stop_data: ", user_stop_data)
   console.log("user_stop_data.name: ", user_stop_data[0].name)
+  console.log("user_stop_data.id: ", user_stop_data[0].id)
+
+  
+  let user_route_data = user_categories_filtered.filter( (e:any) => e.name.includes("Ruta:"))
+  console.log("user_route_data: ", user_route_data)
+  console.log("user_route_data.name: ", user_route_data[0].name)
+  console.log("user_route_data.id: ", user_route_data[0].id)
+
 
 
   console.log(odoo_session);
