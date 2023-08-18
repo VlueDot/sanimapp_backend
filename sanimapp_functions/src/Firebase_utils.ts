@@ -1,7 +1,6 @@
 
 import * as fcn from "firebase-functions";
-const nodemailer = require('nodemailer')
-
+const nodemailer = require("nodemailer");
 
 
 // any --> functions.Change<functions.database.DataSnapshot>
@@ -70,26 +69,26 @@ export async function firebaseRemove(ref: string) {
   }
 }
 
-var transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
+let transporter = nodemailer.createTransport({
+  host: "smtp.gmail.com",
   port: 465,
   secure: true,
   auth: {
-      user: "alfa.vluedot@gmail.com",
-      pass: "orvzeswbmdpdclft"
-  }
+    user: "alfa.vluedot@gmail.com",
+    pass: "orvzeswbmdpdclft",
+  },
 });
 
 export async function sendEmail(dateTs:any, container:any) {
   const date = new Date(Number(dateTs));
-  const date_str =  date.getFullYear()+"-"+("0" + (date.getMonth() + 1)).slice(-2)+"-"+("0" +date.getDate()).slice(-2)+" "+ ("0" +date.getHours()).slice(-2)+":"+("0" +date.getMinutes()).slice(-2)+":"+("0" +date.getSeconds()).slice(-2)
-  let env
-  if(process.env.GCLOUD_PROJECT === "sanimapp-prod") env = "[PROD]"
-  else env = "[DEV]"
+  const date_str = date.getFullYear()+"-"+("0" + (date.getMonth() + 1)).slice(-2)+"-"+("0" +date.getDate()).slice(-2)+" "+ ("0" +date.getHours()).slice(-2)+":"+("0" +date.getMinutes()).slice(-2)+":"+("0" +date.getSeconds()).slice(-2);
+  let env;
+  if (process.env.GCLOUD_PROJECT === "sanimapp-prod") env = "[PROD]";
+  else env = "[DEV]";
   const mailOptions = {
     from: "Sanimapp Backend Assistant",
     to: ["rvin.rdgz@gmail.com"],
-    subject: env + ' Sanimapp Backend Alert',
+    subject: env + " Sanimapp Backend Alert",
     html: `
           <p>Hola equipo de Sanima! <br>
           esta alerta fue generada el ${date_str} :<br>
@@ -102,19 +101,16 @@ export async function sendEmail(dateTs:any, container:any) {
               <br>
               Atentamente, <br>
               Vluedot.
-          </p>`
-};
+          </p>`,
+  };
 
 
-  return transporter.sendMail(mailOptions, (error:any, data:any) => {
-      if (error) {
-          console.log(error)
-          return
-      }
-      console.log("Sent!")
+  return transporter.sendMail(mailOptions, (error:any) => {
+    if (error) {
+      console.log(error);
+      return;
+    }
+    console.log("Sent!");
   });
-  
 }
 
-        
-  

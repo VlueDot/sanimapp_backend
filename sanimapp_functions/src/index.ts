@@ -673,8 +673,8 @@ firebaseToOdoo_CRM_update = functions.database.ref("/notRegisteredUsers/{idTicke
 });
 
 const runtimeOpts = {
-  timeoutSeconds: 540
- }
+  timeoutSeconds: 540,
+};
 
 exports.test = functions.runWith(runtimeOpts).https.onRequest( async (request, response)=> {
   const odoo_session = await OdooFcn.odoo_Login();
@@ -683,9 +683,9 @@ exports.test = functions.runWith(runtimeOpts).https.onRequest( async (request, r
   // const lastupdateTimestamp_campaigns = await FirebaseFcn.firebaseGet("/timestamp_collection/CMR_campaings_timestamp");
   // OdooFcn.odooToFirebase_Campaigns(odoo_session, lastupdateTimestamp_campaigns);
   const lastupdateTimestamp_users = await FirebaseFcn.firebaseGet("/timestamp_collection/ussersTimeStamp");
-  console.log(lastupdateTimestamp_users)
+  console.log(lastupdateTimestamp_users);
   let success = await OdooFcn.odooToFirebase_Users(odoo_session, lastupdateTimestamp_users);
-  console.log("success: ", success)
+  console.log("success: ", success);
   console.log(odoo_session);
   console.log(settings.odoo_url);
   response.send("<p>odoo url: "+settings.odoo_url +"</p><p>odoo session: "+odoo_session +"</p><p>Everything's working fine</p>");
@@ -703,36 +703,34 @@ exports.test = functions.runWith(runtimeOpts).https.onRequest( async (request, r
 
 
 exports.test2 = functions
-.https.onRequest( async (request, response)=> {
-  const odoo_session = await OdooFcn.odoo_Login();
+    .https.onRequest( async (request, response)=> {
+      const odoo_session = await OdooFcn.odoo_Login();
 
-  let categories_list = await OdooFcn.GetCategories(odoo_session);
-  if (categories_list.length == 0)
-  {
-  console.log("Error: No categories")
-  }
-  // else console.log(categories_list)
+      let categories_list = await OdooFcn.getCategories(odoo_session);
+      if (categories_list.length == 0) {
+        console.log("Error: No categories");
+      }
+      // else console.log(categories_list)
 
-  let user_categories = [809, 453, 646, 867, 506]
-  
-  let user_categories_filtered = await OdooFcn.search_categories_Odoo( user_categories, categories_list );
+      let user_categories = [809, 453, 646, 867, 506];
 
-  // console.log("user_categories_filtered: ", user_categories_filtered)
+      let user_categories_filtered = await OdooFcn.search_categories_Odoo( user_categories, categories_list );
 
-  let user_stop_data = user_categories_filtered.filter( (e:any) => e.name.includes("Paradero:"))
-  console.log("user_stop_data: ", user_stop_data)
-  console.log("user_stop_data.name: ", user_stop_data[0].name)
-  console.log("user_stop_data.id: ", user_stop_data[0].id)
+      // console.log("user_categories_filtered: ", user_categories_filtered)
 
-  
-  let user_route_data = user_categories_filtered.filter( (e:any) => e.name.includes("Ruta:"))
-  console.log("user_route_data: ", user_route_data)
-  console.log("user_route_data.name: ", user_route_data[0].name)
-  console.log("user_route_data.id: ", user_route_data[0].id)
+      let user_stop_data = user_categories_filtered.filter( (e:any) => e.name.includes("Paradero:"));
+      console.log("user_stop_data: ", user_stop_data);
+      console.log("user_stop_data.name: ", user_stop_data[0].name);
+      console.log("user_stop_data.id: ", user_stop_data[0].id);
 
 
+      let user_route_data = user_categories_filtered.filter( (e:any) => e.name.includes("Ruta:"));
+      console.log("user_route_data: ", user_route_data);
+      console.log("user_route_data.name: ", user_route_data[0].name);
+      console.log("user_route_data.id: ", user_route_data[0].id);
 
-  console.log(odoo_session);
-  console.log(settings.odoo_url);
-  response.send("<p>odoo url: "+settings.odoo_url +"</p><p>odoo session: "+odoo_session +"</p><p>Everything's working fine</p>");
-});
+
+      console.log(odoo_session);
+      console.log(settings.odoo_url);
+      response.send("<p>odoo url: "+settings.odoo_url +"</p><p>odoo session: "+odoo_session +"</p><p>Everything's working fine</p>");
+    });
