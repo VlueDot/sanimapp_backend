@@ -15,7 +15,8 @@ export let firebaseToOdoo_Act_approve: any;
 export let firebaseToOdoo_CRM_update: any;
 
 // FROM ODOO TO FIREBASE
-export let odooToFirebase : any;// if users or ticket changed in odoo, it changes it in firebase
+export let odooToFirebase : any;// if users or ticket changed in odoo, it changes it in firebase'
+export let send_errors_mailreminder: any
 
 // TRIGGERS INSIDE FIREBASE
 export let firebase_Stops_UsersQuantity_update : any;// [IN PRODUCTION] it stops changed, it updates users_quantity if necesary
@@ -688,7 +689,7 @@ exports.test = functions.runWith(runtimeOpts).https.onRequest( async (request, r
   console.log("success: ", success);
   console.log(odoo_session);
   console.log(settings.odoo_url);
-  response.send("<p>odoo url: "+settings.odoo_url +"</p><p>odoo session: "+odoo_session +"</p><p>Everything's working fine</p>");
+  response.send("<p>[odooToFirebase_Users] <br>odoo url: "+settings.odoo_url +"</p><p>odoo session: "+odoo_session +"</p><p>Everything's working fine</p>");
 });
 
 
@@ -734,3 +735,61 @@ exports.test2 = functions
       console.log(settings.odoo_url);
       response.send("<p>odoo url: "+settings.odoo_url +"</p><p>odoo session: "+odoo_session +"</p><p>Everything's working fine</p>");
     });
+
+
+    send_errors_mailreminder = functions.pubsub.schedule("every 1 minutes")
+    .timeZone("America/Lima")
+    .onRun(async () =>{
+
+      //1. get info from errors node. 
+
+
+      //2. sent it to mail 
+
+    })
+
+    exports.test3 = functions
+    .https.onRequest( async (request, response)=> {
+      try {
+
+      const pendand_errors = await FirebaseFcn.firebaseGet("/illegal_entries_stack");
+      const pendand_errors_keys = Object.keys(pendand_errors)
+    
+
+      let message_container = []
+      for(let i = 0 ; i < pendand_errors_keys.length; i++){
+        message_container.push(pendand_errors[pendand_errors_keys[i]] + "(User_id: " + pendand_errors_keys[i] + ")" )
+      }
+
+      if(pendand_errors == null ) functions.logger.info( "[send_errors_mailreminder] No pendant error.")
+      else{
+
+        // const dateTimeEmail = Date.now();
+        const dateTimeEmail = false
+        const subject_str = "Sanimapp Daily Backend Alert"
+        const welcome_str = "Esta es una alerta diaria"
+        const message_str = "Se registraron los siguientes ingresos que fueron ignorados. Por favor, revisarlos a la brevedad"
+        await FirebaseFcn.sendEmail(subject_str, welcome_str, dateTimeEmail, message_str, message_container);
+      
+
+      }
+
+      response.send("<p>[send_errors_mailreminder] <p>Everything's working fine</p>");
+
+        
+      } catch (error) {
+
+        functions.logger.error( "[send_errors_mailreminder] ERROR  ( ", error, ")");
+        response.send("<p>[send_errors_mailreminder] <p>Everything's working fine</p>");
+
+
+         
+        
+      }
+
+      return
+      response.send("Empty test")
+
+
+
+    })

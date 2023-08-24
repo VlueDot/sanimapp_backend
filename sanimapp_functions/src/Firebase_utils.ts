@@ -79,22 +79,29 @@ let transporter = nodemailer.createTransport({
   },
 });
 
-export async function sendEmail(dateTs:any, container:any) {
+export async function sendEmail(subject_str: string, welcome_str:string, dateTs:any,  message_str: string, items_container:any) {
+  let date_str
+  if(dateTs != false){
   const date = new Date(Number(dateTs));
-  const date_str = date.getFullYear()+"-"+("0" + (date.getMonth() + 1)).slice(-2)+"-"+("0" +date.getDate()).slice(-2)+" "+ ("0" +date.getHours()).slice(-2)+":"+("0" +date.getMinutes()).slice(-2)+":"+("0" +date.getSeconds()).slice(-2);
-  let env;
+   date_str = date.getFullYear()+"-"+("0" + (date.getMonth() + 1)).slice(-2)+"-"+("0" +date.getDate()).slice(-2)+" "+ ("0" +date.getHours()).slice(-2)+":"+("0" +date.getMinutes()).slice(-2)+":"+("0" +date.getSeconds()).slice(-2);
+ } else{
+   date_str = ""
+ }
+ let env;
   if (process.env.GCLOUD_PROJECT === "sanimapp-prod") env = "[PROD]";
   else env = "[DEV]";
   const mailOptions = {
     from: "Sanimapp Backend Assistant",
-    to: ["rvin.rdgz@gmail.com"],
-    subject: env + " Sanimapp Backend Alert",
+    to: ["alfa.vluedot@gmail.com"],
+    subject: env + subject_str,
     html: `
           <p>Hola equipo de Sanima! <br>
-          esta alerta fue generada el ${date_str} :<br>
+          ${welcome_str} ${date_str} :<br>
           
+          ${message_str} : <br>
+
               <ol type="1">
-                ${container.map( (entry:any) => `<li>${entry}</li>`).join("")}
+                ${items_container.map( (entry:any) => `<li>${entry}</li>`).join("")}
               </ol>
               
           

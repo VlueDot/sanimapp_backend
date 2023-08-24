@@ -235,6 +235,12 @@ export async function getCategories(odoo_session:any) {
 }
 
 export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp:any) {
+
+  let illegal_entries_stack 
+
+  let warning_list = [];
+  let warning_list_map = new Map();
+
   if (lastupdateTimestamp==null) lastupdateTimestamp = 0;
   const date = new Date(Number(lastupdateTimestamp));
   const date_str = "'"+ date.getFullYear()+"-"+("0" + (date.getMonth() + 1)).slice(-2)+"-"+("0" +date.getDate()).slice(-2)+" "+ ("0" +date.getHours()).slice(-2)+":"+("0" +date.getMinutes()).slice(-2)+":"+("0" +date.getSeconds()).slice(-2) + "'";
@@ -279,12 +285,28 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
       body: raw,
     };
     const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
-
+    const odoo_query_time = Date.now();    //THIS IS THE TIME WHERE I MADE THE CHECK
     let data;
     data = await response.json();
 
     const qtty_users = data.result.length;
     if (qtty_users > 0) {
+      //donwload illegal_entries_stack
+      let illegal_entries_stack_keys
+      try {
+        illegal_entries_stack = await FirebaseFcn.firebaseGet("illegal_entries_stack")
+        illegal_entries_stack_keys = Object.keys(illegal_entries_stack);
+
+        for(let index=0; index< illegal_entries_stack_keys.length; index ++) warning_list_map.set(illegal_entries_stack_keys[index], illegal_entries_stack[illegal_entries_stack_keys[index]])
+
+      } catch (error) {
+        console.log(error)
+      }
+
+      
+      
+      
+
       const fb_stops = await FirebaseFcn.firebaseGet("stops");
       const keys = Object.keys(fb_stops);
 
@@ -298,9 +320,7 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
           } );
 
 
-      let warning_list = [];
       let count_correct = 0;
-      let count_incorrect = 0;
 
       for (let i= 0; i<qtty_users; i++) {
         const user_id = target_data[i].id;
@@ -325,64 +345,92 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
           const user_status_data = user_categories_filtered.filter( (e:any) => e.name.includes("usuario activo") || e.name.includes("usuario inactivo") || e.name.includes("Usuario por instalar"));
 
 
-          console.log("user_stop_data: ", user_stop_data);
-          console.log("user_route_data: ", user_route_data);
-          console.log("user_status_data: ", user_status_data);
+          // console.log("user_stop_data: ", user_stop_data);
+          // console.log("user_route_data: ", user_route_data);
+          // console.log("user_status_data: ", user_status_data);
 
           // FILTERS DEFINE STATES
           let legal_task = true;
           let reason;
           let no_entry_in_firebase = false;
+          let user_state_is_NaN  = false
+
+          const usuario_inactivo_tags = ["Cliente desinstalado"]
+          const usuario_activo_tags = ["Cliente Nuevo", "Cliente normal"]
+          const usuario_instalar_tags = ["Cliente por instalar"]
+          
 
           if (user_status_data.length == 1) {
             const user_state_from_firebase = await FirebaseFcn.firebaseGet("Data_client/" + user_id +"/Data_client_2/Client_Type" );
-            const user_state2_from_firebase = await FirebaseFcn.firebaseGet("Data_client/" + user_id +"/Data_client_2/client_type" );
+            const user_state2_from_firebase = await FirebaseFcn.firebaseGet("Data_client/" + user_id +"/Data_client_3/client_type" );
 
             console.log("user_state_from_firebase ", user_state_from_firebase);
 
+            
+
             if (user_state2_from_firebase == null && user_state_from_firebase == null) no_entry_in_firebase = true;
+
+            if (user_state2_from_firebase == "NaN" && user_state_from_firebase == "NaN") user_state_is_NaN = true;
+
 
             if (user_state2_from_firebase != user_state_from_firebase && !no_entry_in_firebase ) {
               legal_task = false;
               reason = "Different user states found in firebase. Fix it first. (" + user_state_from_firebase +", "+ user_state2_from_firebase+")";
               warning_list.push(user_name + " ("+ user_id +") " + reason);
+              warning_list_map.set(user_id, "("+ user_name +") " + reason)
+
             } else {
+
+              let user_state_from_firebase_Odoo_label
+              if(usuario_instalar_tags.includes(user_state_from_firebase)) user_state_from_firebase_Odoo_label = "Usuario por instalar"
+              if(usuario_activo_tags.includes(user_state_from_firebase)) user_state_from_firebase_Odoo_label = "usuario activo"
+              if(usuario_inactivo_tags.includes(user_state_from_firebase)) user_state_from_firebase_Odoo_label = "usuario inactivo"
+
+
+
+
               if ( user_status_data[0].name == "Usuario por instalar" ) {
-                if ( no_entry_in_firebase || user_state_from_firebase == "Usuario por instalar" ) {
+                if ( no_entry_in_firebase || user_state_from_firebase_Odoo_label == "Usuario por instalar" || user_state_is_NaN || user_state_from_firebase_Odoo_label =="usuario inactivo") {
                   true;
                 } else {
                   legal_task = false;
-                  reason = "Forbidden move. 'Usuario por instalar' ---> ", user_state_from_firebase;
+                  reason = "Forbidden move 1. From Firebase " + user_state_from_firebase_Odoo_label +  " ("+ user_state_from_firebase +") ---> 'Usuario por instalar' " ;
                   warning_list.push(user_name + " ("+ user_id +") " + reason);
+                  warning_list_map.set(user_id, "("+ user_name +") " + reason)
                 }
               }
 
 
+
               if ( user_status_data[0].name == "usuario activo" ) {
-                if (user_state_from_firebase == "Usuario por instalar" ) {
+                if (user_state_from_firebase_Odoo_label == "Usuario por instalar"  ||  user_state_from_firebase_Odoo_label == "usuario activo"   ) {
                   if (user_stop_data.length == 0) {
                     legal_task = false;
-                    reason = "Forbidden move. Impossible to set Usuario activo without stop";
+                    reason = "Forbidden move 2. Impossible to set Usuario activo without stop";
                     warning_list.push(user_name + " ("+ user_id +") " + reason);
+                    warning_list_map.set(user_id, "("+ user_name +") " + reason)
                   } else if (user_stop_data.length > 1) {
                     legal_task = false;
-                    reason = "Forbidden move. Impossible to set Usuario activo with more than 1 stop " + user_stop_data;
+                    reason = "Forbidden move 3. Impossible to set Usuario activo with more than 1 stop " + user_stop_data;
                     warning_list.push(user_name + " ("+ user_id +") " + reason);
+                    warning_list_map.set(user_id, "("+ user_name +") " + reason)
                   }
                 } else {
                   legal_task = false;
-                  reason = "Forbidden move. 'Usuario activo' ---> ", user_state_from_firebase;
+                  reason = "Forbidden move 4. From Firebase " + user_state_from_firebase_Odoo_label +  " ("+ user_state_from_firebase +") ---> 'usuario activo' " ;
                   warning_list.push(user_name + " ("+ user_id +") " + reason);
+                  warning_list_map.set(user_id, "("+ user_name +") " + reason)
                 }
               }
 
               if ( user_status_data[0].name == "usuario inactivo" ) {
-                if (user_state_from_firebase == "usuario activo" ) {
+                if (user_state_from_firebase_Odoo_label == "usuario activo" || user_state_from_firebase_Odoo_label == "usuario inactivo") {
                   true;
                 } else {
                   legal_task = false;
-                  reason = "Forbidden move. 'Usuario inactivo' ---> ", user_state_from_firebase;
+                  reason = "Forbidden move 5. From Firebase " + user_state_from_firebase_Odoo_label +  " ("+ user_state_from_firebase +") ---> 'usuario inactivo' " ;
                   warning_list.push(user_name + " ("+ user_id +") " + reason);
+                  warning_list_map.set(user_id, "("+ user_name +") " + reason)
                 }
               }
             }
@@ -390,6 +438,7 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
             if (user_status_data.length == 0) reason = "There is no state for a client. Will be ignored.";
             else reason = "There are more than 1 one state for a client. Will be ignored.";
             warning_list.push( user_name + " ("+ user_id +") " + reason);
+            warning_list_map.set(user_id, "("+ user_name +") " + reason)
             legal_task = false;
           }
 
@@ -399,7 +448,7 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
 
               let user_stopId = 0; let user_namestop = "NaN";
 
-              if (user_stop_data.length > 0) {
+              if (user_stop_data.length > 0 && user_status_data[0].name == "usuario activo") {
                 user_stopId = user_stop_data[0].id;
                 user_namestop = user_stop_data[0].name;
               }
@@ -408,7 +457,7 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
               let user_routeId = 0; let user_nameroute = "NaN";
 
 
-              if (user_route_data.length > 0) {
+              if (user_route_data.length > 0 && user_status_data[0].name == "usuario activo") {
                 user_routeId = user_route_data[0].id;
                 user_nameroute = user_route_data[0].name;
               }
@@ -425,6 +474,8 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
                 else if ( user_status_data[0].name == "usuario inactivo") user_status_name = "Cliente desinstalado";
                 else if ( user_status_data[0].name == "usuario activo" && user_route_data.length == 1) user_status_name = "Cliente normal";
               }
+
+              console.log("user_status_name ", user_status_name)
 
               let ubigeo = "NaN";
               // l10n_pe_ubigeo is deprecated. Using zip instead
@@ -463,6 +514,8 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
               let route_id_firebase = 0;
               let route_name_fromDataClient2 = "NaN ";
 
+              let client_type_fromDataCLient2 = "NaN"
+
               try {
                 const dataclient2_from_FB = await FirebaseFcn.firebaseGet("Data_client/" + user_id +"/Data_client_2/" );
                 stop_id_odoo_fromDataClient2 = dataclient2_from_FB["idStop"];
@@ -473,24 +526,22 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
                 route_id_firebase = dataclient2_from_FB["route_id_firebase"];
                 route_name_fromDataClient2 = dataclient2_from_FB["Route"];
 
+                client_type_fromDataCLient2 = dataclient2_from_FB["Client_Type"]
+
                 if (dataclient2_from_FB["Stops"] == "NaN") {
-                  console.log("$$ mark 2");
 
                   stop_id_odoo_fromDataClient2 = 0;
                   stop_id_firebase = 0;
                   stop_name_fromDataClient2 = "NaN";
 
-                  console.log("$$ mark 3");
 
                   route_id_odoo_fromDataClient2 = 0;
                   route_id_firebase = 0;
                   route_name_fromDataClient2 = "NaN ";
                 } else {
-                  console.log("$$ mark 4");
 
 
                   if (!dataclient2_from_FB["idStop"] || !dataclient2_from_FB["idRoute"] || !dataclient2_from_FB["stop_id_firebase"] || !dataclient2_from_FB["route_id_firebase"]) {
-                    console.log("$$ mark 5");
 
 
                     for (let index = 0, len = fb_stops.length; index < len; index++) {
@@ -502,7 +553,6 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
                       }
                     }
 
-                    console.log("$$ mark 6");
 
 
                     for (let index = 0, len = fb_routes.length; index < len; index++) {
@@ -572,7 +622,6 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
                   "warning_label": true,
                 });
 
-                console.log("$$ mark 7");
 
                 FirebaseFcn.firebaseSet("Data_client/" + user_id, dataClient_node);
 
@@ -598,6 +647,8 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
                 "route_id_odoo": route_id_odoo_fromDataClient2,
                 "route_id_firebase": route_id_firebase,
                 "route_name": route_name_fromDataClient2,
+                "Client_Type": client_type_fromDataCLient2
+                
 
               };
 
@@ -632,17 +683,42 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
                 "route_id_odoo": user_routeId,
                 "route_id_firebase": target_routeId_fb,
                 "route_name": user_nameroute,
+                "Client_Type": user_status_name
+
 
               };
+
 
               const ToDoList = [];
               const stops_changed = initialState.stop_id_odoo != targetState.stop_id_odoo;
               const just_routes_changed = initialOdoo_routeId != targetState.route_id_odoo && !stops_changed;
               const just_no_route = targetState.route_id_odoo == 0 && targetState.stop_id_odoo != 0 && !stops_changed;
+              const state_change = targetState.Client_Type != initialState.Client_Type;
               if (stops_changed) ToDoList.push("Stops changed: " + initialState.stop_id_odoo +" -> " + targetState.stop_id_odoo);
               if ( just_routes_changed) ToDoList.push("Routes changed: " + initialOdoo_routeId +" -> " + targetState.route_id_odoo);
               if ( just_no_route ) ToDoList.push("There is no route in odoo");
               if (!stops_changed && !just_no_route && ! just_routes_changed) ToDoList.push("Nothing to do.");
+
+
+              // fast solution
+              if(state_change){
+                // update change in firebase
+                try {
+                  let status_address2 = "Data_client/" + user_id +"/Data_client_2/Client_Type";
+                  let status_address3 = "Data_client/" + user_id +"/Data_client_3/client_type";
+
+                  await FirebaseFcn.firebaseSet(status_address2, targetState.Client_Type );
+                  await FirebaseFcn.firebaseSet(status_address3, targetState.Client_Type );
+
+                  console.log("states updated")
+
+                  
+                } catch (error) {
+                  console.log("states not updated. ", error)
+                  
+                }
+              }
+
 
 
               functions.logger.info( "[odooToFirebase_Users] Tasks. ",
@@ -668,7 +744,6 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
               };
 
               if ( stops_changed) {
-                console.log("$$ mark 9");
 
                 // 1 update route in odoo
                 // 2 update data client 2
@@ -910,14 +985,12 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
                 console.log("just_no_route");
               }
 
-              console.log("$$ mark 11");
-
-              const dateTime = Date.now();
-              FirebaseFcn.firebaseSet("/timestamp_collection/ussersTimeStamp", String(dateTime));
-              functions.logger.info( "[odooToFirebase_Users] updating ussersTimeStamp in Firebase", {
-                "odoo_session": odoo_session,
-                "userTimestamp": String(dateTime),
-              } );
+              console.log("$$ mark 11-----------");
+              
+              if(warning_list_map.has(String(user_id))) {
+                console.log("the user ", user_id, " is on the warning list. attempting to delete it")
+                warning_list_map.delete(String(user_id))}
+              
               count_correct = count_correct + 1;
             } else {
               functions.logger.info( "[odooToFirebase_Users] User " + user_id + " ignored due ilegal move.", {
@@ -927,7 +1000,7 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
               });
             }
           } catch (error) {
-            count_incorrect = count_incorrect +1;
+            
           }
         } catch (error) {
           functions.logger.error( "[odooToFirebase_Users] ERROR: error updating user " + user_id, {
@@ -942,14 +1015,28 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
         }
       }
 
-      console.log("count_correct", count_correct);
-      console.log("count_incorrect", count_incorrect);
 
+      
+      FirebaseFcn.firebaseSet("/timestamp_collection/ussersTimeStamp", String(odoo_query_time));
+      functions.logger.info( "[odooToFirebase_Users] updating ussersTimeStamp in Firebase", {
+        "odoo_session": odoo_session,
+        "userTimestamp": String(odoo_query_time),
+      } );
+
+      console.log("count_correct", count_correct);
+      console.log("count_incorrect", warning_list.length);
 
       if (warning_list.length > 0) {
         const dateTimeEmail = Date.now();
-        await FirebaseFcn.sendEmail(dateTimeEmail, warning_list);
+        const subject_str = "Sanimapp Backend Alert"
+        const welcome_str = "Esta es una alerta generada el "
+        const message_str = "Se han ignorados los siguientes ingresos. Por favor, revisarlos a la brevedad."
+        await FirebaseFcn.sendEmail(subject_str,welcome_str,dateTimeEmail, message_str, warning_list);
       }
+
+      const warning_list_json = Object.fromEntries(warning_list_map);
+      FirebaseFcn.firebaseSet("illegal_entries_stack",warning_list_json)
+
     } else functions.logger.info( "[odooToFirebase_Users] No update founded in Odoo.", {"odoo_session": odoo_session});
   } catch (err) {
     functions.logger.error( "[odooToFirebase_Users] ERROR: " + err, {"odoo_session": odoo_session} );
