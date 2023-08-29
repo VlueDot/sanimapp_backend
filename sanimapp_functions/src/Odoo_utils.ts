@@ -63,8 +63,6 @@ export async function odooToFirebase_Campaigns(odoo_session:any, lastupdateTimes
   const date = new Date(Number(lastupdateTimestamp));
   const date_str = "'"+ date.getFullYear()+"-"+("0" + (date.getMonth() + 1)).slice(-2)+"-"+("0" +date.getDate()).slice(-2)+" "+ ("0" +date.getHours()).slice(-2)+":"+("0" +date.getMinutes()).slice(-2)+":"+("0" +date.getSeconds()).slice(-2) + "'";
 
-  // console.log(date_str);
-
   const CustomHeaders: HeadersInit = {
     "Content-Type": "application/json",
     "Cookie": "session_id="+odoo_session,
@@ -94,53 +92,62 @@ export async function odooToFirebase_Campaigns(odoo_session:any, lastupdateTimes
     response = await fetch(settings.odoo_url + "dataset/search_read", params);
     data = await response.json();
     target_data = data["result"]["records"];
+
     odoo_res = true;
   } catch (error) {
     functions.logger.error("[odooToFirebase_Campaigns] Odoo request Error: ", {
       "odoo_session": odoo_session,
     });
     odoo_res = false;
+    return false
   }
 
-  let res = false;
+  let res 
 
-  try {
-    if (odoo_res) {
-      if (response?.status == 200) {
-        const map = new Map();
-        let id : any;
-        let name : string;
+  if(target_data.length == 0) functions.logger.info( "[odooToFirebase_Campaigns] Campaings no needed to be updated.")
+  else{
+    res = false;
 
-
-        for (let i = 0, len = target_data.length; i < len; i++) {
-          id = target_data[i]["id"];
-          name = target_data[i]["display_name"];
-
-          map.set(id, name);
-        }
-
-        const firebase_json = Object.fromEntries(map);
-        res = await FirebaseFcn.firebaseUpdate("campaign_names", firebase_json);
-
-        if (!res) {
-          functions.logger.error("[odooToFirebase_Campaigns] Campaings : Firebase failure updating " + target_data.length + " records.", {
+    try {
+      if (odoo_res) {
+        if (response?.status == 200) {
+          const map = new Map();
+          let id : any;
+          let name : string;
+  
+  
+          for (let i = 0, len = target_data.length; i < len; i++) {
+            id = target_data[i]["id"];
+            name = target_data[i]["display_name"];
+  
+            map.set(id, name);
+          }
+  
+          const firebase_json = Object.fromEntries(map);
+          res = await FirebaseFcn.firebaseUpdate("campaign_names", firebase_json);
+  
+          if (!res) {
+            functions.logger.error("[odooToFirebase_Campaigns] Campaings : Firebase failure updating " + target_data.length + " records.", {
+              "odoo_session": odoo_session,
+              "target_data": target_data});
+          }
+        } else {
+          functions.logger.error("[odooToFirebase_Campaigns] Odoo request Error: " + response?.status, {
             "odoo_session": odoo_session,
-            "target_data": target_data});
+            "target_data": target_data,
+          });
         }
-      } else {
-        functions.logger.error("[odooToFirebase_Campaigns] Odoo request Error: " + response?.status, {
-          "odoo_session": odoo_session,
-          "target_data": target_data,
-        });
       }
+    } catch (error) {
+      functions.logger.error( "[odooToFirebase_Campaigns] No Firebase updated so any campaign updated", {
+        "odoo_session": odoo_session,
+        "target_data": target_data,
+      });
+      return false
     }
-  } catch (error) {
-    functions.logger.error( "[odooToFirebase_Campaigns] No Firebase updated so any campaign updated", {
-      "odoo_session": odoo_session,
-      "target_data": target_data,
-    });
-  }
 
+  }
+  
   try {
     if (res) {
       const dateTime = Date.now();
@@ -150,7 +157,7 @@ export async function odooToFirebase_Campaigns(odoo_session:any, lastupdateTimes
       const new_date_str = "'"+ new_date.getFullYear()+"-"+("0" + (new_date.getMonth() + 1)).slice(-2)+"-"+("0" +new_date.getDate()).slice(-2)+" "+ ("0" +new_date.getHours()).slice(-2)+":"+("0" +new_date.getMinutes()).slice(-2)+":"+("0" +new_date.getSeconds()).slice(-2) + "'";
 
 
-      functions.logger.info( "[odooToFirebase_Users] Campaings succesful updated.", {
+      functions.logger.info( "[odooToFirebase_Campaigns] Campaings succesful updated.", {
         "odoo_session": odoo_session,
         "target_data": target_data,
         "CMR_campaings_timestamp": lastupdateTimestamp,
@@ -164,7 +171,10 @@ export async function odooToFirebase_Campaigns(odoo_session:any, lastupdateTimes
       "odoo_session": odoo_session,
       "target_data": target_data,
     });
+    return false
   }
+
+  return true
 }
 
 export async function firebaseToOdoo_ChangeStopsRoutesLabels(odoo_session:any, idOdoo: number, stopsOrRoutes_json:any) {
@@ -1289,7 +1299,7 @@ export async function firebaseToOdoo_PutInactiveTag(odoo_session: any, idOdoo: n
   return data_write;
 }
 
-async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdateTimestamp: any) {
+export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdateTimestamp: any) {
   // The function reads the tickes of service created in odoo after the last update
   const serviceColletion= await FirebaseFcn.firebaseGet("/Service_collection");
   const date = new Date(Number(lastupdateTimestamp));
@@ -1582,14 +1592,17 @@ async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdateTimesta
       "odoo_session": odoo_session,
       "tickets_timestamp": String(dateTime),
     } );
+    return true
+
   } catch (err) {
     functions.logger.error("[odooToFirebase_ServiceTickets] ERROR: " + err, {"odoo_session": odoo_session} );
+    
   }
-
-  return null;
+  return false
+  
 }
 
-async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: any) {
+export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: any) {
   // The function reads the tickes CRM created in odoo after the last update
   const date = new Date(Number(lastupdateTimestamp));
   const date_str = "'"+ date.getFullYear()+"-"+("0" + (date.getMonth() + 1)).slice(-2)+"-"+("0" +date.getDate()).slice(-2)+" "+ ("0" +date.getHours()).slice(-2)+":"+("0" +date.getMinutes()).slice(-2)+":"+("0" +date.getSeconds()).slice(-2) + "'";
@@ -2268,9 +2281,10 @@ async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: 
     // if (letter != "") Se envia el correo con la info en letter
   } catch (err) {
     functions.logger.error("[odooToFirebase_CRMTickets] ERROR: " + err, {"odoo_session": odoo_session} );
+    return false
   }
 
-  return null;
+  return true;
 }
 
 export async function odooToFirebase_all(odoo_session:any, lastupdateTimestamp_users: any,

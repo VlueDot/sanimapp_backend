@@ -92,7 +92,12 @@ export async function sendEmail(subject_str: string, welcome_str:string, dateTs:
   else env = "[DEV]";
   const mailOptions = {
     from: "Sanimapp Backend Assistant",
-    to: ["alfa.vluedot@gmail.com"],
+    // to: ["alfa.vluedot@gmail.com"],
+    to: ["alfa.vluedot@gmail.com", 
+    "pablo.centeno@sanima.pe",
+    "lucero.hurtado@sanima.pe",
+    "alejandra.quispe@sanima.pe",
+    "rvin.rdgz@gmail.com"],
     subject: env + subject_str,
     html: `
           <p>Hola equipo de Sanima! <br>
@@ -107,7 +112,7 @@ export async function sendEmail(subject_str: string, welcome_str:string, dateTs:
           
               <br>
               Atentamente, <br>
-              Vluedot.
+              Equipo de Vluedot.
           </p>`,
   };
 
