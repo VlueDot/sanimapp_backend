@@ -16,7 +16,7 @@ export let firebaseToOdoo_CRM_update: any;
 
 // FROM ODOO TO FIREBASE
 export let odooToFirebase : any;// if users or ticket changed in odoo, it changes it in firebase'
-export let send_errors_mailreminder: any
+export let send_errors_mailreminder: any;
 
 // TRIGGERS INSIDE FIREBASE
 export let firebase_Stops_UsersQuantity_update : any;// [IN PRODUCTION] it stops changed, it updates users_quantity if necesary
@@ -635,48 +635,47 @@ firebaseToOdoo_CRM_update = functions.database.ref("/notRegisteredUsers/{idTicke
 });
 
 // odooToFirebase = functions.https.onRequest(async (request, response)=> {
-  odooToFirebase = functions
-  .runWith({timeoutSeconds: 540})
-  .pubsub.schedule("every 5 minutes")
-  .timeZone("America/Lima")
-  .onRun(async () =>{
+odooToFirebase = functions
+    .runWith({timeoutSeconds: 55})
+    .pubsub.schedule("every minute")
+    .timeZone("America/Lima")
+    .onRun(async () =>{
     // this will run with certain periodicity. This will be the stable function.
     // Here will be everything at the moment. eventually we will separate them to test each one of these.
 
-    try {
-      const lastupdateTimestamp_users = await FirebaseFcn.firebaseGet("/timestamp_collection/ussersTimeStamp");
-      const lastupdateTimestamp_tickets = await FirebaseFcn.firebaseGet("/timestamp_collection/tickets_timestamp");
-      const lastupdateTimestamp_crm = await FirebaseFcn.firebaseGet("/timestamp_collection/CMR_tickets_timestamp");
-      const lastupdateTimestamp_campaigns = await FirebaseFcn.firebaseGet("/timestamp_collection/CMR_campaings_timestamp");
+      try {
+        const lastupdateTimestamp_users = await FirebaseFcn.firebaseGet("/timestamp_collection/ussersTimeStamp");
+        const lastupdateTimestamp_tickets = await FirebaseFcn.firebaseGet("/timestamp_collection/tickets_timestamp");
+        const lastupdateTimestamp_crm = await FirebaseFcn.firebaseGet("/timestamp_collection/CMR_tickets_timestamp");
+        const lastupdateTimestamp_campaigns = await FirebaseFcn.firebaseGet("/timestamp_collection/CMR_campaings_timestamp");
 
-      const odoo_session = await OdooFcn.odoo_Login();
+        const odoo_session = await OdooFcn.odoo_Login();
 
-      if (odoo_session != null) {
-
+        if (odoo_session != null) {
         // await OdooFcn.odooToFirebase_all(odoo_session, lastupdateTimestamp_users, lastupdateTimestamp_tickets, lastupdateTimestamp_crm, lastupdateTimestamp_campaigns);
 
-        let crm_tickets_success = await OdooFcn.odooToFirebase_CRMTickets(odoo_session, lastupdateTimestamp_crm);
-        let users_success = await OdooFcn.odooToFirebase_Users(odoo_session, lastupdateTimestamp_users);
-        let serviceTickets_success = await OdooFcn.odooToFirebase_ServiceTickets(odoo_session, lastupdateTimestamp_tickets);
-        let campaings_success = await OdooFcn.odooToFirebase_Campaigns(odoo_session, lastupdateTimestamp_campaigns);
-        await OdooFcn.odoo_Logout(odoo_session);
+          let crm_tickets_success = await OdooFcn.odooToFirebase_CRMTickets(odoo_session, lastupdateTimestamp_crm);
+          let users_success = await OdooFcn.odooToFirebase_Users(odoo_session, lastupdateTimestamp_users);
+          let serviceTickets_success = await OdooFcn.odooToFirebase_ServiceTickets(odoo_session, lastupdateTimestamp_tickets);
+          let campaings_success = await OdooFcn.odooToFirebase_Campaigns(odoo_session, lastupdateTimestamp_campaigns);
+          await OdooFcn.odoo_Logout(odoo_session);
 
-        functions.logger.info("[odooToFirebase]: Stop created with partners in odoo.", {
-          "odoo_session": odoo_session,
-          "crm_tickets_success": crm_tickets_success,
-          "users_success": users_success,
-          "serviceTickets_success": serviceTickets_success,
-          "campaings_success": campaings_success,
-        })
+          functions.logger.info("[odooToFirebase]: Stop created with partners in odoo.", {
+            "odoo_session": odoo_session,
+            "crm_tickets_success": crm_tickets_success,
+            "users_success": users_success,
+            "serviceTickets_success": serviceTickets_success,
+            "campaings_success": campaings_success,
+          });
+        }
+        // response.send("odooToFirebase. odoo_session: .." + odoo_session?.substring(odoo_session.length - 5));
+        return true;
+      } catch (error) {
+        functions.logger.error( "[odooToFirebase] ERROR at Start. ", error);
+        // response.send("OdooSync Error: "+error);
+        return false;
       }
-      // response.send("odooToFirebase. odoo_session: .." + odoo_session?.substring(odoo_session.length - 5));
-      return true;
-    } catch (error) {
-      functions.logger.error( "[odooToFirebase] ERROR at Start. ", error);
-      // response.send("OdooSync Error: "+error);
-      return false;
-    }
-  });
+    });
 
 const runtimeOpts = {
   timeoutSeconds: 540,
@@ -684,16 +683,18 @@ const runtimeOpts = {
 
 exports.test = functions.runWith(runtimeOpts).https.onRequest( async (request, response)=> {
   const odoo_session = await OdooFcn.odoo_Login();
-  // const lastupdateTimestamp_campaigns = await FirebaseFcn.firebaseGet("/timestamp_collection/CMR_campaings_timestamp");
+  const firebaseType = await FirebaseFcn.firebaseGet("/firebaseType");
   // OdooFcn.odooToFirebase_Campaigns(odoo_session, lastupdateTimestamp_campaigns);
+  /*
   const lastupdateTimestamp_users = await FirebaseFcn.firebaseGet("/timestamp_collection/ussersTimeStamp");
   let success = await OdooFcn.odooToFirebase_Users(odoo_session, lastupdateTimestamp_users);
   console.log("success: ", success);
   console.log(odoo_session);
   console.log(settings.odoo_url);
-  response.send("<p>[odooToFirebase_Users] <br>odoo url: "+settings.odoo_url +"</p><p>odoo session: "+odoo_session +"</p><p>Everything's working fine</p>");
+  */
+  await OdooFcn.odoo_Logout(odoo_session);
+  response.send("<p>[TEST] <br>firebaseType: "+firebaseType+"<br>odoo url: "+settings.odoo_url +"</p><p>odoo session: "+odoo_session +"</p><p>Everything's working fine</p>");
 });
-
 
 
 /*
@@ -732,71 +733,60 @@ exports.test2 = functions
 */
 
 send_errors_mailreminder = functions
-    .pubsub.schedule("every 6 hours")
+    .pubsub.schedule("everyday 08:00")
     .timeZone("America/Lima")
     .onRun(async () =>{
-
       try {
-
         const pendand_errors = await FirebaseFcn.firebaseGet("/illegal_entries_stack");
-        const pendand_errors_keys = Object.keys(pendand_errors)
-      
-  
-        let message_container = []
-        for(let i = 0 ; i < pendand_errors_keys.length; i++){
-          message_container.push(pendand_errors[pendand_errors_keys[i]] + "(User_id: " + pendand_errors_keys[i] + ")" )
+        const pendand_errors_keys = Object.keys(pendand_errors);
+
+
+        let message_container = [];
+        for (let i = 0; i < pendand_errors_keys.length; i++) {
+          message_container.push(pendand_errors[pendand_errors_keys[i]] + "(User_id: " + pendand_errors_keys[i] + ")" );
         }
-  
-        if(pendand_errors == null ) functions.logger.info( "[send_errors_mailreminder] No pendant error.")
-        else{
-      
-          const dateTimeEmail = false
-          const subject_str = "Sanimapp Daily Backend Alert"
-          const welcome_str = "Esta es una alerta diaria"
-          const message_str = "Se registraron los siguientes ingresos que fueron ignorados. Por favor, revisarlos a la brevedad"
+
+        if (pendand_errors == null ) functions.logger.info( "[send_errors_mailreminder] No pendant error.");
+        else {
+          const dateTimeEmail = false;
+          const subject_str = "Sanimapp Daily Backend Alert";
+          const welcome_str = "Esta es una alerta diaria";
+          const message_str = "Se registraron los siguientes ingresos que fueron ignorados. Por favor, revisarlos a la brevedad";
           await FirebaseFcn.sendEmail(subject_str, welcome_str, dateTimeEmail, message_str, message_container);
-        
         }
-        return true
+        return true;
         // response.send("<p>[send_errors_mailreminder] <p>Everything's working fine</p>");
-  
-        } catch (error) {
-          functions.logger.error( "[send_errors_mailreminder] ERROR  ( ", error, ")");
-          // response.send("<p>[send_errors_mailreminder] <p>Everything's working fine</p>");
-          return false
-        }
+      } catch (error) {
+        functions.logger.error( "[send_errors_mailreminder] ERROR  ( ", error, ")");
+        // response.send("<p>[send_errors_mailreminder] <p>Everything's working fine</p>");
+        return false;
+      }
+    });
 
-
-    })
-
-    exports.test3 = functions
+exports.test3 = functions
     .https.onRequest( async (request, response)=> {
       try {
+        const pendand_errors = await FirebaseFcn.firebaseGet("/illegal_entries_stack");
+        const pendand_errors_keys = Object.keys(pendand_errors);
 
-      const pendand_errors = await FirebaseFcn.firebaseGet("/illegal_entries_stack");
-      const pendand_errors_keys = Object.keys(pendand_errors)
-    
 
-      let message_container = []
-      for(let i = 0 ; i < pendand_errors_keys.length; i++){
-        message_container.push(pendand_errors[pendand_errors_keys[i]] + "(User_id: " + pendand_errors_keys[i] + ")" )
-      }
+        let message_container = [];
+        for (let i = 0; i < pendand_errors_keys.length; i++) {
+          message_container.push(pendand_errors[pendand_errors_keys[i]] + "(User_id: " + pendand_errors_keys[i] + ")" );
+        }
 
-      if(pendand_errors == null ) functions.logger.info( "[send_errors_mailreminder] No pendant error.")
-      else{
-    
-        const dateTimeEmail = false
-        const subject_str = "Sanimapp Daily Backend Alert"
-        const welcome_str = "Esta es una alerta diaria"
-        const message_str = "Se registraron los siguientes ingresos que fueron ignorados. Por favor, revisarlos a la brevedad"
-        await FirebaseFcn.sendEmail(subject_str, welcome_str, dateTimeEmail, message_str, message_container);
-      
-      }
+        if (pendand_errors == null ) functions.logger.info( "[send_errors_mailreminder] No pendant error.");
+        else {
+          const dateTimeEmail = false;
+          const subject_str = "Sanimapp Daily Backend Alert";
+          const welcome_str = "Esta es una alerta diaria";
+          const message_str = "Se registraron los siguientes ingresos que fueron ignorados. Por favor, revisarlos a la brevedad";
+          await FirebaseFcn.sendEmail(subject_str, welcome_str, dateTimeEmail, message_str, message_container);
+        }
 
-      response.send("<p>[send_errors_mailreminder] <p>Everything's working fine</p>");
-
+        response.send("<p>[send_errors_mailreminder] <p>Everything's working fine</p>");
       } catch (error) {
         functions.logger.error( "[send_errors_mailreminder] ERROR  ( ", error, ")");
         response.send("<p>[send_errors_mailreminder] <p>Everything's working fine</p>");
       }
-    })
+    });

@@ -79,26 +79,25 @@ let transporter = nodemailer.createTransport({
   },
 });
 
-export async function sendEmail(subject_str: string, welcome_str:string, dateTs:any,  message_str: string, items_container:any) {
-  let date_str
-  if(dateTs != false){
-  const date = new Date(Number(dateTs));
-   date_str = date.getFullYear()+"-"+("0" + (date.getMonth() + 1)).slice(-2)+"-"+("0" +date.getDate()).slice(-2)+" "+ ("0" +date.getHours()).slice(-2)+":"+("0" +date.getMinutes()).slice(-2)+":"+("0" +date.getSeconds()).slice(-2);
- } else{
-   date_str = ""
- }
- let env;
-  if (process.env.GCLOUD_PROJECT === "sanimapp-prod") env = "[PROD]";
-  else env = "[DEV]";
+export async function sendEmail(subject_str: string, welcome_str:string, dateTs:any, message_str: string, items_container:any) {
+  let date_str;
+  if (dateTs != false) {
+    const date = new Date(Number(dateTs));
+    date_str = date.getFullYear()+"-"+("0" + (date.getMonth() + 1)).slice(-2)+"-"+("0" +date.getDate()).slice(-2)+" "+ ("0" +date.getHours()).slice(-2)+":"+("0" +date.getMinutes()).slice(-2)+":"+("0" +date.getSeconds()).slice(-2);
+  } else {
+    date_str = "";
+  }
+  let environ:string;
+  if (process.env.GCLOUD_PROJECT === "sanimapp-prod") environ = "[PROD]";
+  else environ = "[DEV]";
   const mailOptions = {
     from: "Sanimapp Backend Assistant",
     // to: ["alfa.vluedot@gmail.com"],
-    to: ["alfa.vluedot@gmail.com", 
-    "pablo.centeno@sanima.pe",
-    "lucero.hurtado@sanima.pe",
-    "alejandra.quispe@sanima.pe",
-    "rvin.rdgz@gmail.com"],
-    subject: env + subject_str,
+    to: ["alfa.vluedot@gmail.com",
+      "pablo.centeno@sanima.pe",
+      "lucero.hurtado@sanima.pe",
+      "alejandra.quispe@sanima.pe"],
+    subject: environ + subject_str,
     html: `
           <p>Hola equipo de Sanima! <br>
           ${welcome_str} ${date_str} :<br>
@@ -122,7 +121,7 @@ export async function sendEmail(subject_str: string, welcome_str:string, dateTs:
       console.log(error);
       return;
     }
-    console.log("Sent!");
+    fcn.logger.info(environ + subject_str +": Email sent! ");
   });
 }
 
