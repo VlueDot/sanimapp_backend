@@ -16,6 +16,7 @@ export let firebaseToOdoo_CRM_update: any;
 
 // FROM ODOO TO FIREBASE
 export let odooToFirebase : any;// if users or ticket changed in odoo, it changes it in firebase'
+export let check_payments : any;
 export let send_errors_mailreminder: any;
 
 // TRIGGERS INSIDE FIREBASE
@@ -634,48 +635,112 @@ firebaseToOdoo_CRM_update = functions.database.ref("/notRegisteredUsers/{idTicke
   }
 });
 
-// odooToFirebase = functions.https.onRequest(async (request, response)=> {
-odooToFirebase = functions
-    .runWith({timeoutSeconds: 55})
-    .pubsub.schedule("every minute")
-    .timeZone("America/Lima")
-    .onRun(async () =>{
+odooToFirebase = functions.https.onRequest(async (request, response)=> {
+// odooToFirebase = functions
+//     .runWith({timeoutSeconds: 57})
+//     .pubsub.schedule("every minute")
+//     .timeZone("America/Lima")
+//     .onRun(async () =>{
     // this will run with certain periodicity. This will be the stable function.
     // Here will be everything at the moment. eventually we will separate them to test each one of these.
 
       try {
-        const lastupdateTimestamp_users = await FirebaseFcn.firebaseGet("/timestamp_collection/ussersTimeStamp");
+        const lastupdateTimestamp_campaigns = await FirebaseFcn.firebaseGet("/timestamp_collection/CMR_campaings_timestamp");
         const lastupdateTimestamp_tickets = await FirebaseFcn.firebaseGet("/timestamp_collection/tickets_timestamp");
         const lastupdateTimestamp_crm = await FirebaseFcn.firebaseGet("/timestamp_collection/CMR_tickets_timestamp");
-        const lastupdateTimestamp_campaigns = await FirebaseFcn.firebaseGet("/timestamp_collection/CMR_campaings_timestamp");
+        const lastupdateTimestamp_users = await FirebaseFcn.firebaseGet("/timestamp_collection/ussersTimeStamp");
 
         const odoo_session = await OdooFcn.odoo_Login();
 
         if (odoo_session != null) {
         // await OdooFcn.odooToFirebase_all(odoo_session, lastupdateTimestamp_users, lastupdateTimestamp_tickets, lastupdateTimestamp_crm, lastupdateTimestamp_campaigns);
-
+          let campaings_success = await OdooFcn.odooToFirebase_Campaigns(odoo_session, lastupdateTimestamp_campaigns);
+          let serviceTickets_success = await OdooFcn.odooToFirebase_ServiceTickets(odoo_session, lastupdateTimestamp_tickets);
           let crm_tickets_success = await OdooFcn.odooToFirebase_CRMTickets(odoo_session, lastupdateTimestamp_crm);
           let users_success = await OdooFcn.odooToFirebase_Users(odoo_session, lastupdateTimestamp_users);
-          let serviceTickets_success = await OdooFcn.odooToFirebase_ServiceTickets(odoo_session, lastupdateTimestamp_tickets);
-          let campaings_success = await OdooFcn.odooToFirebase_Campaigns(odoo_session, lastupdateTimestamp_campaigns);
           await OdooFcn.odoo_Logout(odoo_session);
 
-          functions.logger.info("[odooToFirebase]: Stop created with partners in odoo.", {
+          functions.logger.info("[odooToFirebase]:", {
             "odoo_session": odoo_session,
+            "campaings_success": campaings_success,
+            "serviceTickets_success": serviceTickets_success,
             "crm_tickets_success": crm_tickets_success,
             "users_success": users_success,
-            "serviceTickets_success": serviceTickets_success,
-            "campaings_success": campaings_success,
           });
         }
-        // response.send("odooToFirebase. odoo_session: .." + odoo_session?.substring(odoo_session.length - 5));
-        return true;
+        response.send("odooToFirebase. odoo_session: .." + odoo_session?.substring(odoo_session.length - 5));
+        // return true;
       } catch (error) {
         functions.logger.error( "[odooToFirebase] ERROR at Start. ", error);
-        // response.send("OdooSync Error: "+error);
-        return false;
+        response.send("OdooSync Error: "+error);
+        // return false;
       }
     });
+
+
+check_payments = functions.https.onRequest(async (request, response)=> {
+  // check_payments = functions
+  //     .runWith({timeoutSeconds: 57})
+  //     .pubsub.schedule("every minute")
+  //     .timeZone("America/Lima")
+  //     .onRun(async () =>{
+
+  const odoo_session = await OdooFcn.odoo_Login();
+  let user_with_payment = []
+
+  let invoice_reference_stack = await FirebaseFcn.firebaseGet("invoice_reference_stack");
+  if(invoice_reference_stack){
+
+  let invoice_reference_stack_keys =  Object.keys(invoice_reference_stack).sort()
+  // let min = Number(invoice_reference_stack_keys[0])
+  let invoice_reference_stack_keys_numbers = invoice_reference_stack_keys.map(str => {return Number(str)})
+
+  console.log("invoice_reference_stack_keys", invoice_reference_stack_keys_numbers)
+
+  user_with_payment = await OdooFcn.read_accountmove_reference(odoo_session, invoice_reference_stack_keys_numbers)
+
+  console.log("user_with_payment",user_with_payment)
+
+  
+
+  for(let i = 0; i< user_with_payment.length; i++){
+    let partner_id = invoice_reference_stack_keys[i]
+    console.log(partner_id)
+    if(partner_id){
+
+      console.log("invoice_reference_stack/" + partner_id)
+      await FirebaseFcn.firebaseRemove("invoice_reference_stack/"  + partner_id)
+      //crear ticket de atencion y guardar id en una lista de firebase. 
+      let user_data = await OdooFcn.get_user_data(odoo_session,Number(partner_id),0)
+      let helpdesk_id =await OdooFcn.create_helpdesk_ticket(odoo_session,Number(partner_id),user_data.name)
+      console.log("helpdesk_id", helpdesk_id, "helpdesk_stack/" + helpdesk_id)
+
+      await FirebaseFcn.firebaseSet("helpdesk_stack/" + helpdesk_id, partner_id) 
+      //cambia etiqueta de usuario a por instalar 
+      
+      OdooFcn.modify_state_user(odoo_session,user_data,453,"add")
+
+      const dateTimeEmail = false;
+          const subject_str = "Sanimapp: Nuevo Ticket de instalación #" + helpdesk_id + " ("+ user_data.name;
+          const welcome_str = "Este es un mensaje del backend. ";
+          const message_str = "Se registró el siguiente pago y se creo un ticket de instalacion.";
+          let message_container = "helpdesk_id: " + helpdesk_id + " /n partner_id: " + partner_id + " /n Name: " + user_data.name 
+          await FirebaseFcn.sendEmail(subject_str, welcome_str, dateTimeEmail, message_str, message_container);
+
+
+    }
+    
+
+  }
+  }
+    
+  response.send("check_payments. odoo_session: .." + odoo_session?.substring(odoo_session.length - 5));
+
+
+  
+
+  });
+
 
 const runtimeOpts = {
   timeoutSeconds: 540,
@@ -697,40 +762,6 @@ exports.test = functions.runWith(runtimeOpts).https.onRequest( async (request, r
 });
 
 
-/*
-exports.test2 = functions
-    .https.onRequest( async (request, response)=> {
-      const odoo_session = await OdooFcn.odoo_Login();
-
-      let categories_list = await OdooFcn.getCategories(odoo_session);
-      if (categories_list.length == 0) {
-        console.log("Error: No categories");
-      }
-      // else console.log(categories_list)
-
-      let user_categories = [809, 453, 646, 867, 506];
-
-      let user_categories_filtered = await OdooFcn.search_categories_Odoo( user_categories, categories_list );
-
-      // console.log("user_categories_filtered: ", user_categories_filtered)
-
-      let user_stop_data = user_categories_filtered.filter( (e:any) => e.name.includes("Paradero:"));
-      console.log("user_stop_data: ", user_stop_data);
-      console.log("user_stop_data.name: ", user_stop_data[0].name);
-      console.log("user_stop_data.id: ", user_stop_data[0].id);
-
-
-      let user_route_data = user_categories_filtered.filter( (e:any) => e.name.includes("Ruta:"));
-      console.log("user_route_data: ", user_route_data);
-      console.log("user_route_data.name: ", user_route_data[0].name);
-      console.log("user_route_data.id: ", user_route_data[0].id);
-
-
-      console.log(odoo_session);
-      console.log(settings.odoo_url);
-      response.send("<p>odoo url: "+settings.odoo_url +"</p><p>odoo session: "+odoo_session +"</p><p>Everything's working fine</p>");
-    });
-*/
 
 send_errors_mailreminder = functions
     .pubsub.schedule("everyday 08:00")
@@ -763,30 +794,139 @@ send_errors_mailreminder = functions
       }
     });
 
+
 exports.test3 = functions
     .https.onRequest( async (request, response)=> {
       try {
-        const pendand_errors = await FirebaseFcn.firebaseGet("/illegal_entries_stack");
-        const pendand_errors_keys = Object.keys(pendand_errors);
+        const odoo_session = await OdooFcn.odoo_Login();
 
-
-        let message_container = [];
-        for (let i = 0; i < pendand_errors_keys.length; i++) {
-          message_container.push(pendand_errors[pendand_errors_keys[i]] + "(User_id: " + pendand_errors_keys[i] + ")" );
+        let crm_ticket = {
+          "id": 3285,
+          "partner_id": false,
+          "campaign_id": [
+              34,
+              "Campaña Febrero"
+          ],
+          "stage_id": [
+              4,
+              "Ganado"
+          ],
+          "medium_id": [
+              18,
+              "Recomendación"
+          ],
+          "source_id": [
+              24,
+              "Recomendación"
+          ],
+          "referred": false,
+          "name": "Lucero Hurtado prueba 3",
+          "phone": "+51 908 764 532",
+          "mobile": false,
+          "tag_ids": [
+              2
+          ],
+          "create_uid": [
+              24,
+              "[73015741] HURTADO ROCA LUCERO"
+          ],
+          "create_date": "2023-09-07 13:51:45",
+          "street": "Me b lt10",
+          "street2": false,
+          "zip": "12/23/2789",
+          "order_ids": [],
+          "city": "Lima",
+          "state_id": [
+              1160,
+              "Lima (PE)"
+          ],
+          "country_id": [
+              173,
+              "Perú"
+          ]
         }
 
-        if (pendand_errors == null ) functions.logger.info( "[send_errors_mailreminder] No pendant error.");
-        else {
-          const dateTimeEmail = false;
-          const subject_str = "Sanimapp Daily Backend Alert";
-          const welcome_str = "Esta es una alerta diaria";
-          const message_str = "Se registraron los siguientes ingresos que fueron ignorados. Por favor, revisarlos a la brevedad";
-          await FirebaseFcn.sendEmail(subject_str, welcome_str, dateTimeEmail, message_str, message_container);
-        }
+        let crm_id = crm_ticket["id"]
+        let res_id = 31559
 
-        response.send("<p>[send_errors_mailreminder] <p>Everything's working fine</p>");
-      } catch (error) {
-        functions.logger.error( "[send_errors_mailreminder] ERROR  ( ", error, ")");
-        response.send("<p>[send_errors_mailreminder] <p>Everything's working fine</p>");
-      }
+        let crm_name = crm_ticket.name
+
+        
+
+            let sale_order_status= await OdooFcn.create_sale_order_and_invoice(odoo_session, crm_id, crm_name, res_id)
+             if(sale_order_status == false){
+              console.log("error 404. create_sale_order_and_invoice not working well")
+              response.send("<p>[2] <p>Something wrong</p>");
+             }
+             else {
+              console.log("create_sale_order_and_invoice ok")
+              response.send("<p>[3] <p>Everything's working fine</p>");
+             }
+
+          }
+          catch(e){
+
+          }
+ 
     });
+
+  exports.test4 = functions
+  .https.onRequest( async (request, response)=> {
+
+        //download invoice stack 
+    
+    let min = 9999999
+
+    try {
+      let invoice_reference_stack = await FirebaseFcn.firebaseGet("invoice_reference_stack");
+      console.log(invoice_reference_stack)
+      let invoice_reference_stack_keys = Object.keys(invoice_reference_stack)
+
+
+      console.log(invoice_reference_stack_keys)
+
+
+      min = Number( invoice_reference_stack_keys.sort()[0] ) // to search invoices
+      
+    
+    }
+    catch(error){
+      response.send("<p>[test4] <p>Something wrong</p>");
+    }
+
+    try {
+      const odoo_session = await OdooFcn.odoo_Login();
+      let references = await OdooFcn.read_accountmove_reference(odoo_session, min)
+      console.log(references)
+      
+    } catch (error) {
+      
+    }
+
+    response.send("<p>[test4] <p>Everything working fine</p>");
+  });
+
+
+  exports.test5 = functions
+  .https.onRequest( async (request, response)=> {
+
+ 
+
+    try {
+      const odoo_session = await OdooFcn.odoo_Login();
+      
+      let user_data = await OdooFcn.get_user_data(odoo_session,31558,0)
+      console.log("existant data ", user_data)
+
+      OdooFcn.modify_state_user(odoo_session,user_data,453,"remover")
+
+
+
+      await OdooFcn.odoo_Logout(odoo_session)
+      
+    } catch (error) {
+      
+    }
+
+    response.send("<p>[test4] <p>Everything working fine</p>");
+  });
