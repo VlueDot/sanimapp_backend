@@ -104,7 +104,10 @@ export async function odooToFirebase_Campaigns(odoo_session:any, lastupdateTimes
 
   let res;
 
-  if (target_data.length == 0) functions.logger.info( "[odooToFirebase_Campaigns] Campaings no needed to be updated.");
+  if (target_data.length == 0) {
+    true
+    // functions.logger.info( "[odooToFirebase_Campaigns] Campaings no needed to be updated.");
+  }
   else {
     res = false;
 
@@ -282,7 +285,7 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
         "offset": 0,
         "fields": [
           "id", "name", "phone", "mobile", "zip",
-          "vat", "street", "street2", "city", "country_id", "display_name", "category_id", "write_date"],
+          "vat", "street", "street2", "city", "country_id", "display_name", "category_id", "write_date", "opportunity_ids"],
         "domain": [["write_date", ">", date_str]],
       },
     });
@@ -302,12 +305,17 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
       // donwload illegal_entries_stack
       let illegal_entries_stack_keys;
       try {
+        if(illegal_entries_stack != null){
+
         illegal_entries_stack = await FirebaseFcn.firebaseGet("illegal_entries_stack");
         illegal_entries_stack_keys = Object.keys(illegal_entries_stack);
 
         for (let index=0; index< illegal_entries_stack_keys.length; index ++) warning_list_map.set(illegal_entries_stack_keys[index], illegal_entries_stack[illegal_entries_stack_keys[index]]);
+        
+        }
+
       } catch (error) {
-        console.log(error);
+        functions.logger.error("[odooToFirebase_Users] ERROR 0211230156 ", error);
       }
 
 
@@ -330,7 +338,9 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
         const user_id = target_data[i].id;
         const user_name = target_data[i].name;
         const user_categories = target_data[i].category_id;
-
+        const opportunity_id_len = target_data[i].opportunity_ids.length;
+     
+        let user_state_from_firebase
         try {
           // check for categories
           // alternatively we could download every stops and categories. depending on demand or testings
@@ -364,13 +374,21 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
           const usuario_instalar_tags = ["Cliente por instalar"];
           const usuario_ganado_tags = ["Cliente ganado"];
 
+          // let tsss = Date.now()
+          // let ts_2  =tsss
+          // console.log("tsss" , tsss)
+          // tsss = tsss + 40*1000
+          // console.log(tsss)
+          
+          // while(tsss > ts_2) {ts_2 = Date.now()}
 
-          if (user_status_data.length == 1) {
-            const user_state_from_firebase = await FirebaseFcn.firebaseGet("Data_client/" + user_id +"/Data_client_2/Client_Type" );
+          if (user_status_data.length == 1 || opportunity_id_len ==1) {
+            
+            console.log("Data_client/" + user_id +"/Data_client_2/Client_Type")
+            
+            user_state_from_firebase = await FirebaseFcn.firebaseGet("Data_client/" + user_id +"/Data_client_2/Client_Type" );
             const user_state2_from_firebase = await FirebaseFcn.firebaseGet("Data_client/" + user_id +"/Data_client_3/client_type" );
-
-            // console.log("user_state_from_firebase ", user_state_from_firebase);
-
+            
 
             if (user_state2_from_firebase == null && user_state_from_firebase == null) no_entry_in_firebase = true;
 
@@ -389,55 +407,61 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
               if (usuario_inactivo_tags.includes(user_state_from_firebase)) user_state_from_firebase_Odoo_label = "usuario inactivo";
               if (usuario_ganado_tags.includes(user_state_from_firebase)) user_state_from_firebase_Odoo_label = "Cliente ganado";
 
-
-
-              if ( user_status_data[0].name == "Usuario por instalar" ) {
-                if ( no_entry_in_firebase || user_state_from_firebase_Odoo_label == "Usuario por instalar" || user_state_is_NaN || user_state_from_firebase_Odoo_label =="usuario inactivo" || user_state_from_firebase_Odoo_label == "Cliente ganado") {
-                  true;
-                } else {
-                  legal_task = false;
-                  reason = "Forbidden move 1. From Firebase " + user_state_from_firebase_Odoo_label + " ("+ user_state_from_firebase +") ---> 'Usuario por instalar' ";
-                  warning_list.push(user_name + " ("+ user_id +") " + reason);
-                  warning_list_map.set(user_id, "("+ user_name +") " + reason);
-                }
-              }
-
-
-              if ( user_status_data[0].name == "usuario activo" ) {
-                if (user_state_from_firebase_Odoo_label == "Usuario por instalar" || user_state_from_firebase_Odoo_label == "usuario activo" ) {
-                  if (user_stop_data.length == 0) {
+              console.log("-----1", user_status_data[0].name, user_state_from_firebase_Odoo_label)
+              
+              if (user_stop_data[0] == undefined) {
+                true;
+              } else {
+                if ( user_status_data[0].name == "Usuario por instalar" ) {
+                  if ( no_entry_in_firebase || user_state_from_firebase_Odoo_label == "Usuario por instalar" || user_state_is_NaN || user_state_from_firebase_Odoo_label =="usuario inactivo" || user_state_from_firebase_Odoo_label == "Cliente ganado") {
+                    true;
+                  } else {
                     legal_task = false;
-                    reason = "Forbidden move 2. Impossible to set Usuario activo without stop";
-                    warning_list.push(user_name + " ("+ user_id +") " + reason);
-                    warning_list_map.set(user_id, "("+ user_name +") " + reason);
-                  } else if (user_stop_data.length > 1) {
-                    legal_task = false;
-                    reason = "Forbidden move 3. Impossible to set Usuario activo with more than 1 stop " + user_stop_data;
+                    reason = "Forbidden move 1. From Firebase " + user_state_from_firebase_Odoo_label + " ("+ user_state_from_firebase +") ---> 'Usuario por instalar' ";
                     warning_list.push(user_name + " ("+ user_id +") " + reason);
                     warning_list_map.set(user_id, "("+ user_name +") " + reason);
                   }
-                } else {
-                  legal_task = false;
-                  reason = "Forbidden move 4. From Firebase " + user_state_from_firebase_Odoo_label + " ("+ user_state_from_firebase +") ---> 'usuario activo' ";
-                  warning_list.push(user_name + " ("+ user_id +") " + reason);
-                  warning_list_map.set(user_id, "("+ user_name +") " + reason);
                 }
-              }
 
-              if ( user_status_data[0].name == "usuario inactivo" ) {
-                if (user_state_from_firebase_Odoo_label == "usuario activo" || user_state_from_firebase_Odoo_label == "usuario inactivo") {
-                  true;
-                } else {
-                  legal_task = false;
-                  reason = "Forbidden move 5. From Firebase " + user_state_from_firebase_Odoo_label + " ("+ user_state_from_firebase +") ---> 'usuario inactivo' ";
-                  warning_list.push(user_name + " ("+ user_id +") " + reason);
-                  warning_list_map.set(user_id, "("+ user_name +") " + reason);
+                if ( user_status_data[0].name == "usuario activo" ) {
+                  if (user_state_from_firebase_Odoo_label == "Usuario por instalar" || user_state_from_firebase_Odoo_label == "usuario activo" ) {
+                    if (user_stop_data.length == 0) {
+                      legal_task = false;
+                      reason = "Forbidden move 2. Impossible to set Usuario activo without stop";
+                      warning_list.push(user_name + " ("+ user_id +") " + reason);
+                      warning_list_map.set(user_id, "("+ user_name +") " + reason);
+                    } else if (user_stop_data.length > 1) {
+                      legal_task = false;
+                      reason = "Forbidden move 3. Impossible to set Usuario activo with more than 1 stop " + user_stop_data;
+                      warning_list.push(user_name + " ("+ user_id +") " + reason);
+                      warning_list_map.set(user_id, "("+ user_name +") " + reason);
+                    }
+                  } else {
+                    legal_task = false;
+                    reason = "Forbidden move 4. From Firebase " + user_state_from_firebase_Odoo_label + " ("+ user_state_from_firebase +") ---> 'usuario activo' ";
+                    warning_list.push(user_name + " ("+ user_id +") " + reason);
+                    warning_list_map.set(user_id, "("+ user_name +") " + reason);
+                  }
+                }
+
+                if ( user_status_data[0].name == "usuario inactivo" ) {
+                  if (user_state_from_firebase_Odoo_label == "usuario activo" || user_state_from_firebase_Odoo_label == "usuario inactivo") {
+                    true;
+                  } else {
+                    legal_task = false;
+                    reason = "Forbidden move 5. From Firebase " + user_state_from_firebase_Odoo_label + " ("+ user_state_from_firebase +") ---> 'usuario inactivo' ";
+                    warning_list.push(user_name + " ("+ user_id +") " + reason);
+                    warning_list_map.set(user_id, "("+ user_name +") " + reason);
+                  }
                 }
               }
             }
           } else {
-            if (user_status_data.length == 0) reason = "There is no state for a client. Will be ignored.";
-            else reason = "There are more than 1 one state for a client. Will be ignored.";
+            if (user_status_data.length == 0) {
+              // check at least if it has an oportunity
+              if (opportunity_id_len == 0) reason = "There is no state for a client and no opportunity in crm. Will be ignored.";
+              else if (opportunity_id_len >1) reason = "There is no state for a client and more than 1 opportunitty in crm. Is that ok? Will be ignored.";
+            } else reason = "There are more than 1 one state for a client. Will be ignored.";
             warning_list.push( user_name + " ("+ user_id +") " + reason);
             warning_list_map.set(user_id, "("+ user_name +") " + reason);
             legal_task = false;
@@ -445,6 +469,10 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
 
           try {
             if (legal_task) {
+
+              console.log("-----2 ", user_state_from_firebase)
+            // 
+
               // STOPS ----------------------------------------------------------------
 
               let user_stopId = 0; let user_namestop = "NaN";
@@ -474,9 +502,14 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
                 if ( user_status_data[0].name == "Usuario por instalar") user_status_name = "Cliente por instalar";
                 else if ( user_status_data[0].name == "usuario inactivo") user_status_name = "Cliente desinstalado";
                 else if ( user_status_data[0].name == "usuario activo" && user_route_data.length == 1) user_status_name = "Cliente normal";
+              }else { // that means in case dont have status but have a crm ticket that actual have status
+                user_status_name = user_state_from_firebase
               }
 
-              // console.log("user_status_name ", user_status_name);
+
+
+              console.log("5 user_status_name ", user_status_name)
+
 
               let ubigeo = "NaN";
               // l10n_pe_ubigeo is deprecated. Using zip instead
@@ -560,7 +593,14 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
                     }
                   }
                 }
+              console.log("4 user_status_name ", user_status_name)
+
+                
               } catch (error) {
+
+              console.log("3 user_status_name ", user_status_name)
+
+
                 const dataClient_node = {
                   "Data_client_1": {
                     "Addr_reference": "NaN",
@@ -646,6 +686,9 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
 
               };
 
+              console.log("2 user_status_name ", user_status_name)
+
+
               // update firebase
 
               let target_stopId_fb = 0;
@@ -681,6 +724,7 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
 
 
               };
+              console.log("1 targetState ", targetState)
 
 
               const ToDoList = [];
@@ -693,9 +737,10 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
               if ( just_no_route ) ToDoList.push("There is no route in odoo");
               if (!stops_changed && !just_no_route && ! just_routes_changed) ToDoList.push("Nothing to do.");
 
-
               // fast solution
               if (state_change) {
+              console.log("-----11")
+
                 // update change in firebase
                 try {
                   let status_address2 = "Data_client/" + user_id +"/Data_client_2/Client_Type";
@@ -969,11 +1014,11 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
               }
 
               if (just_no_route ) {
-                console.log("just_no_route");
+                functions.logger.info("just_no_route");
               }
 
               if (warning_list_map.has(String(user_id))) {
-                console.log("the user ", user_id, " is on the warning list. attempting to delete it");
+                functions.logger.info("the user ", user_id, " is on the warning list. attempting to delete it");
                 warning_list_map.delete(String(user_id));
               }
 
@@ -1014,6 +1059,9 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
       console.log("count_correct", count_correct);
       console.log("count_incorrect", warning_list.length);
 
+      const warning_list_json = Object.fromEntries(warning_list_map);
+      FirebaseFcn.firebaseSet("illegal_entries_stack", warning_list_json);
+
       if (warning_list.length > 0) {
         const dateTimeEmail = Date.now();
         const subject_str = "Sanimapp Backend Alert";
@@ -1022,8 +1070,7 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
         await FirebaseFcn.sendEmail(subject_str, welcome_str, dateTimeEmail, message_str, warning_list);
       }
 
-      const warning_list_json = Object.fromEntries(warning_list_map);
-      FirebaseFcn.firebaseSet("illegal_entries_stack", warning_list_json);
+      
     } else functions.logger.info( "[odooToFirebase_Users] No update founded in Odoo.", {"odoo_session": odoo_session});
   } catch (err) {
     functions.logger.error( "[odooToFirebase_Users] ERROR: " + err, {"odoo_session": odoo_session} );
@@ -1165,7 +1212,7 @@ export async function search_categories_Odoo(user_categories: any, categories_li
       // console.log("filtered_element", filtered_element);
       filtered_list.push(filtered_element[0]);
     } catch (error) {
-      console.log("[search_categories_Odoo] error ", error);
+      functions.logger.error("[search_categories_Odoo] error 0211231159 ", error);
     }
   }
   return filtered_list;
@@ -1309,6 +1356,9 @@ export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdate
     // Only works if there is at least a new ticket
     if (len > 0) {
       const servCollKeys = Object.keys(serviceColletion); // list of tickets ids in Firebase
+
+      console.log("servCollKeys", servCollKeys)
+
       const tickets = data.result.records;
       functions.logger.info( "[odooToFirebase_ServiceTickets] Entries Founded:", {
         "odoo_session": odoo_session,
@@ -1319,7 +1369,14 @@ export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdate
         const ticket = tickets[i];
         const id = String(ticket["id"]);
 
+        console.log("ticket " + (i + 1), ticket)
+
+
         try {
+          let user_data = await get_user_data(odoo_session, ticket["partner_id"][0], 0);
+
+          console.log("user_data ", user_data)
+
           // save the data readed from odoo, organizing it to write in Firebase
           const create_date = Date.parse(ticket["create_date"]);
           const creation_date = new Date(Number(create_date)-18000000);
@@ -1328,6 +1385,7 @@ export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdate
           const partner_id = String(ticket["partner_id"][0]);
           const description = ticket["description"];
           const name = ticket["name"];
+
 
           const stage_id = Number(ticket["stage_id"][0]);
           // stage_id defines ticket status acording the relation below
@@ -1360,10 +1418,16 @@ export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdate
             // The updating depends on the current ticket status in firebase and the new ticket status from odoo
 
             const initialState = await FirebaseFcn.firebaseGet("/Service_collection/" + id);
+
+            console.log("initialState", initialState)
+
             const targetState = initialState;
 
             // if ticket status is "Nuevo"--------------------------------------------------------------------------------------
             if (ticket_status === "Nuevo") {
+              await modify_state_user(odoo_session, user_data, 453, "add" );
+
+              await modify_state_user(odoo_session, user_data, 358, "remove" );
               // just update if the current status is "Nuevo"
               if (serviceColletion[id]["ticket_status"] === "Nuevo") {
                 targetState["id_client"] = Number(partner_id);
@@ -1375,6 +1439,9 @@ export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdate
 
             // if ticket status is "En progreso"--------------------------------------------------------------------------------
             if (ticket_status === "En progreso") {
+              await modify_state_user(odoo_session, user_data, 453, "add" );
+
+              await modify_state_user(odoo_session, user_data, 358, "remove" );
               // just update if the current status is "Nuevo" or "En progreso"
 
               // If "Nuevo"
@@ -1398,6 +1465,16 @@ export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdate
             // if ticket status is "Terminado"-----------------------------------------------------------------------------------
             if (ticket_status === "Terminado") {
               // just update if the current status is "Nuevo" or "En progreso"
+              await modify_state_user(odoo_session, user_data, 453, "remove" );
+
+              await modify_state_user(odoo_session, user_data, 358, "add" );
+
+              const dateTimeEmail = false;
+              const subject_str = "Sanimapp: Ticket de instalación #" + id + " [TERMINADO] ("+ name;
+              const welcome_str = "Este es un mensaje del backend. ";
+              const message_str = "Se registró ticket de instalación como terminado. El usuario se encuentra como activo, añadir al menos un paradero. ";
+              let message_container = ["[helpdesk_id: " + id + "] [partner_id: " + partner_id + "] [Name: " + name + "]"];
+              await FirebaseFcn.sendEmail(subject_str, welcome_str, dateTimeEmail, message_str, message_container);
 
               // If "Nuevo"
               if (serviceColletion[id]["ticket_status"] === "Nuevo") {
@@ -1593,13 +1670,15 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
       "model": "crm.lead",
       "offset": 0,
       "fields": [
-        "id","partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
-        "name", "phone", "mobile", "tag_ids", "create_uid", "create_date", "write_date","street", "street2", "zip", "country_id", "state_id","tag_ids","user_id"
-      
+        "id", "partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
+        "name", "phone", "mobile", "tag_ids", "create_uid", "create_date", "write_date", "street", "street2", "zip", "country_id", "state_id", "tag_ids", "user_id",
+
       ],
-      "domain": [["write_date", ">", date_str]],
+      "domain": ["&", ["write_date", ">", date_str], ["partner_id", "!=", false]],
     },
   });
+
+  //sales person is user_id
 
   const params = {
     headers: CustomHeaders,
@@ -1607,15 +1686,16 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
     body: raw,
   };
 
-  let invoice_reference_stack_keys 
-  let invoice_reference_stack
+  let invoice_reference_stack_keys :any[] = [];
+  let invoice_reference_stack;
   try {
     invoice_reference_stack = await FirebaseFcn.firebaseGet("invoice_reference_stack");
-    console.log("invoice_reference_stack", invoice_reference_stack)
-    invoice_reference_stack_keys = Object.keys(invoice_reference_stack)
-    
+    if (invoice_reference_stack != null) {
+      functions.logger.info("invoice_reference_stack: ", invoice_reference_stack);
+      invoice_reference_stack_keys = Object.keys(invoice_reference_stack);
+    }
   } catch (error) {
-    
+    functions.logger.error("[odooToFirebase_CRMTickets] ERROR 2410231410: " + error, {"odoo_session": odoo_session} );
   }
 
   try {
@@ -1634,23 +1714,22 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
       });
 
 
-
       // for every ticket to write in firebase
       for (let i = 0; i < tickets.length; i++) {
         const ticket = tickets[i];
         const ticket_id = String(ticket["id"]);
 
-        let full_data : any
-        full_data= await verify_user_exist_create_modify(odoo_session,ticket)
-        console.log("full_data",full_data)
+        let full_data : any;
+        full_data= await verify_user_exist_create_modify(odoo_session, ticket);
+        functions.logger.info("User full data crm: " + ticket_id , {"full_data":full_data});
 
-        let is_in_reference_stack_keys = invoice_reference_stack_keys?.includes(String(ticket.partner_id[0]))
-        let is_any_order_line = await is_there_order_line(odoo_session,ticket.partner_id[0])
-        
+        let is_in_reference_stack_keys = invoice_reference_stack_keys?.includes(String(ticket.partner_id[0]));
+        // let is_any_order_line = await is_there_order_line(odoo_session, ticket.partner_id[0]);
+
 
         // Saving info to write in firebase--------------------------------------------------------------------------------------------
         const stage_id = Number(ticket["stage_id"][0]);
-        
+
         let ticket_status = "NaN";
         switch (stage_id) {
           case 1:
@@ -1670,48 +1749,49 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
         }
 
 
-        if(ticket_status == "Cliente ganado"){
-          //busca si ya esta creada la orden en la lista stack. sino la crea y la agrega a la lista. 
-          
+        if (ticket_status == "Cliente ganado") {
+          // busca si ya esta creada la orden en la lista stack. sino la crea y la agrega a la lista.
 
-          if(!is_in_reference_stack_keys){
-            //
-            if(!is_any_order_line){
-              let sale_order_status= await create_sale_order_and_invoice (odoo_session,ticket.id,ticket.name, ticket.partner_id[0])
-              if(sale_order_status == false){
-                console.log("error 404. create_sale_order_and_invoice not working well")
-               }
-               else {
-                console.log("create_sale_order_and_invoice ok")
-               }
 
-            }
-            else{
-              //crea item en la lista
+          if (!is_in_reference_stack_keys) {
+            /*
+            if (!is_any_order_line) {
+               let sale_order_status= await create_sale_order_and_invoice(odoo_session, ticket.id, ticket.name, ticket.partner_id[0]);
+              if (sale_order_status == false) {
+                console.log("error 404. create_sale_order_and_invoice not working well");
+              } else {
+                console.log("create_sale_order_and_invoice ok");
+              }
+              console.log("create_sale_order_and_invoice is not working anymore.");
+
+            } else {
+              // crea item en la lista
               let invoice_reference_stack_map = new Map();
 
-              invoice_reference_stack_map.set(ticket.partner_id[0],ticket.name)
-            
+              invoice_reference_stack_map.set(ticket.partner_id[0], ticket.name);
+
               const invoice_reference_stack_json = Object.fromEntries(invoice_reference_stack_map);
               FirebaseFcn.firebaseUpdate("invoice_reference_stack", invoice_reference_stack_json);
             }
 
-         
+            */
+
+
+            let invoice_reference_stack_map = new Map();
+
+            invoice_reference_stack_map.set(ticket.partner_id[0], ticket.name);
+
+            const invoice_reference_stack_json = Object.fromEntries(invoice_reference_stack_map);
+            FirebaseFcn.firebaseUpdate("invoice_reference_stack", invoice_reference_stack_json);
+
+            functions.logger.info("Se ha añadido el registro a invoices references stack:  ", invoice_reference_stack_json);
           }
-
-          
-        }
-        else{
-          if(is_in_reference_stack_keys){
-            FirebaseFcn.firebaseRemove("invoice_reference_stack/" + String(ticket.partner_id[0]))
-
+        } else {
+          if (is_in_reference_stack_keys) {
+            FirebaseFcn.firebaseRemove("invoice_reference_stack/" + String(ticket.partner_id[0]));
           }
-
-
         }
 
-
-        
 
         let partner_id = "NaN";
         if (stage_id != 0) {
@@ -1738,7 +1818,6 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
         let mobile = ticket["mobile"];
         if (mobile === false) mobile = "NaN";
 
-       
 
         const tag_ids = ticket["tag_ids"];
         // tag_ids defines ticket type acording the relation below
@@ -1746,12 +1825,12 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
         if (tag_ids.includes(2)) ticket_type = "Ventas-Pamplona";
         if (tag_ids.includes(3)) ticket_type = "Ventas-Accu";
 
-        
 
-        let sales_person_name
-        full_data.user_data.user_id? sales_person_name = full_data.user_data.user_id:false
+        let sales_person_name;
+        full_data.crm_data.user_id? sales_person_name = full_data.crm_data.user_id:false;
 
-        
+        console.log("------01 ", full_data)
+
 
         const create_date = Date.parse(ticket["create_date"]);
 
@@ -1774,7 +1853,6 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
           ticketIdToPartnerId.set(val, key);
         }
 
-     
 
         const ToDoList = [];
 
@@ -1798,7 +1876,7 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
             targetState["Sales_person"] = sales_person_name;
             targetState["Zone"] = ticket_type;
 
-            functions.logger.info( "[odooToFirebase_CRMTickets] Tasks. ", {
+            functions.logger.info( "[odooToFirebase_CRMTickets] (1) Tasks. ", {
               "odoo_session": odoo_session,
               "crm_id": ticket_id,
               "to-do-list": ToDoList,
@@ -1826,7 +1904,7 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
               targetState["Phone2"] = mobile;
               targetState["Sales_person"] = sales_person_name;
               targetState["Zone"] = ticket_type;
-              functions.logger.info( "[odooToFirebase_CRMTickets] Tasks. ", {
+              functions.logger.info( "[odooToFirebase_CRMTickets] (2) Tasks. ", {
                 "odoo_session": odoo_session,
                 "crm_id": ticket_id,
                 "to-do-list": ToDoList,
@@ -1860,7 +1938,7 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
                   "client_type": ticket_status,
                 };
 
-                functions.logger.info( "[odooToFirebase_CRMTickets] Tasks. ", {
+                functions.logger.info( "[odooToFirebase_CRMTickets] (3) Tasks. ", {
                   "odoo_session": odoo_session,
                   "crm_id": ticket_id,
                   "user_id": partner_id,
@@ -1884,6 +1962,8 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
                   "odoo_session": odoo_session,
                   "ticket_status": ticket_status,
                 });
+
+                console.log("_______2 ")
 
                 update = true;
               } else {
@@ -1981,7 +2061,10 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
                     "Data_client_3": Data_client_3,
                   };
 
-                  functions.logger.info( "[odooToFirebase_CRMTickets] Tasks. ", {
+                console.log("_______3 ")
+
+
+                  functions.logger.info( "[odooToFirebase_CRMTickets] (4) Tasks. ", {
                     "odoo_session": odoo_session,
                     "crm_id": ticket_id,
                     "to-do-list": ToDoList,
@@ -2005,6 +2088,8 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
                     "Data_client_2": Data_client_2,
                     "Data_client_3": Data_client_3,
                   };
+
+                  console.log( "------- 4", clientData)
                   await FirebaseFcn.firebaseSet("/Data_client/" + partner_id, clientData);
                   functions.logger.info( "[odooToFirebase_CRMTickets] Data_client created in firebase (/Data_client/" + partner_id + ").", {
                     "crm_id": ticket_id,
@@ -2013,6 +2098,8 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
                   });
                   update = true;
                 } else {
+                console.log("_______5 ")
+
                   if (contactData === null) {
                     functions.logger.error("[odooToFirebase_CRMTickets] ERROR. No se cargó la información de contacto", {
                       "odoo_session": odoo_session,
@@ -2062,7 +2149,7 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
               "client_type": ticket_status,
             };
 
-            functions.logger.info( "[odooToFirebase_CRMTickets] Tasks. ", {
+            functions.logger.info( "[odooToFirebase_CRMTickets] (5) Tasks. ", {
               "odoo_session": odoo_session,
               "crm_id": ticket_id,
               "user_id": partner_id,
@@ -2070,6 +2157,8 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
               "initialState": init,
               "targetState": targ,
             });
+
+            console.log("_______6 ")
 
             const id_client = ticketIdToPartnerId.get(ticket_id);
             await FirebaseFcn.firebaseSet("/Data_client/"+id_client+"/Data_client_2/Client_Type", ticket_status);
@@ -2108,7 +2197,7 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
                 "Client_Community": "NaN",
               };
 
-              functions.logger.info( "[odooToFirebase_CRMTickets] Tasks. ", {
+              functions.logger.info( "[odooToFirebase_CRMTickets] (6) Tasks. ", {
                 "odoo_session": odoo_session,
                 "crm_id": ticket_id,
                 "to-do-list": ToDoList,
@@ -2143,7 +2232,7 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
                   "client_type": ticket_status,
                 };
 
-                functions.logger.info( "[odooToFirebase_CRMTickets] Tasks. ", {
+                functions.logger.info( "[odooToFirebase_CRMTickets] (7) Tasks. ", {
                   "odoo_session": odoo_session,
                   "crm_id": ticket_id,
                   "user_id": partner_id,
@@ -2248,7 +2337,7 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
                     "Data_client_3": Data_client_3,
                   };
 
-                  functions.logger.info( "[odooToFirebase_CRMTickets] Tasks. ", {
+                  functions.logger.info( "[odooToFirebase_CRMTickets] (8) Tasks. ", {
                     "odoo_session": odoo_session,
                     "crm_id": ticket_id,
                     "to-do-list": ToDoList,
@@ -2267,6 +2356,8 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
                     "Data_client_2": Data_client_2,
                     "Data_client_3": Data_client_3,
                   };
+                  console.log("______9")
+                  console.log(clientData)
                   await FirebaseFcn.firebaseSet("/Data_client/" + partner_id, clientData);
                   functions.logger.info( "[odooToFirebase_CRMTickets] Data_client created in firebase (/Data_client/" + partner_id + ").", {
                     "crm_id": ticket_id,
@@ -2320,7 +2411,7 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
     if (update) {
       const dateTime = Date.now();
       FirebaseFcn.firebaseSet("/timestamp_collection/CMR_tickets_timestamp", String(dateTime));
-      functions.logger.info( "[odooToFirebase_ServiceTickets] updating CMR_tickets_timestamp in Firebase", {
+      functions.logger.info( "[odooToFirebase_ServiceTickets]   updating CMR_tickets_timestamp in Firebase", {
         "odoo_session": odoo_session,
         "CMR_tickets_timestamp": String(dateTime),
       });
@@ -2769,7 +2860,7 @@ export async function firebaseToOdoo_updateCRM(odoo_session:any, partner_id: num
     });
     return res;
   } catch (error) {
-    functions.logger.info("[firebaseToOdoo_updateCRM] ERROR updated CRM in Odoo ("+partner_id+")", {
+    functions.logger.error("[firebaseToOdoo_updateCRM] ERROR 0311231158 updated CRM in Odoo ("+partner_id+")", {
       "odoo_session": odoo_session,
       "id_user": partner_id,
       "id_ticket_crm": idTicket,
@@ -2825,13 +2916,12 @@ export async function createUser_Odoo_firebase(odoo_session: any, contact_data_j
   }
 }
 
-
 export async function create_user_in_Odoo(odoo_session: any, crm_ticket: any) {
   // 1. Get id_odoo
 
-console.log("create_user_in_Odoo: ")
-console.log(crm_ticket)
-  if(crm_ticket.partner_id == false){
+  functions.logger.info("create_user_in_Odoo: ", crm_ticket);
+
+  if (crm_ticket.partner_id == false) {
     const CustomHeaders: HeadersInit = {
       "Content-Type": "application/json",
       "Cookie": "session_id="+odoo_session,
@@ -2843,31 +2933,29 @@ console.log(crm_ticket)
         "model": "res.partner",
         "method": "create",
         "kwargs": {},
-        "args":[{
-                "is_company": false,
-                 "phone":crm_ticket.phone ,
-                 "mobile": crm_ticket.mobile,
-                 "name": crm_ticket.name,
-                 "vat": false,
-                 "l10n_latam_identification_type_id": 5,
-                "street": crm_ticket.street ,
-                "street2": crm_ticket.street2,
-                "country_id":crm_ticket.country_id[0],
-                "zip": crm_ticket.zip,
-                "category_id": [],
-                "city": crm_ticket.city,
-                "state_id": crm_ticket.state_id[0],
-                "tz": "America/Lima",
-                "tz_offset": "-0500",
-                "user_id": 24,
-                "city_id": 128,
-                "opportunity_ids": [crm_ticket.id]
+        "args": [{
+          "is_company": false,
+          "phone": crm_ticket.phone,
+          "mobile": crm_ticket.mobile,
+          "name": crm_ticket.name,
+          "vat": false,
+          "l10n_latam_identification_type_id": 5,
+          "street": crm_ticket.street,
+          "street2": crm_ticket.street2,
+          "country_id": crm_ticket.country_id[0],
+          "zip": crm_ticket.zip,
+          "category_id": [],
+          "city": crm_ticket.city,
+          "state_id": crm_ticket.state_id[0],
+          "tz": "America/Lima",
+          "tz_offset": "-0500",
+          "user_id": 24,
+          "city_id": 128,
+          "opportunity_ids": [crm_ticket.id],
 
-                }]
-    }
+        }],
+      },
     });
-
-    console.log(raw)
 
     const params = {
       headers: CustomHeaders,
@@ -2878,18 +2966,85 @@ console.log(crm_ticket)
     const response = await fetch(settings.odoo_url + "dataset/call_kw/res.partner/create", params);
     const data = await response.json();
 
-    console.log("data: ",data)
-
     try {
+      functions.logger.info("[createUser_Odoo_firebase] User ("+ crm_ticket.name+") succesfully created in Odoo ("+ data.result+")", {
+        "odoo_session": odoo_session,
+        "id_user": data.result,
+      });
 
-    functions.logger.info("[createUser_Odoo_firebase] User ("+ crm_ticket.name+") succesfully created in Odoo ("+ data.result+")", {
+      return data.result;
+    } catch (error) {
+      functions.logger.error("[createUser_Odoo_firebase] Error creating user in Odoo", {
+        "odoo_session": odoo_session,
+        "params": params.body,
+      });
+
+      return 0;
+    }
+  } else {
+    functions.logger.info("No need to create user because it already exists");
+    return crm_ticket.partner_id;
+  }
+}
+
+export async function create_user_in_Odoo2(odoo_session: any, crm_ticket_id: any, _data: any) {
+  // 1. Get id_odoo
+
+  functions.logger.info("create_user_in_Odoo: crm: ", crm_ticket_id);
+
+
+  const CustomHeaders: HeadersInit = {
+    "Content-Type": "application/json",
+    "Cookie": "session_id="+odoo_session,
+  };
+
+
+  // from OdooGenerateJsonsToWriteOdoo function
+  const raw = JSON.stringify({
+    "params": {
+      "model": "res.partner",
+      "method": "create",
+      "kwargs": {},
+      "args": [{
+        "is_company": false,
+        "phone": _data.phone != undefined? _data.phone: false,
+        "mobile": _data.mobile!= undefined? _data.name: false,
+        "name": _data.name!= undefined? _data.name: false,
+        "vat": _data.dni!= undefined? _data.dni: false,
+        "l10n_latam_identification_type_id": 5,
+        "street": _data.street!= undefined? _data.street: false,
+        "street2": _data.street2!= undefined? _data.street2: false,
+        // "country_id": _data.country_id[0]!= undefined? _data.country_id[0]: false,
+        // "zip": _data.zip!= undefined? _data.zip: false,
+        // "city": _data.city!= undefined? _data.city: false,
+        // "state_id": _data.state_id[0]!= undefined? _data.state_id[0]: false,
+        // "tz": "America/Lima",
+        // "tz_offset": "-0500",
+        // "user_id": 24,
+        // "city_id": 128,
+        "opportunity_ids": [Number(crm_ticket_id)],
+
+      }],
+    },
+  });
+
+  const params = {
+    headers: CustomHeaders,
+    method: "post",
+    body: raw,
+  };
+
+  const response = await fetch(settings.odoo_url + "dataset/call_kw/res.partner/create", params);
+  const data = await response.json();
+
+
+  try {
+    functions.logger.info("[createUser_Odoo_firebase] User ("+ _data.name+") succesfully created in Odoo ("+ data.result+")", {
       "odoo_session": odoo_session,
       "id_user": data.result,
     });
 
-    return data.result
-
-    
+    return data.result;
   } catch (error) {
     functions.logger.error("[createUser_Odoo_firebase] Error creating user in Odoo", {
       "odoo_session": odoo_session,
@@ -2898,21 +3053,10 @@ console.log(crm_ticket)
 
     return 0;
   }
-
-  }
-  else{
-    console.log("No need to create user because it already exists")
-    return crm_ticket.partner_id
-  }
- 
-
 }
 
-
-
-export async function create_sale_order_and_invoice(odoo_session:any, crm_id : number, crm_name:string ,res_id : number  ) {
-
-  //creating order 
+export async function create_sale_order_and_invoice(odoo_session:any, crm_id : number, crm_name:string, res_id : number ) {
+  // creating order
 
   const CustomHeaders: HeadersInit = {
     "Content-Type": "application/json",
@@ -2925,19 +3069,18 @@ export async function create_sale_order_and_invoice(odoo_session:any, crm_id : n
       "method": "create",
       "kwargs": {},
       "args": [
-          
-          {   "partner_id":res_id,
-              "note": "<p>[Backend] Requerimiento para instalar.</p>",
-              "opportunity_id": crm_id,
-              "origin": crm_name,
-              "show_update_pricelist": true,
-              "state": "sale" 
-              
-                  
 
-          }
-      ]
-  }
+        {"partner_id": res_id,
+          "note": "<p>[Backend] Requerimiento para instalar.</p>",
+          "opportunity_id": crm_id,
+          "origin": crm_name,
+          "show_update_pricelist": true,
+          "state": "sale",
+
+
+        },
+      ],
+    },
   });
 
   let params = {
@@ -2946,22 +3089,19 @@ export async function create_sale_order_and_invoice(odoo_session:any, crm_id : n
     body: raw,
   };
 
-  let sale_order_id
+  let sale_order_id;
 
   try {
     const response = await fetch(settings.odoo_url + "dataset/call_kw/sale.order/create", params);
     const data = await response.json();
 
-    sale_order_id = data.result
-
-  }
-
-  catch (err) {
+    sale_order_id = data.result;
+  } catch (err) {
     functions.logger.error("[create_sale_order_and_invoice] ERROR 401: " + err, {"odoo_session": odoo_session} );
-    return false
+    return false;
   }
 
-  // creating sale.order.line 
+  // creating sale.order.line
 
   raw = JSON.stringify({
     "params": {
@@ -2969,18 +3109,18 @@ export async function create_sale_order_and_invoice(odoo_session:any, crm_id : n
       "method": "create",
       "kwargs": {},
       "args": [
-          {   "order_id": sale_order_id,
-              "product_id": 54,
-              "name": "Instalación baño al contado",
-              "product_uom": 1,
-              "product_uom_qty": 1.0,
-              "price_unit": 120.0,
-              "price_total": 120.0,
-              "discount": 83.33
+        {"order_id": sale_order_id,
+          "product_id": 54,
+          "name": "Instalación baño al contado",
+          "product_uom": 1,
+          "product_uom_qty": 1.0,
+          "price_unit": 120.0,
+          "price_total": 120.0,
+          "discount": 83.33,
 
-          }
-      ]
-  }
+        },
+      ],
+    },
   });
 
   params = {
@@ -2989,19 +3129,15 @@ export async function create_sale_order_and_invoice(odoo_session:any, crm_id : n
     body: raw,
   };
 
-  
 
   try {
     const response = await fetch(settings.odoo_url + "dataset/call_kw/sale.order.line/create", params);
     const data = await response.json();
 
-    data.result
-
-  }
-
-  catch (err) {
+    data.result;
+  } catch (err) {
     functions.logger.error("[create_sale_order_and_invoice] ERROR 402: " + err, {"odoo_session": odoo_session} );
-    return false
+    return false;
   }
 
 
@@ -3013,13 +3149,13 @@ export async function create_sale_order_and_invoice(odoo_session:any, crm_id : n
       "method": "create",
       "kwargs": {},
       "args": [
-          {   "res_model": "sale.order",
-              "res_id": sale_order_id,
-              "partner_id": 3891
+        {"res_model": "sale.order",
+          "res_id": sale_order_id,
+          "partner_id": 3891,
 
-          }
-      ]
-  }
+        },
+      ],
+    },
   });
 
   params = {
@@ -3029,39 +3165,30 @@ export async function create_sale_order_and_invoice(odoo_session:any, crm_id : n
   };
 
 
-
   try {
     const response = await fetch(settings.odoo_url + "dataset/call_kw/sale.order.line/create", params);
     const data = await response.json();
 
-     data.result
-
-  }
-
-  catch (err) {
+    data.result;
+  } catch (err) {
     functions.logger.error("[create_sale_order_and_invoice] ERROR 403: " + err, {"odoo_session": odoo_session} );
-    return false
+    return false;
   }
 
-  //send to stack to check reference
+  // send to stack to check reference
 
   let invoice_reference_stack_map = new Map();
 
-  invoice_reference_stack_map.set(res_id,crm_name)
+  invoice_reference_stack_map.set(res_id, crm_name);
 
   const invoice_reference_stack_json = Object.fromEntries(invoice_reference_stack_map);
   FirebaseFcn.firebaseUpdate("invoice_reference_stack", invoice_reference_stack_json);
 
 
-  return true
-  
+  return true;
 }
 
-
-export async function read_accountmove_reference(odoo_session:any, array: any){
-
- 
-
+export async function read_accountmove_reference(odoo_session:any, array: any) {
   const CustomHeaders: HeadersInit = {
     "Content-Type": "application/json",
     "Cookie": "session_id="+odoo_session,
@@ -3070,9 +3197,9 @@ export async function read_accountmove_reference(odoo_session:any, array: any){
   const raw = JSON.stringify({
     "params": {
       "model": "account.move",
-      "fields":["partner_id","ref"],
-      "offset":0,
-      "domain":["&",["partner_id","in", array ], ["ref", "!=", ""]]
+      "fields": ["partner_id", "ref"],
+      "offset": 0,
+      "domain": ["&", ["partner_id", "in", array], ["ref", "!=", ""]],
     },
   });
 
@@ -3087,104 +3214,76 @@ export async function read_accountmove_reference(odoo_session:any, array: any){
     const data_read = await response_read.json();
 
     // console.log("data_read", data_read)
-    
-    let user_payment = []
 
-    for(let i =0 ; i<data_read.result.length; i++){
-      
-      user_payment.push(data_read.result.records[i].partner_id[0])
+    let user_payment = [];
 
+    for (let i =0; i<data_read.result.length; i++) {
+      user_payment.push(data_read.result.records[i].partner_id[0]);
     }
 
-   
 
-    
-
-    return user_payment
-    
+    return user_payment;
   } catch (error) {
-    
-  }
-  
-  return []
-
-}
-
-export async function verify_user_exist_create_modify(odoo_session:any, crm_data :any){
-  //verifica que un usuario existe, sino lo crea. 
-  //modifica la informacion del usuario
-
-    //parameters deberia tener 
-
-let partner_id
-let new_crm_data
-let user_data
-
-try {
-  if(crm_data.partner_id == false) {
-    partner_id = await create_user_in_Odoo(odoo_session, crm_data)
-    new_crm_data = await get_crm_data(odoo_session, crm_data.id , null)  //luego testeamos el bulk
-
-  }
-  else{ 
-    partner_id = crm_data.partner_id[0]
-    new_crm_data= crm_data
+    functions.logger.error("[read_accountmove_reference] ERROR 2410231411: " + error, {"odoo_session": odoo_session, "array": array} );
   }
 
-  user_data = await get_user_data(odoo_session, partner_id , null)  //luego testeamos el bulk
-
-  update_user_in_firebase(new_crm_data, user_data)
-
-  return {"crm_data": new_crm_data, "user_data":user_data}
-  
-} catch (error) {
-  functions.logger.error("[verify_user_exist_create_modify] ERROR 2110231732: " + error, {"odoo_session": odoo_session,crm_data} );  
-  
+  return [];
 }
 
-return false
+export async function verify_user_exist_create_modify(odoo_session:any, crm_data :any) {
+  // verifica que un usuario existe, sino lo crea.
+  // modifica la informacion del usuario
 
+  // parameters deberia tener
+
+  let partner_id;
+  let new_crm_data;
+  let user_data;
+
+  try {
+    if (crm_data.partner_id == false) {
+      // partner_id = await create_user_in_Odoo(odoo_session, crm_data);
+      // dont create any user
+      new_crm_data = await get_crm_data(odoo_session, crm_data.id, null); // luego testeamos el bulk
+    } else {
+      partner_id = crm_data.partner_id[0];
+      new_crm_data= crm_data;
+    }
+
+    user_data = await get_user_data(odoo_session, partner_id, null); // luego testeamos el bulk
+
+    // update_user_in_firebase(new_crm_data, user_data);
+
+    return {"crm_data": new_crm_data, "user_data": user_data};
+  } catch (error) {
+    functions.logger.error("[verify_user_exist_create_modify] ERROR 2110231732: " + error, {"odoo_session": odoo_session, crm_data} );
+  }
+
+  return false;
 }
 
-
-export async function update_user_in_firebase(crm_data:any, user_data:any){
-  // crea usuarios en Marte
-  console.log("updatear usuarios en firebase from odoo pendiente")
-
-  return 0
-}
-
-export async function modify_user_in_Odoo(odoo_session:any,partner_id: number, parameters:any){
-  // modify info en los usuarios. deberia tener su simil en firebase.
-}
-
-export async function get_crm_data(odoo_session:any, crm_id: Number, since_timestamp : any){
-  /*esta funcion obtiene data de odoo CRM. si crm_id se ignora si existe since_timestamp*/
+export async function get_crm_data(odoo_session:any, crm_id: number, since_timestamp : any) {
+  /* esta funcion obtiene data de odoo CRM. si crm_id se ignora si existe since_timestamp*/
   const CustomHeaders: HeadersInit = {
     "Content-Type": "application/json",
     "Cookie": "session_id="+odoo_session,
   };
 
-  let raw
+  let raw;
 
-  if(since_timestamp == 0 || since_timestamp == null){
-
+  if (since_timestamp == 0 || since_timestamp == null) {
     raw = JSON.stringify({
       "params": {
         "model": "crm.lead",
         "offset": 0,
         "fields": [
-          "id","partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
-          "name", "phone", "mobile", "tag_ids", "create_uid", "create_date", "write_date","street", "street2", "zip", "country_id", "state_id","tag_ids","user_id"
+          "id", "partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
+          "name", "phone", "mobile", "tag_ids", "create_uid", "create_date", "write_date", "street", "street2", "zip", "country_id", "state_id", "tag_ids", "user_id",
         ],
-        "domain": [["id","=", crm_id]],
+        "domain": [["id", "=", crm_id]],
       },
     });
-    
-  
-  }
-  else{
-
+  } else {
     const date = new Date(Number(since_timestamp));
     const date_str = "'"+ date.getFullYear()+"-"+("0" + (date.getMonth() + 1)).slice(-2)+"-"+("0" +date.getDate()).slice(-2)+" "+ ("0" +date.getHours()).slice(-2)+":"+("0" +date.getMinutes()).slice(-2)+":"+("0" +date.getSeconds()).slice(-2) + "'";
 
@@ -3193,13 +3292,12 @@ export async function get_crm_data(odoo_session:any, crm_id: Number, since_times
         "model": "crm.lead",
         "offset": 0,
         "fields": [
-          "id","partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
-          "name", "phone", "mobile", "tag_ids", "create_uid", "create_date", "write_date","street", "street2", "zip","country_id", "state_id","tag_ids","user_id"
+          "id", "partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
+          "name", "phone", "mobile", "tag_ids", "create_uid", "create_date", "write_date", "street", "street2", "zip", "country_id", "state_id", "tag_ids", "user_id",
         ],
         "domain": [["write_date", ">", date_str]],
       },
     });
-
   }
 
   const params = {
@@ -3212,35 +3310,100 @@ export async function get_crm_data(odoo_session:any, crm_id: Number, since_times
     const response = await fetch(settings.odoo_url + "dataset/search_read", params);
     const data = await response.json();
 
-    if(data.result.length<=1) return data.result.records[0]
-    else return data.result.records
-
-     
+    if (data.result.length<=1) return data.result.records[0];
+    else return data.result.records;
   } catch (error) {
-    functions.logger.error("[get_crm_data] ERROR 2110231807: " + error, 
-                {"odoo_session": odoo_session,
-                  "crm_id": crm_id,
-                  "since_timestamp" : since_timestamp} ); 
-    return false
-                  
-  
-
-    
+    functions.logger.error("[get_crm_data] ERROR 2110231807: " + error,
+        {"odoo_session": odoo_session,
+          "crm_id": crm_id,
+          "since_timestamp": since_timestamp} );
+    return false;
   }
-
-
 }
 
-export async function get_user_data(odoo_session:any, user_id: Number, since_timestamp : any){
-  /*esta funcion obtiene data de odoo CRM. si crm_id se ignora si existe since_timestamp*/
+export async function update_crm_data(odoo_session:any, crm_id: any, _data: any) {
+  /* esta funcion obtiene data de odoo CRM. si crm_id se ignora si existe since_timestamp*/
   const CustomHeaders: HeadersInit = {
     "Content-Type": "application/json",
     "Cookie": "session_id="+odoo_session,
   };
 
-  let raw
+  let raw = JSON.stringify({
 
-  if(since_timestamp == 0 || since_timestamp == null){
+    "params": {
+      "model": "crm.lead",
+      "method": "write",
+      "kwargs": {},
+      "args": [Number(crm_id), _data],
+    },
+
+
+  });
+
+
+  const params = {
+    headers: CustomHeaders,
+    method: "call",
+    body: raw,
+  };
+
+  try {
+    const response = await fetch(settings.odoo_url + "dataset/call_kw/crm.lead/write", params);
+    await response.json();
+
+    return true;
+  } catch (error) {
+    functions.logger.error("[get_crm_data] ERROR 0211231653: " + error,
+        {"odoo_session": odoo_session,
+          "crm_id": crm_id} );
+    return false;
+  }
+}
+
+export async function get_user_data(odoo_session:any, user_id: number, since_timestamp : any) {
+  /* esta funcion obtiene data de odoo CRM. si crm_id se ignora si existe since_timestamp*/
+  const CustomHeaders: HeadersInit = {
+    "Content-Type": "application/json",
+    "Cookie": "session_id="+odoo_session,
+  };
+
+  let raw;
+
+  if (since_timestamp == 0 || since_timestamp == null) {
+    raw = JSON.stringify({
+      "params": {
+        "model": "res.partner",
+        "offset": 0,
+        "fields": [
+          "is_company",
+          "phone",
+          "mobile",
+          "name",
+          "display_name",
+          "vat",
+          "l10n_latam_identification_type_id",
+          "street",
+          "street2",
+          "country_id",
+          "zip",
+          "category_id",
+          "city",
+          "state_id",
+
+          "tz",
+          "tz_offset",
+          "user_id",
+          "same_vat_partner_id",
+          "city_id",
+
+          "opportunity_ids",
+        ],
+        "domain": [["id", "=", user_id]],
+      },
+    });
+  } else {
+    const date = new Date(Number(since_timestamp));
+    const date_str = "'"+ date.getFullYear()+"-"+("0" + (date.getMonth() + 1)).slice(-2)+"-"+("0" +date.getDate()).slice(-2)+" "+ ("0" +date.getHours()).slice(-2)+":"+("0" +date.getMinutes()).slice(-2)+":"+("0" +date.getSeconds()).slice(-2) + "'";
 
     raw = JSON.stringify({
       "params": {
@@ -3254,65 +3417,25 @@ export async function get_user_data(odoo_session:any, user_id: Number, since_tim
           "display_name",
           "vat",
           "l10n_latam_identification_type_id",
-         "street",
-         "street2",
-         "country_id",
-         "zip",
-         "category_id",
-         "city",
-         "state_id",
+          "street",
+          "street2",
+          "country_id",
+          "zip",
+          "category_id",
+          "city",
+          "state_id",
 
-         "tz",
-         "tz_offset",
-         "user_id",
-         "same_vat_partner_id",
-         "city_id",
+          "tz",
+          "tz_offset",
+          "user_id",
+          "same_vat_partner_id",
+          "city_id",
 
-         "opportunity_ids"
-        ],
-        "domain": [["id","=", user_id]],
-      },
-    });
-    
-  
-  }
-  else{
-
-    const date = new Date(Number(since_timestamp));
-    const date_str = "'"+ date.getFullYear()+"-"+("0" + (date.getMonth() + 1)).slice(-2)+"-"+("0" +date.getDate()).slice(-2)+" "+ ("0" +date.getHours()).slice(-2)+":"+("0" +date.getMinutes()).slice(-2)+":"+("0" +date.getSeconds()).slice(-2) + "'";
-
-    raw = JSON.stringify({
-      "params": {
-        "model": "res.partner",
-        "offset": 0,
-        "fields": [
-                "is_company",
-                 "phone",
-                 "mobile",
-                 "name",
-                 "display_name",
-                 "vat",
-                 "l10n_latam_identification_type_id",
-                "street",
-                "street2",
-                "country_id",
-                "zip",
-                "category_id",
-                "city",
-                "state_id",
-
-                "tz",
-                "tz_offset",
-                "user_id",
-                "same_vat_partner_id",
-                "city_id",
-
-                "opportunity_ids"
+          "opportunity_ids",
         ],
         "domain": [["write_date", ">", date_str]],
       },
     });
-
   }
 
   const params = {
@@ -3326,28 +3449,18 @@ export async function get_user_data(odoo_session:any, user_id: Number, since_tim
     const data = await response.json();
 
 
-    if(data.result.length<=1) return data.result.records[0]
-    else return data.result.records
-
-     
+    if (data.result.length<=1) return data.result.records[0];
+    else return data.result.records;
   } catch (error) {
-    functions.logger.error("[get_crm_data] ERROR 2110231907: " + error, 
-                {"odoo_session": odoo_session,
-                  "user_id": user_id,
-                  "since_timestamp" : since_timestamp} ); 
-    return false
-                  
-  
-
-    
+    functions.logger.error("[get_crm_data] ERROR 2110231907: " + error,
+        {"odoo_session": odoo_session,
+          "user_id": user_id,
+          "since_timestamp": since_timestamp} );
+    return false;
   }
-
-
 }
 
-
-export async function is_there_order_line(odoo_session:any, user_id: Number){
-
+export async function is_there_order_line(odoo_session:any, user_id: number) {
   const CustomHeaders: HeadersInit = {
     "Content-Type": "application/json",
     "Cookie": "session_id="+odoo_session,
@@ -3356,10 +3469,10 @@ export async function is_there_order_line(odoo_session:any, user_id: Number){
   const raw = JSON.stringify({
     "params": {
       "model": "sale.order.line",
-      "fields":[],
-      "offset":0,
-      "domain":[["order_partner_id","=", user_id], ["name","ilike","Instalación baño al contado"]]
-    }
+      "fields": [],
+      "offset": 0,
+      "domain": [["order_partner_id", "=", user_id], ["name", "ilike", "Instalación baño al contado"]],
+    },
   });
 
   const params = {
@@ -3371,133 +3484,114 @@ export async function is_there_order_line(odoo_session:any, user_id: Number){
   try {
     const response = await fetch(settings.odoo_url + "dataset/search_read", params);
     const data = await response.json();
-    return data.result.length>0
+    return data.result.length>0;
+  } catch (error) {
+    functions.logger.error("[get_crm_data] ERROR 2210232307: " + error,
+        {"odoo_session": odoo_session,
+          "user_id": user_id} );
+    return false;
   }
-  catch (error) {
-    functions.logger.error("[get_crm_data] ERROR 2210232307: " + error, 
-                {"odoo_session": odoo_session,
-                  "user_id": user_id,} ); 
-    return false
-                  
-  
-
-    
-  }
-  
-
-
 }
 
-
-export async function modify_state_user(odoo_session:any, user_data: any, state: number,mode: string){ 
-  
-  //453 - usuario por instalar 
-
-  
-  try{
-  
-  let user_id =  user_data.id
-  let categories_list : any[] = user_data.category_id
-  
-  console.log("tentativa de "+ mode + " el estado "+ state + " al usuario " + user_id)
-
-  const index_category = categories_list.indexOf(state);
+export async function modify_state_user(odoo_session:any, user_data: any, state: number, mode: string) {
+  // 453 - usuario por instalar
+  // 358 - usuario activo
+  // {id, category_id}
 
 
-  if(mode == "add"){
-    if (index_category == -1 ){
-      //si no existe añadir
-      categories_list.push(state)
+  try {
+    let user_id = user_data.id;
+    let categories_list : any[] = user_data.category_id;
 
-    }else{
-      //si existe no hacer nada
+    functions.logger.info("tentativa de "+ mode + " el estado "+ state + " al usuario " + user_id);
 
+    const index_category = categories_list.indexOf(state);
+
+
+    if (mode == "add") {
+      if (index_category == -1 ) {
+      // si no existe añadir
+        categories_list.push(state);
+      } else {
+      // si existe no hacer nada
+
+      }
+    } else {
+    // remove
+      if (index_category == -1 ) {
+      // si no existe no hacer nada
+
+
+      } else {
+      // si existe remover
+        categories_list.splice(index_category, 1);
+      }
     }
 
-  }
-  else{
-    //remove
-    if (index_category == -1 ){
-      //si no existe no hacer nada
-      
-
-    }else{
-      //si existe remover
-      categories_list.splice(index_category,1)
-
-    }
-  }
-
-  console.log("categories_list ", categories_list)
+    functions.logger.info("categories_list ", categories_list);
 
 
-  const CustomHeaders: HeadersInit = {
-    "Content-Type": "application/json",
-    "Cookie": "session_id="+odoo_session,
-  };
+    const CustomHeaders: HeadersInit = {
+      "Content-Type": "application/json",
+      "Cookie": "session_id="+odoo_session,
+    };
 
-  const raw = JSON.stringify({
-    
-    "params": {
-      "model": "res.partner",
-      "method": "write",
-      "kwargs": {},
-      "args": [
-         user_id,
+    const raw = JSON.stringify({
+
+      "params": {
+        "model": "res.partner",
+        "method": "write",
+        "kwargs": {},
+        "args": [
+          user_id,
           {
-              "category_id" : categories_list
-          }
-      ]
-  }
-  });
+            "category_id": categories_list,
+          },
+        ],
+      },
+    });
 
-  const params = {
-    headers: CustomHeaders,
-    method: "write",
-    body: raw,
-  };
+    const params = {
+      headers: CustomHeaders,
+      method: "write",
+      body: raw,
+    };
 
-  
 
     const response = await fetch(settings.odoo_url + "dataset/call_kw/res.partner/", params);
     const data = await response.json();
     // console.log("data ", data)
-    return data.result
-    
+    return data.result;
   } catch (error) {
-
-    return false
-    
+    return false;
   }
-
-
-
-
 }
 
-export async function create_helpdesk_ticket(odoo_session:any, user_id: Number, user_name: String){
-
+export async function create_helpdesk_ticket(odoo_session:any, user_id: number, user_name: string) {
   const CustomHeaders: HeadersInit = {
     "Content-Type": "application/json",
     "Cookie": "session_id="+odoo_session,
   };
 
   const raw = JSON.stringify({
-    
+
     "params": {
       "model": "helpdesk.ticket",
       "method": "create",
       "kwargs": {},
       "args": [
         {
-            "partner_id": user_id,
-             "description": "[Edite descripcion del servicio aqui. Puede crearse un mensaje predeterminado. Puede enviarse un correo cuando se cree." ,
-             "name" : user_name
-             
-           
-        }
-    ]
-  }
+          "partner_id": user_id,
+          "description": "[Edite descripcion del servicio aqui. Puede crearse un mensaje predeterminado. Puede enviarse un correo cuando se cree.",
+          "name": user_name,
+          "team_id": 17,
+          "tag_ids": [14],
+          "priority": "3",
+
+
+        },
+      ],
+    },
   });
 
   const params = {
@@ -3506,16 +3600,10 @@ export async function create_helpdesk_ticket(odoo_session:any, user_id: Number, 
     body: raw,
   };
 
-  console.log("supose to create helpdesk ", params.method)
-
   const response = await fetch(settings.odoo_url + "dataset/call_kw/helpdesk.ticket/create", params);
   const data = await response.json();
 
   return data.result;
-  }
-
-
-
-
+}
 
 
