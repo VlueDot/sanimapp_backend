@@ -662,7 +662,7 @@ odooToFirebase_syncUsers = functions.https.onRequest(async (request, response)=>
           await OdooFcn.odoo_Logout(odoo_session);
 
           if ( !crm_tickets_success || ! users_success ) {
-            functions.logger.error("[odooToFirebase] Error 2510231538 Something Bad Happen", {
+            functions.logger.error("[odooToFirebase_syncUsers] Error 2510231538 Something Bad Happen", {
               "odoo_session": odoo_session,
               // "campaings_success": campaings_success,
               // "serviceTickets_success": serviceTickets_success,
@@ -671,11 +671,11 @@ odooToFirebase_syncUsers = functions.https.onRequest(async (request, response)=>
             });
           }
         }
-        response.send("odooToFirebase. odoo_session: .." + odoo_session?.substring(odoo_session.length - 5));
+        response.send("odooToFirebase_syncUsers. odoo_session: .." + odoo_session?.substring(odoo_session.length - 5));
         // return true;
       } catch (error) {
-        functions.logger.error( "[odooToFirebase] ERROR at Start. ", error);
-        response.send("OdooSync Error: "+error);
+        functions.logger.error( "[odooToFirebase_syncUsers] ERROR at Start. ", error);
+        response.send("odooToFirebase_syncUsers Error: "+error);
         // return false;
       }
     });

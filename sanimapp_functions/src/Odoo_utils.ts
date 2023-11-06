@@ -384,7 +384,7 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
 
           if (user_status_data.length == 1 || opportunity_id_len ==1) {
             
-            console.log("Data_client/" + user_id +"/Data_client_2/Client_Type")
+            // console.log("Data_client/" + user_id +"/Data_client_2/Client_Type")
             
             user_state_from_firebase = await FirebaseFcn.firebaseGet("Data_client/" + user_id +"/Data_client_2/Client_Type" );
             const user_state2_from_firebase = await FirebaseFcn.firebaseGet("Data_client/" + user_id +"/Data_client_3/client_type" );
@@ -400,14 +400,20 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
               reason = "Different user states found in firebase. Fix it first. (" + user_state_from_firebase +", "+ user_state2_from_firebase+")";
               warning_list.push(user_name + " ("+ user_id +") " + reason);
               warning_list_map.set(user_id, "("+ user_name +") " + reason);
-            } else {
+            } 
+            else {
               let user_state_from_firebase_Odoo_label;
               if (usuario_instalar_tags.includes(user_state_from_firebase)) user_state_from_firebase_Odoo_label = "Usuario por instalar";
               if (usuario_activo_tags.includes(user_state_from_firebase)) user_state_from_firebase_Odoo_label = "usuario activo";
               if (usuario_inactivo_tags.includes(user_state_from_firebase)) user_state_from_firebase_Odoo_label = "usuario inactivo";
               if (usuario_ganado_tags.includes(user_state_from_firebase)) user_state_from_firebase_Odoo_label = "Cliente ganado";
 
-              console.log("-----1", user_status_data[0].name, user_state_from_firebase_Odoo_label)
+              // try {
+              // console.log("-----1", user_status_data[0].name, user_state_from_firebase_Odoo_label)
+              
+              // } catch (error) {
+              //   true
+              // }
               
               if (user_stop_data[0] == undefined) {
                 true;
@@ -424,6 +430,7 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
                 }
 
                 if ( user_status_data[0].name == "usuario activo" ) {
+
                   if (user_state_from_firebase_Odoo_label == "Usuario por instalar" || user_state_from_firebase_Odoo_label == "usuario activo" ) {
                     if (user_stop_data.length == 0) {
                       legal_task = false;
@@ -456,6 +463,7 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
                 }
               }
             }
+
           } else {
             if (user_status_data.length == 0) {
               // check at least if it has an oportunity
@@ -469,9 +477,6 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
 
           try {
             if (legal_task) {
-
-              console.log("-----2 ", user_state_from_firebase)
-            // 
 
               // STOPS ----------------------------------------------------------------
 
@@ -497,19 +502,28 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
 
               let user_status_name ="NaN"; // if NaN its error
 
+              // console.log("user_status_data" , user_status_data)
 
               if (user_status_data.length > 0) {
                 if ( user_status_data[0].name == "Usuario por instalar") user_status_name = "Cliente por instalar";
                 else if ( user_status_data[0].name == "usuario inactivo") user_status_name = "Cliente desinstalado";
                 else if ( user_status_data[0].name == "usuario activo" && user_route_data.length == 1) user_status_name = "Cliente normal";
+                else if ( user_status_data[0].name == "usuario activo" && user_route_data.length ==0 && user_state_from_firebase == "Cliente por instalar") {
+                  user_status_name = "Cliente por instalar";
+                  
+                  const dateTimeEmail = false;
+                  const subject_str = "Sanimapp: Requerimiento de paradero usuario #" + user_id + " " + user_name; ;
+                  const welcome_str = "Este es un mensaje del backend. ";
+                  const message_str = "Se detectó que el usuario ya está disponible para ser activo y solo requiere un paradero como mínimo.";
+                  let message_container = [" [partner_id: " + user_id + "] [Name: " + user_name + "]"];
+                  await FirebaseFcn.sendEmail(subject_str, welcome_str, dateTimeEmail, message_str, message_container);
+                  
+                  
+
+                }
               }else { // that means in case dont have status but have a crm ticket that actual have status
                 user_status_name = user_state_from_firebase
               }
-
-
-
-              console.log("5 user_status_name ", user_status_name)
-
 
               let ubigeo = "NaN";
               // l10n_pe_ubigeo is deprecated. Using zip instead
@@ -593,13 +607,8 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
                     }
                   }
                 }
-              console.log("4 user_status_name ", user_status_name)
-
                 
               } catch (error) {
-
-              console.log("3 user_status_name ", user_status_name)
-
 
                 const dataClient_node = {
                   "Data_client_1": {
@@ -686,9 +695,6 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
 
               };
 
-              console.log("2 user_status_name ", user_status_name)
-
-
               // update firebase
 
               let target_stopId_fb = 0;
@@ -736,6 +742,8 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
               if ( just_routes_changed) ToDoList.push("Routes changed: " + initialOdoo_routeId +" -> " + targetState.route_id_odoo);
               if ( just_no_route ) ToDoList.push("There is no route in odoo");
               if (!stops_changed && !just_no_route && ! just_routes_changed) ToDoList.push("Nothing to do.");
+
+              console.log("2 ToDoList ", ToDoList)
 
               // fast solution
               if (state_change) {
@@ -1389,6 +1397,9 @@ export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdate
 
           const stage_id = Number(ticket["stage_id"][0]);
           // stage_id defines ticket status acording the relation below
+
+          console.log("stage_id", stage_id)
+
           let ticket_status = "NaN";
           switch (stage_id) {
             case 1:
@@ -1742,11 +1753,13 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
             ticket_status = "Cliente con Venta perdida";
             break;
           case 4:
-            ticket_status = "Cliente ganado";
+            if(full_data.user_data.category_id.includes(358)) ticket_status = "Cliente por instalar"
+            else ticket_status = "Cliente ganado";
             break;
           default:
             break;
         }
+
 
 
         if (ticket_status == "Cliente ganado") {
@@ -1863,6 +1876,8 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
           const potentialAddress = "/notRegisteredUsers/" + ticket_id;
           const initialState = await FirebaseFcn.firebaseGet(potentialAddress);
           const targetState = initialState;
+
+          console.log("------02 ", targetState)
 
           if (ticket_status === "Cliente Potencial") {
             ToDoList.push("Update notRegisteredUsers data");
@@ -2061,8 +2076,6 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
                     "Data_client_3": Data_client_3,
                   };
 
-                console.log("_______3 ")
-
 
                   functions.logger.info( "[odooToFirebase_CRMTickets] (4) Tasks. ", {
                     "odoo_session": odoo_session,
@@ -2240,6 +2253,8 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
                   "initialState": init,
                   "targetState": targ,
                 });
+
+                console.log("_______7 ", full_data);
 
                 await FirebaseFcn.firebaseSet("/Data_client/"+partner_id+"/Data_client_2/Client_Type", ticket_status);
                 functions.logger.info("[odooToFirebase_CRMTickets] client type updated in Firebase (/Data_client/"+partner_id+"/Data_client_2/Client_Type).", {
