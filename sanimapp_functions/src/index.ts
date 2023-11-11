@@ -639,7 +639,7 @@ firebaseToOdoo_CRM_update = functions.database.ref("/notRegisteredUsers/{idTicke
 // odooToFirebase_syncUsers = functions.https.onRequest(async (request, response)=> {
 odooToFirebase_syncUsers = functions
     .runWith({timeoutSeconds: 540})
-    .pubsub.schedule("every 10 minutes")
+    .pubsub.schedule("every hour")
     .timeZone("America/Lima")
     .onRun(async () =>{
       // this will run with certain periodicity. This will be the stable function.
@@ -682,8 +682,8 @@ odooToFirebase_syncUsers = functions
 
 // odooToFirebase_syncServices = functions.https.onRequest(async (request, response)=> {
 odooToFirebase_syncServices = functions
-    .runWith({timeoutSeconds: 57})
-    .pubsub.schedule("every minute")
+    .runWith({timeoutSeconds: 540})
+    .pubsub.schedule("every hour")
     .timeZone("America/Lima")
     .onRun(async () =>{
       // this will run with certain periodicity. This will be the stable function.
@@ -721,8 +721,8 @@ odooToFirebase_syncServices = functions
 
 // check_payments = functions.https.onRequest(async (request, response)=> {
 check_payments = functions
-    .runWith({timeoutSeconds: 57})
-    .pubsub.schedule("every minute")
+    .runWith({timeoutSeconds: 540})
+    .pubsub.schedule("every hour")
     .timeZone("America/Lima")
     .onRun(async () =>{
       const odoo_session = await OdooFcn.odoo_Login();
@@ -740,14 +740,14 @@ check_payments = functions
 
         user_with_payment = await OdooFcn.read_accountmove_reference(odoo_session, invoice_reference_stack_keys_numbers);
 
-        console.log("user_with_payment", user_with_payment);
+        // console.log("user_with_payment", user_with_payment);
 
 
         for (let i = 0; i< user_with_payment.length; i++) {
           let partner_id = invoice_reference_stack_keys[i];
           console.log(partner_id);
           if (partner_id) {
-            console.log("invoice_reference_stack/" + partner_id);
+            // console.log("invoice_reference_stack/" + partner_id);
             await FirebaseFcn.firebaseRemove("invoice_reference_stack/" + partner_id);
             // crear ticket de atencion y guardar id en una lista de firebase.
             let user_data = await OdooFcn.get_user_data(odoo_session, Number(partner_id), 0);
@@ -766,9 +766,9 @@ check_payments = functions
             const message_str = "Se registró el siguiente pago y se creo un ticket de instalacion.";
             let message_container = ["[helpdesk_id: " + helpdesk_id + "] [partner_id: " + partner_id + "] [Name: " + user_data.name + "]"];
             await FirebaseFcn.sendEmail(subject_str, welcome_str, dateTimeEmail, message_str, message_container);
-            return true;
           }
         }
+        return true;
       }
       return false;
       // response.send("check_payments. odoo_session: .." + odoo_session?.substring(odoo_session.length - 5));
@@ -790,6 +790,11 @@ exports.test = functions.runWith(runtimeOpts).https.onRequest( async (request, r
   console.log(odoo_session);
   console.log(settings.odoo_url);
   */
+
+
+  const lastupdateTimestamp_users = await FirebaseFcn.firebaseGet("/timestamp_collection/ussersTimeStamp");
+
+  await OdooFcn.odooToFirebase_Users_test(odoo_session, lastupdateTimestamp_users);
 
 
   await OdooFcn.odoo_Logout(odoo_session);

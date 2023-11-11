@@ -1,4 +1,5 @@
-const dev = "oxe360-ooc-sanisol-150-staging-15-0-9504094";
+const dev = "oxe360-ooc-sanisol-150-staging-15-0-10442022";
+// https://oxe360-ooc-sanisol-150-staging-15-0-10391375
 const prod = "oxe360-ooc-sanisol-150-prd-15-0-8745362";
 export const odoo_db = get_odoo_db();
 export const odoo_url = get_odoo_url();
