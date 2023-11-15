@@ -638,8 +638,8 @@ firebaseToOdoo_CRM_update = functions.database.ref("/notRegisteredUsers/{idTicke
 
 // odooToFirebase_syncUsers = functions.https.onRequest(async (request, response)=> {
 odooToFirebase_syncUsers = functions
-    .runWith({timeoutSeconds: 540})
-    .pubsub.schedule("every hour")
+    .runWith({timeoutSeconds: 58})
+    .pubsub.schedule("every minute")
     .timeZone("America/Lima")
     .onRun(async () =>{
       // this will run with certain periodicity. This will be the stable function.
@@ -682,8 +682,8 @@ odooToFirebase_syncUsers = functions
 
 // odooToFirebase_syncServices = functions.https.onRequest(async (request, response)=> {
 odooToFirebase_syncServices = functions
-    .runWith({timeoutSeconds: 540})
-    .pubsub.schedule("every hour")
+    .runWith({timeoutSeconds: 58})
+    .pubsub.schedule("every minute")
     .timeZone("America/Lima")
     .onRun(async () =>{
       // this will run with certain periodicity. This will be the stable function.
@@ -721,8 +721,8 @@ odooToFirebase_syncServices = functions
 
 // check_payments = functions.https.onRequest(async (request, response)=> {
 check_payments = functions
-    .runWith({timeoutSeconds: 540})
-    .pubsub.schedule("every hour")
+    .runWith({timeoutSeconds: 118})
+    .pubsub.schedule("every 2 minutes")
     .timeZone("America/Lima")
     .onRun(async () =>{
       const odoo_session = await OdooFcn.odoo_Login();
@@ -782,6 +782,8 @@ const runtimeOpts = {
 exports.test = functions.runWith(runtimeOpts).https.onRequest( async (request, response)=> {
   const odoo_session = await OdooFcn.odoo_Login();
   const firebaseType = await FirebaseFcn.firebaseGet("/firebaseType");
+
+
   // OdooFcn.odooToFirebase_Campaigns(odoo_session, lastupdateTimestamp_campaigns);
   /*
   const lastupdateTimestamp_users = await FirebaseFcn.firebaseGet("/timestamp_collection/ussersTimeStamp");
@@ -792,9 +794,14 @@ exports.test = functions.runWith(runtimeOpts).https.onRequest( async (request, r
   */
 
 
-  const lastupdateTimestamp_users = await FirebaseFcn.firebaseGet("/timestamp_collection/ussersTimeStamp");
+  // const lastupdateTimestamp_users = await FirebaseFcn.firebaseGet("/timestamp_collection/ussersTimeStamp");
 
-  await OdooFcn.odooToFirebase_Users_test(odoo_session, lastupdateTimestamp_users);
+  // await OdooFcn.odooToFirebase_Users_test(odoo_session, lastupdateTimestamp_users);
+
+  const lastupdateTimestamp_crm = await FirebaseFcn.firebaseGet("/timestamp_collection/CMR_tickets_timestamp");
+
+
+  await OdooFcn.odooToFirebase_CRMTickets(odoo_session, lastupdateTimestamp_crm);
 
 
   await OdooFcn.odoo_Logout(odoo_session);
