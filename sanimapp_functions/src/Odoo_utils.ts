@@ -104,6 +104,8 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
       },
     });
 
+    functions.logger.info("[odooToFirebase_Users] Se ejecutó el siguiente query.", {"odoo_session": odoo_session,
+      "raw": raw});
     const params = {
       headers: CustomHeaders,
       method: "post",
@@ -937,6 +939,8 @@ export async function odooToFirebase_Campaigns(odoo_session:any, lastupdateTimes
   let odoo_res = false;
 
   try {
+    functions.logger.info("[odooToFirebase_Campaigns] Se ejecutó el siguiente query.", {"odoo_session": odoo_session,
+      "raw": raw});
     response = await fetch(settings.odoo_url + "dataset/search_read", params);
     data = await response.json();
     target_data = data["result"]["records"];
@@ -1028,7 +1032,7 @@ export async function odooToFirebase_Campaigns(odoo_session:any, lastupdateTimes
 
 export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdateTimestamp: any) {
   let odoo_query_time = Date.now(); // THIS IS THE TIME WHERE I MADE THE CHECK
-  // const max_qtty_entries_per_session = 10;
+  const max_qtty_entries_per_session = 200;
 
 
   // The function reads the tickes of service created in odoo after the last update
@@ -1057,6 +1061,8 @@ export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdate
   };
 
   try {
+    functions.logger.info("[odooToFirebase_ServiceTickets] Se ejecutó el siguiente query.", {"odoo_session": odoo_session,
+      "raw": raw});
     const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
     const data = await response.json();
     const qtty_entries = data.result.length;
@@ -1415,6 +1421,8 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
   let invoice_reference_stack_keys :any[] = [];
   let invoice_reference_stack;
   try {
+    functions.logger.info("[odooToFirebase_CRMTickets] Se ejecutó el siguiente query.", {"odoo_session": odoo_session,
+      "raw": raw});
     invoice_reference_stack = await FirebaseFcn.firebaseGet("invoice_reference_stack");
     if (invoice_reference_stack != null) {
       // functions.logger.info("invoice_reference_stack: ", invoice_reference_stack);

@@ -721,8 +721,8 @@ odooToFirebase_syncServices = functions
 
 // check_payments = functions.https.onRequest(async (request, response)=> {
 check_payments = functions
-    .runWith({timeoutSeconds: 118})
-    .pubsub.schedule("every 2 minutes")
+    .runWith({timeoutSeconds: 58})
+    .pubsub.schedule("every 1 minutes")
     .timeZone("America/Lima")
     .onRun(async () =>{
       const odoo_session = await OdooFcn.odoo_Login();
