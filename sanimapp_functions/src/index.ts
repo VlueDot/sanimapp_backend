@@ -316,9 +316,11 @@ firebaseToOdoo_Routes_create = functions.database.ref("/Route_definition/{idRout
   return null;
 });
 
+
+//Here
 firebaseToOdoo_UserTags_update = functions.database.ref("/Data_client/{idUserFb}").onUpdate(async (change, context) => {
   const user_id = Number(context.params.idUserFb);
-  const listOfActives = ["Cliente Nuevo", "Cliente suspendido", "Cliente por llamar", "Cliente piloto", "Cliente normal", "Cliente gold"];
+  //const listOfActives = ["Cliente Nuevo", "Cliente suspendido", "Cliente por llamar", "Cliente piloto", "Cliente normal", "Cliente gold"];
 
   const client_before = change.before.val();
   const client_after = change.after.val();
@@ -349,7 +351,7 @@ firebaseToOdoo_UserTags_update = functions.database.ref("/Data_client/{idUserFb}
 
       if ((client_type_new === "Cliente por instalar") && (Client_Type_new === "Cliente por instalar")) {
         const odoo_session = await OdooFcn.odoo_Login();
-        await OdooFcn.firebaseToOdoo_ActiveOrInstall(odoo_session, false, Number(context.params.idUserFb));
+        await OdooFcn.firebaseToOdoo_ActiveOrInstall(odoo_session, Number(context.params.idUserFb));
         functions.logger.info("[firebaseToOdoo_UserTags_update]: The client will be set to <usuario por instalar> tag.", {
           "odoo_session": odoo_session,
           "user_id": context.params.idUserFb,
@@ -362,6 +364,7 @@ firebaseToOdoo_UserTags_update = functions.database.ref("/Data_client/{idUserFb}
         return null;
       }
 
+      /* //Cambio a activo
       if (listOfActives.includes(client_type_new) && listOfActives.includes(Client_Type_new)) {
         const odoo_session = await OdooFcn.odoo_Login();
         await OdooFcn.firebaseToOdoo_ActiveOrInstall(odoo_session, true, Number(context.params.idUserFb));
@@ -375,8 +378,9 @@ firebaseToOdoo_UserTags_update = functions.database.ref("/Data_client/{idUserFb}
         });
         await OdooFcn.odoo_Logout(odoo_session);
         return null;
-      }
+      } // */
 
+      //Consultar
       if ((client_type_new === "Cliente con Venta perdida") && (Client_Type_new === "Cliente con Venta perdida")) {
         const ticket_id = await FirebaseFcn.firebaseGet("/CRM_tickets_not_archived/"+ context.params.idUserFb);
         const odoo_session = await OdooFcn.odoo_Login();
@@ -408,8 +412,6 @@ firebaseToOdoo_UserTags_update = functions.database.ref("/Data_client/{idUserFb}
 
   return null;
 });
-
-
 
 firebaseToOdoo_Tickets_update = functions.database.ref("/Service_collection/{idTicketFb}").onUpdate(async (change, context) => {
   const ticket_before = change.before.val();

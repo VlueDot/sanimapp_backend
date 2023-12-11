@@ -1193,6 +1193,17 @@ export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdate
                 targetState["ticket_status"] = ticket_status;
                 targetState["ticket_type"] = ticket_type;
                 targetState["conflict_indicator"]= "Actualizado por Odoo";
+                /*
+                if (initialState["install_timestamp"] == null){
+                  const dateTimeEmail = false;
+                  const subject_str = "Sanimapp: [ADVERTENCIA] Ticket de instalación #" + id + " [EN PROGRESO] ("+ name;
+                  const welcome_str = "Este es un mensaje del backend. ";
+                  const message_str = "Se registró ticket de instalación como En Progreso, sin embargo no cuenta con una hora de instalación, por favor realize el cambio por el app. Antes devuelvalo a Nuevo. ";
+                  let message_container = ["[helpdesk_id: " + id + "] [partner_id: " + partner_id + "] [Name: " + name + "]"];
+                  await FirebaseFcn.sendEmail(subject_str, welcome_str, dateTimeEmail, message_str, message_container);
+                }
+                // */
+
               }
 
               // If "En progreso"
@@ -1335,6 +1346,14 @@ export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdate
                   "initialState": [],
                   "targetState": targetState,
                 });
+                /*
+                const dateTimeEmail = false;
+                const subject_str = "Sanimapp: [ADVERTENCIA] Ticket de instalación #" + id + " [EN PROGRESO] ("+ name;
+                const welcome_str = "Este es un mensaje del backend. ";
+                const message_str = "Se registró ticket de instalación como En Progreso, siendo creado directamente en Odoo, no cuenta con información de fecha y hora o comentario, la cual se guardaría en el App";
+                let message_container = ["[helpdesk_id: " + id + "] [partner_id: " + partner_id + "] [Name: " + name + "]"];.
+                await FirebaseFcn.sendEmail(subject_str, welcome_str, dateTimeEmail, message_str, message_container);
+                // */
               }
 
               // In case, ticket type is install, it alse updates the client type in Firebase to "cliente por instalar"---------
@@ -2461,7 +2480,7 @@ export async function firebaseToOdoo_PutInactiveTag(odoo_session: any, idOdoo: n
   return data_write;
 }
 
-export async function firebaseToOdoo_ActiveOrInstall(odoo_session:any, active: boolean, partnerId: number) {
+export async function firebaseToOdoo_ActiveOrInstall(odoo_session:any, partnerId: number) {
   const CustomHeaders: HeadersInit = {
     "Content-Type": "application/json",
     "Cookie": "session_id="+odoo_session,
@@ -2486,8 +2505,9 @@ export async function firebaseToOdoo_ActiveOrInstall(odoo_session:any, active: b
   const data_read = await response_read.json();
   const category_ids: Array<number> = data_read["result"]["records"][0]["category_id"];
   // console.log("category_ids", category_ids);
-  let newTag = 358;
-  if (active === false) newTag = 453;
+  //let newTag = 358;
+  //if (active === false) newTag = 453;
+  let newTag = 453;
 
   const aux_category_ids: Array<number> = category_ids.filter((id) => ((id != 358) && (id != 359) && (id != 453)));
   // console.log("aux_category_ids", aux_category_ids);
