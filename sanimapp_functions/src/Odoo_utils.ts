@@ -1193,7 +1193,7 @@ export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdate
                 targetState["ticket_status"] = ticket_status;
                 targetState["ticket_type"] = ticket_type;
                 targetState["conflict_indicator"]= "Actualizado por Odoo";
-                /*
+                
                 if (initialState["install_timestamp"] == null){
                   const dateTimeEmail = false;
                   const subject_str = "Sanimapp: [ADVERTENCIA] Ticket de instalación #" + id + " [EN PROGRESO] ("+ name;
@@ -1346,12 +1346,12 @@ export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdate
                   "initialState": [],
                   "targetState": targetState,
                 });
-                /*
+                
                 const dateTimeEmail = false;
                 const subject_str = "Sanimapp: [ADVERTENCIA] Ticket de instalación #" + id + " [EN PROGRESO] ("+ name;
                 const welcome_str = "Este es un mensaje del backend. ";
-                const message_str = "Se registró ticket de instalación como En Progreso, siendo creado directamente en Odoo, no cuenta con información de fecha y hora o comentario, la cual se guardaría en el App";
-                let message_container = ["[helpdesk_id: " + id + "] [partner_id: " + partner_id + "] [Name: " + name + "]"];.
+                const message_str = "Se registró ticket de instalación como En Progreso, siendo creado directamente en Odoo sin haber pasado como Nuevo en Firabse, no cuenta con información de fecha y hora o comentario, la cual se crearía en el App";
+                let message_container = ["[helpdesk_id: " + id + "] [partner_id: " + partner_id + "] [Name: " + name + "]"];
                 await FirebaseFcn.sendEmail(subject_str, welcome_str, dateTimeEmail, message_str, message_container);
                 // */
               }
