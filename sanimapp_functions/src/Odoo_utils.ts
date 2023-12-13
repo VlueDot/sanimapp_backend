@@ -2764,7 +2764,7 @@ export async function createTicketCRM(odoo_session: any, args: any) {
   try {
     const response = await fetch(settings.odoo_url + "dataset/call_kw/crm.lead/create", params);
     const data = await response.json();
-    const idOdoo = String(data["result"]);
+    const idOdoo = data["result"];
 
     const request_str = JSON.stringify(args);
     functions.logger.info("[createTicketCRM]: Ticket CRM created in odoo.", {
@@ -3348,6 +3348,10 @@ export async function get_crm_data(odoo_session:any, crm_id: number, since_times
 
 export async function update_crm_data(odoo_session:any, crm_id: any, _data: any) {
   /* esta funcion obtiene data de odoo CRM. si crm_id se ignora si existe since_timestamp*/
+  let data2 = _data;
+  delete data2.vat;
+  delete data2.l10n_latam_identification_type_id;
+
   const CustomHeaders: HeadersInit = {
     "Content-Type": "application/json",
     "Cookie": "session_id="+odoo_session,
@@ -3359,11 +3363,13 @@ export async function update_crm_data(odoo_session:any, crm_id: any, _data: any)
       "model": "crm.lead",
       "method": "write",
       "kwargs": {},
-      "args": [Number(crm_id), _data],
+      "args": [Number(crm_id), data2],
     },
 
 
   });
+
+  console.log("CRM raw data: " + raw);
 
 
   const params = {
@@ -3374,13 +3380,57 @@ export async function update_crm_data(odoo_session:any, crm_id: any, _data: any)
 
   try {
     const response = await fetch(settings.odoo_url + "dataset/call_kw/crm.lead/write", params);
-    await response.json();
+    const data = await response.json();
+    console.log("cmr response", data);
 
     return true;
   } catch (error) {
     functions.logger.error("[get_crm_data] ERROR 0211231653: " + error,
         {"odoo_session": odoo_session,
           "crm_id": crm_id} );
+    return false;
+  }
+}
+
+export async function update_user_data(odoo_session:any, user_id: any, _data: any) {
+  /* esta funcion obtiene data de odoo CRM. si crm_id se ignora si existe since_timestamp*/
+  const CustomHeaders: HeadersInit = {
+    "Content-Type": "application/json",
+    "Cookie": "session_id="+odoo_session,
+  };
+
+  let raw = JSON.stringify({
+
+    "params": {
+      "model": "res.partner",
+      "method": "write",
+      "kwargs": {},
+      "args": [Number(user_id), _data],
+    },
+
+
+  });
+
+  console.log(raw);
+
+  const params = {
+    headers: CustomHeaders,
+    method: "call",
+    body: raw,
+  };
+
+  try {
+    const response = await fetch(settings.odoo_url + "dataset/call_kw/res.partner/write", params);
+    const data = await response.json();
+
+    console.log("user response", data);
+
+
+    return true;
+  } catch (error) {
+    functions.logger.error("[update_user_data] ERROR 13121055: " + error,
+        {"odoo_session": odoo_session,
+          "user_id": user_id} );
     return false;
   }
 }
