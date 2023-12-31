@@ -1193,8 +1193,8 @@ export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdate
                 targetState["ticket_status"] = ticket_status;
                 targetState["ticket_type"] = ticket_type;
                 targetState["conflict_indicator"]= "Actualizado por Odoo";
-                
-                if (initialState["install_timestamp"] == null){
+
+                if (initialState["install_timestamp"] == null) {
                   const dateTimeEmail = false;
                   const subject_str = "Sanimapp: [ADVERTENCIA] Ticket de instalación #" + id + " [EN PROGRESO] ("+ name;
                   const welcome_str = "Este es un mensaje del backend. ";
@@ -1203,7 +1203,6 @@ export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdate
                   await FirebaseFcn.sendEmail(subject_str, welcome_str, dateTimeEmail, message_str, message_container);
                 }
                 // */
-
               }
 
               // If "En progreso"
@@ -1346,7 +1345,7 @@ export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdate
                   "initialState": [],
                   "targetState": targetState,
                 });
-                
+
                 const dateTimeEmail = false;
                 const subject_str = "Sanimapp: [ADVERTENCIA] Ticket de instalación #" + id + " [EN PROGRESO] ("+ name;
                 const welcome_str = "Este es un mensaje del backend. ";
@@ -2505,8 +2504,8 @@ export async function firebaseToOdoo_ActiveOrInstall(odoo_session:any, partnerId
   const data_read = await response_read.json();
   const category_ids: Array<number> = data_read["result"]["records"][0]["category_id"];
   // console.log("category_ids", category_ids);
-  //let newTag = 358;
-  //if (active === false) newTag = 453;
+  // let newTag = 358;
+  // if (active === false) newTag = 453;
   let newTag = 453;
 
   const aux_category_ids: Array<number> = category_ids.filter((id) => ((id != 358) && (id != 359) && (id != 453)));
@@ -3770,6 +3769,81 @@ export async function odooToFirebase_Users_test(odoo_session:any, lastupdateTime
     console.log("odoo_query_time final", odoo_query_time);
 
     return true;
+  } catch (error) {
+    functions.logger.error( "[odooToFirebase_Users] ERROR: " + error, {"odoo_session": odoo_session} );
+    return false;
+  }
+}
+
+export async function readInventory_Odoo(odoo_session:any) {
+  const CustomHeaders: HeadersInit = {
+    "Content-Type": "application/json",
+    "Cookie": "session_id="+odoo_session,
+  };
+
+  try {
+    const raw = JSON.stringify({
+      "params": {
+        "model": "product.product",
+        "fields": ["id", "barcode", "code", "name"],
+        // "fields":["id","display_name","uom_name"],
+        "offset": 0,
+        // "domain":[["name","ilike","tubo de ve"]]
+        "domain": [],
+        "limit": 20,
+      },
+    });
+
+    const params = {
+      headers: CustomHeaders,
+      method: "post",
+      body: raw,
+    };
+
+    const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+
+
+    let data = await response.json();
+
+    let items = data.result.records;
+    let len =data.result.length;
+
+    console.log("len", len);
+
+    items = items.sort((a:any, b:any) => {
+      if (a.name == b.name) {
+        return 0;
+      }
+      if (a.name < b.name) {
+        return -1;
+      }
+      return 1;
+    });
+
+    let inventory_map = new Map();
+    for (let i = 0; i < 20; i++) {
+      inventory_map.set(items[i].id, items[i].name);
+    }
+
+
+    // items = items.sort((a:any, b:any) => {
+    //   if (a.barcode == b.barcode) {
+    //     return 0;
+    //   }
+    //   if (a.barcode < b.barcode) {
+    //     return -1;
+    //   }
+    //   if(a.barcode == false) {
+    //     return -1;
+    //   }
+
+    //   return 1
+    // });
+
+    // filter barcode false, sort them and merge.
+
+
+    return inventory_map;
   } catch (error) {
     functions.logger.error( "[odooToFirebase_Users] ERROR: " + error, {"odoo_session": odoo_session} );
     return false;

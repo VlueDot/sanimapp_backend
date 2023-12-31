@@ -29,10 +29,8 @@ export let Odoo_Contact_createUser: any;//  create user in Odoo and Dataclient i
 export let Odoo_CRM_createUser: any; //  create user in Odoo and notRegisteredUsers in firebase
 export let Odoo_CreateUser: any; // create user in Odoo and CRM opportunitie
 
-// TIME
-// const runtimeParam = {
-//   timeoutSeconds: 540,
-// };
+export let ReadInventory_Odoo: any; // create user in Odoo and CRM opportunitie
+
 
 // Firebase Connection Settings
 const serviceAccount = require( settings.get_serviceAccount() );
@@ -318,10 +316,10 @@ firebaseToOdoo_Routes_create = functions.database.ref("/Route_definition/{idRout
 });
 
 
-//Here
+// Here
 firebaseToOdoo_UserTags_update = functions.database.ref("/Data_client/{idUserFb}").onUpdate(async (change, context) => {
   const user_id = Number(context.params.idUserFb);
-  //const listOfActives = ["Cliente Nuevo", "Cliente suspendido", "Cliente por llamar", "Cliente piloto", "Cliente normal", "Cliente gold"];
+  // const listOfActives = ["Cliente Nuevo", "Cliente suspendido", "Cliente por llamar", "Cliente piloto", "Cliente normal", "Cliente gold"];
 
   const client_before = change.before.val();
   const client_after = change.after.val();
@@ -381,7 +379,7 @@ firebaseToOdoo_UserTags_update = functions.database.ref("/Data_client/{idUserFb}
         return null;
       } // */
 
-      //Consultar
+      // Consultar
       if ((client_type_new === "Cliente con Venta perdida") && (Client_Type_new === "Cliente con Venta perdida")) {
         const ticket_id = await FirebaseFcn.firebaseGet("/CRM_tickets_not_archived/"+ context.params.idUserFb);
         const odoo_session = await OdooFcn.odoo_Login();
@@ -1123,3 +1121,25 @@ Odoo_update_user = functions.https.onRequest( async (request, response)=> {
   }
 });
 
+ReadInventory_Odoo = functions.https.onRequest( async (request, response)=> {
+  // return false if fail
+  // return list of inventory
+
+  try {
+    const odoo_session = await OdooFcn.odoo_Login();
+
+    if (odoo_session != null) {
+      let res = await OdooFcn.readInventory_Odoo(odoo_session);
+      OdooFcn.odoo_Logout(odoo_session);
+
+      if (res != false) {
+        const res_json = Object.fromEntries(res);
+
+        response.send(res_json);
+      } else response.send({"result": false});
+    }
+  } catch (error) {
+    functions.logger.error( "[ReadInventory_Odoo] ERROR ", error);
+    response.send({"result": false});
+  }
+} );
