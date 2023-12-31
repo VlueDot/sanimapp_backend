@@ -3790,7 +3790,7 @@ export async function readInventory_Odoo(odoo_session:any) {
         "offset": 0,
         // "domain":[["name","ilike","tubo de ve"]]
         "domain": [],
-        // "limit": 20,
+        // "limit": 100,
       },
     });
 
@@ -3810,7 +3810,9 @@ export async function readInventory_Odoo(odoo_session:any) {
 
     console.log("len", len);
 
-    items = items.sort((a:any, b:any) => {
+    /*
+
+    let sorted_items = items.sort((a:any, b:any) => {
       if (a.name == b.name) {
         return 0;
       }
@@ -3820,11 +3822,14 @@ export async function readInventory_Odoo(odoo_session:any) {
       return 1;
     });
 
+    console.log("sorted_items", sorted_items);
+
     let inventory_map = new Map();
-    for (let i = 0; i < len; i++) {
-      inventory_map.set(items[i].id, items[i].name);
+    for (let i = 0; i < 100; i++) {
+      inventory_map.set(sorted_items[i].id, sorted_items[i].name);
     }
 
+    */
 
     // items = items.sort((a:any, b:any) => {
     //   if (a.barcode == b.barcode) {
@@ -3842,6 +3847,11 @@ export async function readInventory_Odoo(odoo_session:any) {
 
     // filter barcode false, sort them and merge.
 
+    let inventory_map = new Map();
+
+    for (let i = 0; i < len; i++) {
+      inventory_map.set(items[i].id, items[i].name);
+    }
 
     return inventory_map;
   } catch (error) {
