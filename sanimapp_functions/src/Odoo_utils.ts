@@ -3790,7 +3790,7 @@ export async function readInventory_Odoo(odoo_session:any) {
         "offset": 0,
         // "domain":[["name","ilike","tubo de ve"]]
         "domain": [],
-        "limit": 20,
+        // "limit": 20,
       },
     });
 
@@ -3821,7 +3821,7 @@ export async function readInventory_Odoo(odoo_session:any) {
     });
 
     let inventory_map = new Map();
-    for (let i = 0; i < 20; i++) {
+    for (let i = 0; i < len; i++) {
       inventory_map.set(items[i].id, items[i].name);
     }
 
