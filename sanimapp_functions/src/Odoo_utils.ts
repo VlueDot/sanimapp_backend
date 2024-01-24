@@ -1152,6 +1152,9 @@ export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdate
           if (tag_ids.includes(4)) ticket_type = "Asistencia Técnica";
           if (tag_ids.includes(14)) ticket_type = "Instalación";
           if (tag_ids.includes(16)) ticket_type = "Desinstalación";
+          if (tag_ids.includes(102)) ticket_type = "Conversión Eléctrica";
+          if (tag_ids.includes(107)) ticket_type = "Desconexión Eléctrica";
+          if (tag_ids.includes(49)) ticket_type = "Instalación Urinario";
 
           // Use saved data to write in firebase depending on each case
           if (servCollKeys.includes(id)) {// **************************************************************************************
