@@ -1029,65 +1029,69 @@ Odoo_CreateUser = functions.https.onRequest( async (request, response)=> {
       user_id = await OdooFcn.create_user_in_Odoo2(odoo_session, crm_id, request.body.args);
 
 
-      await OdooFcn.odoo_Logout(odoo_session);
+      OdooFcn.odoo_Logout(odoo_session);
+
+      let referred = "";
+      referred = request.body.args["referred"];
+      if (referred === undefined) referred = "NaN";
+
+      let phone = "";
+      phone = request.body.args["phone"];
+      if (phone === undefined) phone = "NaN";
+
+      let mobile = "";
+      mobile = request.body.args["mobile"];
+      if (mobile === undefined) mobile = "NaN";
+
+      let comunity = request.body.args["function"];
+      if (comunity === "") comunity = "NaN";
+
+      const targetState = {
+        "Campaign_month": request.body.data.Campaign_month,
+        "How_know_us": request.body.data.How_know_us,
+        "How_know_us_method": request.body.data.How_know_us_method,
+        "How_know_us_referals": referred,
+        "Name_potencial": request.body.args.name,
+        "Phone1": phone,
+        "Phone2": mobile,
+        "Sales_person": request.body.data.Sales_person,
+        "Zone": request.body.data.Zone,
+        "timeStampCreate": String(date),
+        "Sales_person_Commit": request.body.data.Sales_person_Commit,
+        "Lat": request.body.data.latitude,
+        "Long": request.body.data.longitude,
+        "Client_Type": "Cliente Potencial",
+        "Client_Community": comunity,
+      };
+
       if (crm_id != null && user_id != null) {
-        let referred = "";
-        referred = request.body.args["referred"];
-        if (referred === undefined) referred = "NaN";
-
-        let phone = "";
-        phone = request.body.args["phone"];
-        if (phone === undefined) phone = "NaN";
-
-        let mobile = "";
-        mobile = request.body.args["mobile"];
-        if (mobile === undefined) mobile = "NaN";
-
-        let comunity = request.body.args["function"];
-        if (comunity === "") comunity = "NaN";
-
-        date = Date.now();
-
-        const targetState = {
-          "Campaign_month": request.body.data.Campaign_month,
-          "How_know_us": request.body.data.How_know_us,
-          "How_know_us_method": request.body.data.How_know_us_method,
-          "How_know_us_referals": referred,
-          "Name_potencial": request.body.args.name,
-          "Phone1": phone,
-          "Phone2": mobile,
-          "Sales_person": request.body.data.Sales_person,
-          "Zone": request.body.data.Zone,
-          "timeStampCreate": String(date),
-          "Sales_person_Commit": request.body.data.Sales_person_Commit,
-          "Lat": request.body.data.latitude,
-          "Long": request.body.data.longitude,
-          "Client_Type": "Cliente Potencial",
-          "Client_Community": comunity,
-        };
-
-
-        await FirebaseFcn.firebaseSet("/notRegisteredUsers/" + crm_id, targetState);
-        functions.logger.info( "[Odoo_CreateUser] Ticket created in Firebase (/notRegisteredUsers/"+ crm_id +").", {
-          "targetState": targetState,
-          "odoo_session": odoo_session,
-        });
         const res = {
           "crm_id": crm_id,
           "user_id": user_id,
         };
+
         console.log( res );
+
+
+        FirebaseFcn.firebaseSet("/notRegisteredUsers/" + crm_id, targetState);
+        functions.logger.info( "[Odoo_CreateUser] Ticket created in Firebase (/notRegisteredUsers/"+ crm_id +").", {
+          "targetState": targetState,
+          "odoo_session": odoo_session,
+        });
+
         response.send(res);
       } else {
-        response.send("Error");
+        response.send({"result": 0});
       }
     } else {
+      console.log("entry_exist", entry_exist);
       await OdooFcn.odoo_Logout(odoo_session);
       functions.logger.error( "[Odoo_CreateUser] Skipping. User already exists.", {
         "odoo_session": odoo_session,
         "request": request.body,
       });
-      response.send("Skipping. Already exists");
+      response.send(entry_exist);
+      response.send({"result": 1});
     }
   } catch (error) {
     functions.logger.error( "[Odoo_CreateUser] Skipping. User already exists.", {
@@ -1096,7 +1100,7 @@ Odoo_CreateUser = functions.https.onRequest( async (request, response)=> {
       "crm_id": crm_id,
       "user_id": user_id,
     });
-    response.send("Something bad happen");
+    response.send({"result": 2});
   }
 });
 

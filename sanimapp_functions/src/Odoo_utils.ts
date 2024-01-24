@@ -1628,7 +1628,9 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
 
 
           let sales_person_name;
-            full_data.crm_data.user_id? sales_person_name = full_data.crm_data.user_id:false;
+            full_data.crm_data.user_id? sales_person_name = full_data.crm_data.user_id[1]:false;
+
+            console.log("sales_person_name 2", sales_person_name);
 
             const create_date = Date.parse(ticket["create_date"]);
 
@@ -1641,6 +1643,7 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
             if (keys_potentials.includes(ticket_id)) {
               // ****************************************************************************************
               sales_person_name = notRegisteredUsers[ticket_id]["Sales_person"];
+              console.log("sales_person_name 1", sales_person_name);
               // const potentialAddress = "/notRegisteredUsers/" + ticket_id;
               // const initialState = await FirebaseFcn.firebaseGet(potentialAddress);
               const initialState = notRegisteredUsers[ticket_id];
@@ -2836,17 +2839,24 @@ export async function readTicketCRM(odoo_session:any, lastupdateTimestamp: any, 
     const response = await fetch(settings.odoo_url + "dataset/search_read", params);
     const data = await response.json();
     const len = data.result.length;
+
     if (len == 0 ) return false;
     else {
-      return true;
+      const crm_id = data.result.id;
+      const user_id = data.result.partner_id[0];
+      const res = {
+        "crm_id": crm_id,
+        "user_id": user_id,
+      };
+      return res;
     }
   } catch (err) {
     functions.logger.error("[odooToFirebase_CRMTickets] ERROR 2310230045: " + err, {"odoo_session": odoo_session} );
-    return true
+    return 0
     ;
   }
 
-  return true;
+  return 0;
 }
 
 
@@ -3034,7 +3044,7 @@ export async function create_user_in_Odoo(odoo_session: any, crm_ticket: any) {
 export async function create_user_in_Odoo2(odoo_session: any, crm_ticket_id: any, _data: any) {
   // 1. Get id_odoo
 
-  functions.logger.info("create_user_in_Odoo: crm: ", crm_ticket_id);
+  functions.logger.info("create_user_in_Odoo2: crm: ", crm_ticket_id);
 
 
   const CustomHeaders: HeadersInit = {
@@ -3052,7 +3062,7 @@ export async function create_user_in_Odoo2(odoo_session: any, crm_ticket_id: any
       "args": [{
         "is_company": false,
         "phone": _data.phone != undefined? _data.phone: false,
-        "mobile": _data.mobile!= undefined? _data.name: false,
+        "mobile": _data.mobile!= undefined? _data.mobile: false,
         "name": _data.name!= undefined? _data.name: false,
         "vat": _data.dni!= undefined? _data.dni: false,
         "l10n_latam_identification_type_id": 5,
@@ -3083,14 +3093,14 @@ export async function create_user_in_Odoo2(odoo_session: any, crm_ticket_id: any
 
 
   try {
-    functions.logger.info("[createUser_Odoo_firebase] User ("+ _data.name+") succesfully created in Odoo ("+ data.result+")", {
+    functions.logger.info("[create_user_in_Odoo2] User ("+ _data.name+") succesfully created in Odoo ("+ data.result+")", {
       "odoo_session": odoo_session,
       "id_user": data.result,
     });
 
     return data.result;
   } catch (error) {
-    functions.logger.error("[createUser_Odoo_firebase] Error creating user in Odoo", {
+    functions.logger.error("[create_user_in_Odoo2] Error creating user in Odoo", {
       "odoo_session": odoo_session,
       "params": params.body,
     });
@@ -3429,6 +3439,8 @@ export async function update_user_data(odoo_session:any, user_id: any, _data: an
 
 
   });
+
+  console.log("RES PARTNER QUERY raw");
 
   console.log(raw);
 
