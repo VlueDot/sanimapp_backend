@@ -2619,7 +2619,7 @@ export async function firebaseToOdoo_approveTicket(odoo_session:any, idTicket: n
 }
 
 export async function firebaseToOdoo_stock(odoo_session:any, partner_id: number, listOfInv: any, ticket_id: any) {
-  const itemsCollection = {
+  /* const itemsCollection = {
     "Baño completo": 793,
     "Tubo de Vent. 3\"": 865,
     "Sombrerito 3\" con malla": 232,
@@ -2647,7 +2647,12 @@ export async function firebaseToOdoo_stock(odoo_session:any, partner_id: number,
     "Manual de uso y\nmantenimiento": 1034,
     "Ventilador": 255,
     "Tapa asiento": 239,
-  };
+  } */
+
+  const itemsCollection = await getItemsCollection(odoo_session)
+
+
+
   const InventoryCollection = new Map<string, number>(Object.entries(itemsCollection));
 
   const CustomHeaders: HeadersInit = {
@@ -3875,3 +3880,52 @@ export async function readInventory_Odoo(odoo_session:any) {
   }
 }
 
+export async function getItemsCollection(odoo_session:any) {
+  //function needed [firebaseToOdoo_stock]
+  const CustomHeaders: HeadersInit = {
+    "Content-Type": "application/json",
+    "Cookie": "session_id="+odoo_session,
+  };
+
+  try {
+    const raw = JSON.stringify({
+      "params": {
+        "model": "product.product",
+        "fields": ["id", "name"],
+        // "fields":["id","display_name","uom_name"],
+        "offset": 0,
+        // "domain":[["name","ilike","tubo de ve"]]
+        "domain": [],
+        // "limit": 100,
+      },
+    });
+
+    const params = {
+      headers: CustomHeaders,
+      method: "post",
+      body: raw,
+    };
+
+    const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+
+
+    let data = await response.json();
+
+    let items = data.result.records;
+    let len =data.result.length;
+
+    let inventory_map = new Map();
+
+    for (let i = 0; i < len; i++) {
+      inventory_map.set( items[i].name, items[i].id);
+    }
+
+    const res_json = Object.fromEntries(inventory_map)
+    console.log(res_json);
+
+    return inventory_map;
+  } catch (error) {
+    functions.logger.error( "[getItemsCollection] ERROR: " + error, {"odoo_session": odoo_session} );
+    return false;
+  }
+}

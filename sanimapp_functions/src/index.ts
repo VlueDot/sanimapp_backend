@@ -881,26 +881,24 @@ exports.test4 = functions
       response.send("<p>[test4] <p>Everything working fine</p>");
     });
 
+*/
 
 exports.test5 = functions
     .https.onRequest( async (request, response)=> {
       try {
         const odoo_session = await OdooFcn.odoo_Login();
 
-        let user_data = await OdooFcn.get_user_data(odoo_session, 31558, 0);
-        console.log("existant data ", user_data);
-
-        OdooFcn.modify_state_user(odoo_session, user_data, 453, "remover");
-
+       await OdooFcn.getItemsCollection(odoo_session)
+        
 
         await OdooFcn.odoo_Logout(odoo_session);
       } catch (error) {
-        functions.logger.error("[test5] ERROR 2410231414: " + error );
+        functions.logger.error("[test5] ERROR 2601241414: " + error );
       }
 
-      response.send("<p>[test4] <p>Everything working fine</p>");
+      response.send("<p>[test5] <p>Everything working fine</p>");
     });
-*/
+
 
 
 exports.test_create = functions.runWith(runtimeOpts).https.onRequest( async (request, response)=> {
