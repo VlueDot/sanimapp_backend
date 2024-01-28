@@ -468,11 +468,11 @@ firebaseToOdoo_Act_approve = functions.database.ref("/ServiceData_AprovPendant/{
     const group = Inventory[id_group];
     const items = Object.keys(group);
 
-    for (let j = 0; j < items.length; j++) {
-      const id_item = items[i];
+    for (let j = 0; j < items.length; j++) { //
+      const id_item = items[j];
       try {
         const item = group[id_item];
-        if (id_item != "group_name") {
+        if (id_item != "group_name" && id_item != undefined) {
           const art_name = item["art_name"];
           const art_qtty = item["art_qtty"];
 
@@ -482,14 +482,13 @@ firebaseToOdoo_Act_approve = functions.database.ref("/ServiceData_AprovPendant/{
           if (cond1 && cond2) {
             if (Number(art_qtty) > 0.001) {
               listOfInv.set(art_name, Number(art_qtty));
-              if (art_name === "Bolsa con aserrín") listOfInv.set("Bolsa con aserrín_extra", Number(art_qtty));
             }
           }
         }
       } catch (err) {
         functions.logger.error("[firebaseToOdoo_Act_approve] Error while reading inventory. ERROR: " + err, {
           "ticket_id": context.params.idTicketFb,
-          "item_id": id_item,
+          "item_id": String(id_item),
         });
       }
     }
@@ -528,8 +527,7 @@ firebaseToOdoo_Act_approve = functions.database.ref("/ServiceData_AprovPendant/{
     });
     await OdooFcn.odoo_Logout(odoo_session);
     return true;
-  }
-
+  } // */
   return null;
 });
 
@@ -888,8 +886,8 @@ exports.test5 = functions
       try {
         const odoo_session = await OdooFcn.odoo_Login();
 
-       await OdooFcn.getItemsCollection(odoo_session)
-        
+        await OdooFcn.getItemsCollection(odoo_session);
+
 
         await OdooFcn.odoo_Logout(odoo_session);
       } catch (error) {
@@ -898,7 +896,6 @@ exports.test5 = functions
 
       response.send("<p>[test5] <p>Everything working fine</p>");
     });
-
 
 
 exports.test_create = functions.runWith(runtimeOpts).https.onRequest( async (request, response)=> {
