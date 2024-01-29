@@ -1181,7 +1181,7 @@ export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdate
             const targetState = initialState;
 
             // if ticket status is "Nuevo"--------------------------------------------------------------------------------------
-            if (ticket_status === "Nuevo") {
+            if (ticket_status === "Nuevo" && ticket_type == "Instalación") {
               await modify_state_user(odoo_session, user_data, 453, "add" );
 
               await modify_state_user(odoo_session, user_data, 358, "remove" );
@@ -1195,7 +1195,7 @@ export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdate
             }
 
             // if ticket status is "En progreso"--------------------------------------------------------------------------------
-            if (ticket_status === "En progreso") {
+            if (ticket_status === "En progreso" && ticket_type == "Instalación") {
               await modify_state_user(odoo_session, user_data, 453, "add" );
 
               await modify_state_user(odoo_session, user_data, 358, "remove" );
@@ -1230,7 +1230,7 @@ export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdate
             }
 
             // if ticket status is "Terminado"-----------------------------------------------------------------------------------
-            if (ticket_status === "Terminado") {
+            if (ticket_status === "Terminado" && ticket_type == "Instalación") {
               // just update if the current status is "Nuevo" or "En progreso"
               await modify_state_user(odoo_session, user_data, 453, "remove" );
 
