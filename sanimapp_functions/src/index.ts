@@ -671,11 +671,11 @@ check_payments = functions
           return Number(str);
         });
 
-        // console.log("invoice_reference_stack_keys", invoice_reference_stack_keys_numbers);
+        console.log("invoice_reference_stack_keys", invoice_reference_stack_keys_numbers);
 
         user_with_payment = await OdooFcn.read_accountmove_reference(odoo_session, invoice_reference_stack_keys_numbers);
 
-        // console.log("user_with_payment", user_with_payment);
+        console.log("user_with_payment", user_with_payment);
 
 
         for (let i = 0; i< user_with_payment.length; i++) {
@@ -700,7 +700,7 @@ check_payments = functions
             const welcome_str = "Este es un mensaje del backend. ";
             const message_str = "Se registró el siguiente pago y se creo un ticket de instalacion.";
             let message_container = ["[helpdesk_id: " + helpdesk_id + "] [partner_id: " + partner_id + "] [Name: " + user_data.name + "]"];
-            await FirebaseFcn.sendEmail(subject_str, welcome_str, dateTimeEmail, message_str, message_container);
+            FirebaseFcn.sendEmail(subject_str, welcome_str, dateTimeEmail, message_str, message_container);
           }
         }
         return true;

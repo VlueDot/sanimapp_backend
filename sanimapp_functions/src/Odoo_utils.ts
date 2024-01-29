@@ -193,7 +193,7 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
 
           // console.log("user_stop_data: ", user_stop_data);
           // console.log("user_route_data: ", user_route_data);
-          // console.log("user_status_data: ", user_status_data);
+          console.log("user_status_data: ", user_status_data);
 
           // FILTERS DEFINE STATES
           let legal_task = true;
@@ -330,9 +330,15 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
               let user_status_name ="NaN"; // if NaN its error
 
               // console.log("user_status_data" , user_status_data)
+              //check if is paid
+
+              let user_with_payment = await read_accountmove_reference(odoo_session, [user_id]);
+              let user_paid = user_with_payment.length > 0
+
 
               if (user_status_data.length > 0) {
-                if ( user_status_data[0].name == "Usuario por instalar") user_status_name = "Cliente por instalar";
+                if(user_paid) {
+                  if ( user_status_data[0].name == "Usuario por instalar") user_status_name = "Cliente por instalar";
                 else if ( user_status_data[0].name == "usuario inactivo") user_status_name = "Cliente desinstalado";
                 else if ( user_status_data[0].name == "usuario activo" && user_route_data.length == 1) user_status_name = "Cliente normal";
                 else if ( user_status_data[0].name == "usuario activo" && user_stop_data.length == 0 && user_state_from_firebase == "Cliente por instalar") {
@@ -345,9 +351,16 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
                   let message_container = [" [partner_id: " + user_id + "] [Name: " + user_name + "]"];
                   await FirebaseFcn.sendEmail(subject_str, welcome_str, dateTimeEmail, message_str, message_container);
                 }
+                }
+                else{
+                  user_status_name = user_state_from_firebase;
+
+                }
               } else { // that means in case dont have status but have a crm ticket that actual have status
                 user_status_name = user_state_from_firebase;
               }
+
+              console.log("user_status_name: " + user_status_name);
 
               let ubigeo = "NaN";
               // l10n_pe_ubigeo is deprecated. Using zip instead
@@ -583,6 +596,8 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
                 } catch (error) {
                   functions.logger.error("states not updated. ", error);
                 }
+              }else{
+                console.log("states not changed " + targetState.Client_Type +"initialState.Client_Type" + initialState.Client_Type);
               }
 
 
@@ -1591,6 +1606,7 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
                 functions.logger.info("Se ha añadido el registro a invoices references stack:  ", invoice_reference_stack_json);
               }
             }
+
           } else {
             if (is_in_reference_stack_keys) {
               FirebaseFcn.firebaseRemove("invoice_reference_stack/" + String(ticket.partner_id[0]));
@@ -1911,6 +1927,7 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
                   }
                 }
               }
+
             } else {
               // **********************************************************************************************
               if (Object.keys(ticketIdToPartnerId).includes(ticket_id)) {
@@ -2192,7 +2209,7 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
 
     if (update) {
       FirebaseFcn.firebaseSet("/timestamp_collection/CMR_tickets_timestamp", String(odoo_query_time));
-      functions.logger.info( "[odooToFirebase_ServiceTickets]  updating CMR_tickets_timestamp in Firebase", {
+      functions.logger.info( "[odooToFirebase_CRMTickets]  updating CMR_tickets_timestamp in Firebase", {
         "odoo_session": odoo_session,
         "CMR_tickets_timestamp": String(odoo_query_time),
       });
