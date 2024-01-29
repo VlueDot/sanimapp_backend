@@ -879,7 +879,7 @@ exports.test4 = functions
       response.send("<p>[test4] <p>Everything working fine</p>");
     });
 
-*/
+
 
 exports.test5 = functions
     .https.onRequest( async (request, response)=> {
@@ -896,7 +896,7 @@ exports.test5 = functions
 
       response.send("<p>[test5] <p>Everything working fine</p>");
     });
-
+*/
 
 exports.test_create = functions.runWith(runtimeOpts).https.onRequest( async (request, response)=> {
   const odoo_session = await OdooFcn.odoo_Login();
