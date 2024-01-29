@@ -2649,8 +2649,7 @@ export async function firebaseToOdoo_stock(odoo_session:any, partner_id: number,
     "Tapa asiento": 239,
   } */
 
-  const itemsCollection = await getItemsCollection(odoo_session)
-
+  const itemsCollection = await getItemsCollection(odoo_session);
 
 
   const InventoryCollection = new Map<string, number>(Object.entries(itemsCollection));
@@ -3881,7 +3880,7 @@ export async function readInventory_Odoo(odoo_session:any) {
 }
 
 export async function getItemsCollection(odoo_session:any) {
-  //function needed [firebaseToOdoo_stock]
+  // function needed [firebaseToOdoo_stock]
   const CustomHeaders: HeadersInit = {
     "Content-Type": "application/json",
     "Cookie": "session_id="+odoo_session,
@@ -3920,7 +3919,7 @@ export async function getItemsCollection(odoo_session:any) {
       inventory_map.set( items[i].name, items[i].id);
     }
 
-    const res_json = Object.fromEntries(inventory_map)
+    const res_json = Object.fromEntries(inventory_map);
     console.log(res_json);
 
     return inventory_map;

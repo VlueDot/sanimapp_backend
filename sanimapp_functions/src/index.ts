@@ -888,8 +888,8 @@ exports.test5 = functions
       try {
         const odoo_session = await OdooFcn.odoo_Login();
 
-       await OdooFcn.getItemsCollection(odoo_session)
-        
+        await OdooFcn.getItemsCollection(odoo_session);
+
 
         await OdooFcn.odoo_Logout(odoo_session);
       } catch (error) {
@@ -898,7 +898,6 @@ exports.test5 = functions
 
       response.send("<p>[test5] <p>Everything working fine</p>");
     });
-
 
 
 exports.test_create = functions.runWith(runtimeOpts).https.onRequest( async (request, response)=> {
