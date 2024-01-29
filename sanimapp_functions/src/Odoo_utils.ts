@@ -2649,117 +2649,115 @@ export async function firebaseToOdoo_stock(odoo_session:any, partner_id: number,
     "Tapa asiento": 239,
   } */
 
-  const itemsCollection = await getItemsCollection(odoo_session);
+  const InventoryCollection = await getItemsCollection(odoo_session);
 
+  if (InventoryCollection != false) {
+    const CustomHeaders: HeadersInit = {
+      "Content-Type": "application/json",
+      "Cookie": "session_id="+odoo_session,
+    };
 
-  const InventoryCollection = new Map<string, number>(Object.entries(itemsCollection));
-
-  const CustomHeaders: HeadersInit = {
-    "Content-Type": "application/json",
-    "Cookie": "session_id="+odoo_session,
-  };
-
-  const raw_create = JSON.stringify({
-    "params": {
-      "model": "stock.picking",
-      "method": "create",
-      "kwargs": {},
-      "args": [{
-        "location_id": 18,
-        "picking_type_id": 7,
-        "partner_id": partner_id,
-        "state": "draft",
-        "location_dest_id": 5,
-        "show_operations": true,
-        "show_validate": true,
-        "immediate_transfer": true,
-      }],
-    },
-  });
-
-  const params_create = {
-    headers: CustomHeaders,
-    method: "call",
-    body: raw_create,
-  };
-
-  try {
-    const response_create = await fetch(settings.odoo_url + "dataset/call_kw/stock.picking/create", params_create);
-    const data_create = await response_create.json();
-    const idOdoo = data_create["result"];
-
-    const raw_update = JSON.stringify({
+    const raw_create = JSON.stringify({
       "params": {
         "model": "stock.picking",
-        "method": "write",
+        "method": "create",
         "kwargs": {},
-        "args": [
-          Number(idOdoo),
-          {
-            "state": "done",
-            "priority": "1",
-            "show_validate": false,
-          }],
+        "args": [{
+          "location_id": 18,
+          "picking_type_id": 7,
+          "partner_id": partner_id,
+          "state": "draft",
+          "location_dest_id": 5,
+          "show_operations": true,
+          "show_validate": true,
+          "immediate_transfer": true,
+        }],
       },
     });
 
-    const params_update = {
+    const params_create = {
       headers: CustomHeaders,
       method: "call",
-      body: raw_update,
+      body: raw_create,
     };
 
     try {
-      const response_update = await fetch(settings.odoo_url + "dataset/call_kw/stock.picking/write", params_update);
-      const data_update = await response_update.json();
+      const response_create = await fetch(settings.odoo_url + "dataset/call_kw/stock.picking/create", params_create);
+      const data_create = await response_create.json();
+      const idOdoo = data_create["result"];
 
-      if (data_update["result"] === true) {
-        const keys = Object.keys(listOfInv);
-        for (let i = 0; i< keys.length; i++) {
-          const key = String(keys[i]);
-          if (InventoryCollection.get(key)!= null) {
-            const raw_item = JSON.stringify({
-              "params": {
-                "model": "stock.move.line",
-                "method": "create",
-                "kwargs": {},
-                "args": [{
-                  "picking_id": Number(idOdoo),
-                  "move_id": false,
-                  "company_id": 1,
-                  "product_id": InventoryCollection.get(key),
-                  "product_uom_id": 1,
-                  "qty_done": listOfInv.get(key),
-                  "location_id": 18,
-                  "location_dest_id": 5,
-                  "reference": false,
-                  "is_locked": false,
-                }],
-              },
-            });
+      const raw_update = JSON.stringify({
+        "params": {
+          "model": "stock.picking",
+          "method": "write",
+          "kwargs": {},
+          "args": [
+            Number(idOdoo),
+            {
+              "state": "done",
+              "priority": "1",
+              "show_validate": false,
+            }],
+        },
+      });
 
-            const params_item = {
-              headers: CustomHeaders,
-              method: "call",
-              body: raw_item,
-            };
-            try {
-              await fetch(settings.odoo_url + "dataset/call_kw/stock.move.line/create", params_item);
-            } catch (err2) {
-              functions.logger.error("[firebaseToOdoo_stock] ERROR: " + err2, {
-                "odoo_session": odoo_session,
-                "ticket_id": ticket_id,
-                "product_id": InventoryCollection.get(key),
+      const params_update = {
+        headers: CustomHeaders,
+        method: "call",
+        body: raw_update,
+      };
+
+      try {
+        const response_update = await fetch(settings.odoo_url + "dataset/call_kw/stock.picking/write", params_update);
+        const data_update = await response_update.json();
+
+        if (data_update["result"] === true) {
+          const keys = listOfInv.keys();
+          for (let key of keys) { // for (let i = 0; i< keys.length ; i++) { const key = String(keys[i]);
+            if (InventoryCollection.get(key)!= null && InventoryCollection.get(key)!= undefined) {
+              const raw_item = JSON.stringify({
+                "params": {
+                  "model": "stock.move.line",
+                  "method": "create",
+                  "kwargs": {},
+                  "args": [{
+                    "picking_id": Number(idOdoo),
+                    "move_id": false,
+                    "company_id": 1,
+                    "product_id": InventoryCollection.get(key),
+                    "product_uom_id": 1,
+                    "qty_done": listOfInv.get(key),
+                    "location_id": 18,
+                    "location_dest_id": 5,
+                    "reference": false,
+                    "is_locked": false,
+                  }],
+                },
               });
+
+              const params_item = {
+                headers: CustomHeaders,
+                method: "call",
+                body: raw_item,
+              };
+              try {
+                await fetch(settings.odoo_url + "dataset/call_kw/stock.move.line/create", params_item);
+              } catch (err2) {
+                functions.logger.error("[firebaseToOdoo_stock] ERROR: " + err2, {
+                  "odoo_session": odoo_session,
+                  "ticket_id": ticket_id,
+                  "product_id": InventoryCollection.get(key),
+                });
+              }
             }
           }
         }
+      } catch (err1) {
+        functions.logger.error("[firebaseToOdoo_stock] ERROR: " + err1, {"odoo_session": odoo_session, "ticket_id": ticket_id} );
       }
-    } catch (err1) {
-      functions.logger.error("[firebaseToOdoo_stock] ERROR: " + err1, {"odoo_session": odoo_session, "ticket_id": ticket_id} );
+    } catch (err) {
+      functions.logger.error("[firebaseToOdoo_stock] ERROR: " + err, {"odoo_session": odoo_session, "ticket_id": ticket_id} );
     }
-  } catch (err) {
-    functions.logger.error("[firebaseToOdoo_stock] ERROR: " + err, {"odoo_session": odoo_session, "ticket_id": ticket_id} );
   }
 
   return null;
@@ -3881,6 +3879,7 @@ export async function readInventory_Odoo(odoo_session:any) {
 
 export async function getItemsCollection(odoo_session:any) {
   // function needed [firebaseToOdoo_stock]
+  // function needed [firebaseToOdoo_stock]
   const CustomHeaders: HeadersInit = {
     "Content-Type": "application/json",
     "Cookie": "session_id="+odoo_session,
@@ -3919,12 +3918,12 @@ export async function getItemsCollection(odoo_session:any) {
       inventory_map.set( items[i].name, items[i].id);
     }
 
-    const res_json = Object.fromEntries(inventory_map);
-    console.log(res_json);
+    // const res_json = Object.fromEntries(inventory_map)
+    // /console.log(res_json);
 
     return inventory_map;
   } catch (error) {
-    functions.logger.error( "[getItemsCollection] ERROR: " + error, {"odoo_session": odoo_session} );
+    // functions.logger.error( "[getItemsCollection] ERROR: " + error, {"odoo_session": odoo_session} );
     return false;
   }
 }
