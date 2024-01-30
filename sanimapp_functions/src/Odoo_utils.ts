@@ -350,6 +350,14 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
                     const message_str = "Se detectó que el usuario ya está disponible para ser activo y solo requiere un paradero como mínimo.";
                     let message_container = [" [partner_id: " + user_id + "] [Name: " + user_name + "]"];
                     await FirebaseFcn.sendEmail(subject_str, welcome_str, dateTimeEmail, message_str, message_container);
+                  } else {
+                    functions.logger.info("[odooToFirebase_Users] WARNING! Client_type is NaN",{
+                      "user_id": user_id,
+                      "user_status_data": user_status_data,
+                      "user_route_data": user_route_data,
+                      "user_stop_data": user_stop_data,
+                      "user_state_from_firebase": user_state_from_firebase
+                    })
                   }
                 } else {
                   user_status_name = user_state_from_firebase;
