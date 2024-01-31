@@ -309,7 +309,7 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
 
               let user_stopId = 0; let user_namestop = "NaN";
 
-              if (user_stop_data.length > 0 && user_status_data[0].name == "usuario activo") {
+              if (user_stop_data.length > 0 && (user_status_data[0].name == "usuario activo" || user_status_data[0].name == "Usuario por instalar")) {
                 user_stopId = user_stop_data[0].id;
                 user_namestop = user_stop_data[0].name;
               }
@@ -318,7 +318,7 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
               let user_routeId = 0; let user_nameroute = "NaN";
 
 
-              if (user_route_data.length > 0 && user_status_data[0].name == "usuario activo") {
+              if (user_route_data.length > 0 && (user_status_data[0].name == "usuario activo" || user_status_data[0].name == "Usuario por instalar")) {
                 user_routeId = user_route_data[0].id;
                 user_nameroute = user_route_data[0].name;
               }
@@ -350,14 +350,6 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
                     const message_str = "Se detectó que el usuario ya está disponible para ser activo y solo requiere un paradero como mínimo.";
                     let message_container = [" [partner_id: " + user_id + "] [Name: " + user_name + "]"];
                     await FirebaseFcn.sendEmail(subject_str, welcome_str, dateTimeEmail, message_str, message_container);
-                  } else {
-                    functions.logger.info("[odooToFirebase_Users] WARNING! Client_type is NaN",{
-                      "user_id": user_id,
-                      "user_status_data": user_status_data,
-                      "user_route_data": user_route_data,
-                      "user_stop_data": user_stop_data,
-                      "user_state_from_firebase": user_state_from_firebase
-                    })
                   }
                 } else {
                   user_status_name = user_state_from_firebase;
@@ -366,7 +358,19 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
                 user_status_name = user_state_from_firebase;
               }
 
-              console.log("user_status_name: " + user_status_name);
+              try {
+                functions.logger.info("[odooToFirebase_Users] Client_type info.", {
+                  "user_id": user_id,
+                  "user_status_data": user_status_data,
+                  "user_route_data": user_route_data,
+                  "user_stop_data": user_stop_data,
+                  "user_state_from_firebase": user_state_from_firebase,
+                  "user_status_name (client_type)": user_status_name,
+                });
+              } catch (err) {
+                functions.logger.error( "[odooToFirebase_Users] Error 3101231335 (Client_type can't print): " + err);
+              }
+
 
               let ubigeo = "NaN";
               // l10n_pe_ubigeo is deprecated. Using zip instead
@@ -582,7 +586,8 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
               if (stops_changed) ToDoList.push("Stops changed: " + initialState.stop_id_odoo +" -> " + targetState.stop_id_odoo);
               if ( just_routes_changed) ToDoList.push("Routes changed: " + initialOdoo_routeId +" -> " + targetState.route_id_odoo);
               if ( just_no_route ) ToDoList.push("There is no route in odoo");
-              if (!stops_changed && !just_no_route && ! just_routes_changed) ToDoList.push("Nothing to do.");
+              if (state_change) ToDoList.push("State changed: " + initialState.Client_Type + " -> " + targetState.Client_Type);
+              if (!stops_changed && !just_no_route && ! just_routes_changed && !state_change) ToDoList.push("Nothing to do.");
 
 
               functions.logger.info("1. ToDoList ", ToDoList);
