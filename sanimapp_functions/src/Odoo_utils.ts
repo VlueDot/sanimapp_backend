@@ -3406,11 +3406,12 @@ export async function get_crm_data(odoo_session:any, crm_id: number, since_times
   }
 }
 
-export async function update_crm_data(odoo_session:any, crm_id: any, _data: any) {
+export async function update_crm_data(odoo_session:any, crm_id: any, _data: any, stage_id: number) {
   /* esta funcion obtiene data de odoo CRM. si crm_id se ignora si existe since_timestamp*/
   let data2 = _data;
   delete data2.vat;
   delete data2.l10n_latam_identification_type_id;
+  data2.stage_id = stage_id
 
   const CustomHeaders: HeadersInit = {
     "Content-Type": "application/json",

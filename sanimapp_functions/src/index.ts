@@ -664,6 +664,7 @@ check_payments = functions
       let user_with_payment = [];
 
       let invoice_reference_stack = await FirebaseFcn.firebaseGet("invoice_reference_stack");
+      console.log("invoice_reference_stack", invoice_reference_stack);
       if (invoice_reference_stack) {
         let invoice_reference_stack_keys = Object.keys(invoice_reference_stack).sort();
         // let min = Number(invoice_reference_stack_keys[0])
@@ -679,14 +680,14 @@ check_payments = functions
 
 
         for (let i = 0; i< user_with_payment.length; i++) {
-          let partner_id = invoice_reference_stack_keys[i];
-          console.log(partner_id);
-          if (partner_id) {
+          let partner_id_to_remove = user_with_payment[i];
+          console.log("partner_id_to_remove", partner_id_to_remove);
+          if (partner_id_to_remove) {
             // console.log("invoice_reference_stack/" + partner_id);
-            await FirebaseFcn.firebaseRemove("invoice_reference_stack/" + partner_id);
+            await FirebaseFcn.firebaseRemove("invoice_reference_stack/" + partner_id_to_remove);
             // crear ticket de atencion y guardar id en una lista de firebase.
-            let user_data = await OdooFcn.get_user_data(odoo_session, Number(partner_id), 0);
-            let helpdesk_id =await OdooFcn.create_helpdesk_ticket(odoo_session, Number(partner_id), user_data.name);
+            let user_data = await OdooFcn.get_user_data(odoo_session, Number(partner_id_to_remove), 0);
+            let helpdesk_id =await OdooFcn.create_helpdesk_ticket(odoo_session, Number(partner_id_to_remove), user_data.name);
             // console.log("helpdesk_id", helpdesk_id, "helpdesk_stack/" + helpdesk_id);
 
 
@@ -699,7 +700,7 @@ check_payments = functions
             const subject_str = "Sanimapp: Nuevo Ticket de instalación #" + helpdesk_id + " ("+ user_data.name;
             const welcome_str = "Este es un mensaje del backend. ";
             const message_str = "Se registró el siguiente pago y se creo un ticket de instalacion.";
-            let message_container = ["[helpdesk_id: " + helpdesk_id + "] [partner_id: " + partner_id + "] [Name: " + user_data.name + "]"];
+            let message_container = ["[helpdesk_id: " + helpdesk_id + "] [partner_id: " + partner_id_to_remove + "] [Name: " + user_data.name + "]"];
             FirebaseFcn.sendEmail(subject_str, welcome_str, dateTimeEmail, message_str, message_container);
           }
         }
@@ -913,7 +914,7 @@ exports.test_create = functions.runWith(runtimeOpts).https.onRequest( async (req
     console.log(crm_id);
     let user_id = await OdooFcn.create_user_in_Odoo2(odoo_session, crm_id, _data);
 
-    OdooFcn.update_crm_data(odoo_session, crm_id, _data);
+    OdooFcn.update_crm_data(odoo_session, crm_id, _data, 1);
 
     await OdooFcn.odoo_Logout(odoo_session);
     response.send("<p>[TEST_create] <br>firebaseType: "+firebaseType+"<br>odoo url: "+settings.odoo_url +
@@ -1099,8 +1100,8 @@ Odoo_CreateUser = functions.https.onRequest( async (request, response)=> {
 });
 
 Odoo_update_user = functions.https.onRequest( async (request, response)=> {
-  console.log(request.body);
-
+  console.log(request.body); 
+  let stage_id_clienteConFirma  = 2 
 
   try {
     const odoo_session = await OdooFcn.odoo_Login();
@@ -1109,7 +1110,7 @@ Odoo_update_user = functions.https.onRequest( async (request, response)=> {
       // OdooFcn.update_crm_data(odoo_session, crm_id, _data);
       const res2 = await OdooFcn.update_user_data(odoo_session, request.body.user_id, request.body.data);
 
-      const res = await OdooFcn.update_crm_data(odoo_session, request.body.crm_id, request.body.data);
+      const res = await OdooFcn.update_crm_data(odoo_session, request.body.crm_id, request.body.data, stage_id_clienteConFirma);
       await OdooFcn.odoo_Logout(odoo_session);
       response.send({"result": res && res2});
     }
