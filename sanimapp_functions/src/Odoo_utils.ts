@@ -3099,6 +3099,7 @@ export async function create_user_in_Odoo2(odoo_session: any, crm_ticket_id: any
         "l10n_latam_identification_type_id": 5,
         "street": _data.street!= undefined? _data.street: false,
         "street2": _data.street2!= undefined? _data.street2: false,
+        "function": _data.function!= undefined? _data.function: false,
         // "country_id": _data.country_id[0]!= undefined? _data.country_id[0]: false,
         // "zip": _data.zip!= undefined? _data.zip: false,
         // "city": _data.city!= undefined? _data.city: false,
@@ -3406,12 +3407,9 @@ export async function get_crm_data(odoo_session:any, crm_id: number, since_times
   }
 }
 
-export async function update_crm_data(odoo_session:any, crm_id: any, _data: any, stage_id: number) {
+export async function update_crm_data(odoo_session:any, crm_id: any, _data: any, ) {
   /* esta funcion obtiene data de odoo CRM. si crm_id se ignora si existe since_timestamp*/
-  let data2 = _data;
-  delete data2.vat;
-  delete data2.l10n_latam_identification_type_id;
-  data2.stage_id = stage_id
+
 
   const CustomHeaders: HeadersInit = {
     "Content-Type": "application/json",
@@ -3424,7 +3422,7 @@ export async function update_crm_data(odoo_session:any, crm_id: any, _data: any,
       "model": "crm.lead",
       "method": "write",
       "kwargs": {},
-      "args": [Number(crm_id), data2],
+      "args": [Number(crm_id), _data],
     },
 
 

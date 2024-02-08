@@ -910,11 +910,12 @@ exports.test_create = functions.runWith(runtimeOpts).https.onRequest( async (req
     const dateTime = Date.now();
     let _data = {
       "name": "Vluedot test " + dateTime,
+      "stage_id": 1,
     };
     console.log(crm_id);
     let user_id = await OdooFcn.create_user_in_Odoo2(odoo_session, crm_id, _data);
 
-    OdooFcn.update_crm_data(odoo_session, crm_id, _data, 1);
+    OdooFcn.update_crm_data(odoo_session, crm_id, _data);
 
     await OdooFcn.odoo_Logout(odoo_session);
     response.send("<p>[TEST_create] <br>firebaseType: "+firebaseType+"<br>odoo url: "+settings.odoo_url +
@@ -1100,17 +1101,47 @@ Odoo_CreateUser = functions.https.onRequest( async (request, response)=> {
 });
 
 Odoo_update_user = functions.https.onRequest( async (request, response)=> {
-  console.log(request.body); 
-  let stage_id_clienteConFirma  = 2 
+  console.log(request.body);
+
+  let crm_data = {
+    "phone": request.body.data.phone,
+    "mobile": request.body.data.mobile,
+    "name": request.body.data.name,
+    "street": request.body.data.street,
+    "street2": request.body.data.street2,
+    "zip": request.body.data.zip,
+    "country_id": request.body.data.country_id,
+    "state_id": request.body.data.state_id,
+    "city": request.body.data.city,
+
+
+  };
+
+  let res_partner_data = {
+    "phone": request.body.data.phone,
+    "mobile": request.body.data.mobile,
+    "name": request.body.data.name,
+    "street": request.body.data.street,
+    "street2": request.body.data.street2,
+    "zip": request.body.data.zip,
+    "country_id": request.body.data.country_id,
+    "state_id": request.body.data.state_id,
+    "city": request.body.data.city,
+
+
+    "l10n_latam_identification_type_id": request.body.data.l10n_latam_identification_type_id,
+    "vat": request.body.data.vat,
+
+  };
 
   try {
     const odoo_session = await OdooFcn.odoo_Login();
 
     if (odoo_session != null) {
       // OdooFcn.update_crm_data(odoo_session, crm_id, _data);
-      const res2 = await OdooFcn.update_user_data(odoo_session, request.body.user_id, request.body.data);
+      const res2 = await OdooFcn.update_user_data(odoo_session, request.body.user_id, res_partner_data);
 
-      const res = await OdooFcn.update_crm_data(odoo_session, request.body.crm_id, request.body.data, stage_id_clienteConFirma);
+      const res = await OdooFcn.update_crm_data(odoo_session, request.body.crm_id, crm_data);
       await OdooFcn.odoo_Logout(odoo_session);
       response.send({"result": res && res2});
     }
