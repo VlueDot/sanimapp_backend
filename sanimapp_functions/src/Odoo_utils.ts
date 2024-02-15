@@ -3,7 +3,7 @@ import * as settings from "./GlobalSetting";
 import * as functions from "firebase-functions";
 import * as FirebaseFcn from "./Firebase_utils";
 
-// const max_qtty_entries_per_session = 3000; // per 10 minutes
+// const max_qtty_entries_per_session = 2500; // per 10 minutes
 const max_qtty_entries_per_session = 300;
 
 let info = {
@@ -170,6 +170,7 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
         const user_name = target_data[i].name;
         const user_categories = target_data[i].category_id;
         const opportunity_id_len = target_data[i].opportunity_ids.length;
+        let crm_id = opportunity_id_len == 1 ? target_data[i].opportunity_ids[0] : false;
         odoo_query_time = Date.parse(target_data[i].write_date);
 
         let user_state_from_firebase;
@@ -177,7 +178,7 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
           // check for categories
           // alternatively we could download every stops and categories. depending on demand or testings
 
-          console.log( i+1, "/", qtty_users, "----------------------------------------------------");
+          console.log("------------", i+1, "/", qtty_users, "[", user_id, " - ", crm_id, "]------------");
           // console.log(user_categories);
           let user_categories_filtered = await search_categories_Odoo( user_categories, categories_list );
           // console.log("user_categories_filtered: ", user_categories_filtered);
@@ -218,10 +219,18 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
             // console.log("Data_client/" + user_id +"/Data_client_2/Client_Type")
 
             user_state_from_firebase = await FirebaseFcn.firebaseGet("Data_client/" + user_id +"/Data_client_2/Client_Type" );
-            const user_state2_from_firebase = await FirebaseFcn.firebaseGet("Data_client/" + user_id +"/Data_client_3/client_type" );
+            let user_state2_from_firebase = await FirebaseFcn.firebaseGet("Data_client/" + user_id +"/Data_client_3/client_type" );
 
 
-            if (user_state2_from_firebase == null && user_state_from_firebase == null) no_entry_in_firebase = true;
+            if (user_state2_from_firebase == null && user_state_from_firebase == null) {
+              no_entry_in_firebase = true;
+              const notRegisteredUsers_data = await FirebaseFcn.firebaseGet("/notRegisteredUsers/" + crm_id );
+              user_state_from_firebase = notRegisteredUsers_data["Client_Type"];
+              user_state2_from_firebase = notRegisteredUsers_data["Client_Type"];
+              console.log("obtaining data from notregistered users: ", {
+                "crm_id": crm_id,
+                "user_state_from_firebase": user_state_from_firebase});
+            }
 
             if (user_state2_from_firebase == "NaN" && user_state_from_firebase == "NaN") user_state_is_NaN = true;
 
@@ -930,9 +939,14 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
       if (warning_list.length > 0) {
         const dateTimeEmail = Date.now()-18000000;
         const subject_str = " Sanimapp Backend Alert";
-        const welcome_str = "Esta es una alerta generada el ";
+        // const welcome_str = "Esta es una alerta generada el ";
         const message_str = "Se han ignorados los siguientes ingresos ( Odoo timestamp: "+lastupdateTimestamp+" ["+ date_str +"] ). Por favor, revisarlos a la brevedad.";
-        await FirebaseFcn.sendEmail(subject_str, welcome_str, dateTimeEmail, message_str, warning_list);
+        // await FirebaseFcn.sendEmail(subject_str, welcome_str, dateTimeEmail, message_str, warning_list);
+        functions.logger.info( "[odooToFirebase_Users] "+ subject_str, {
+          "odoo_session": odoo_session,
+          "dateTimeEmail": String(dateTimeEmail),
+          "message_str": message_str,
+        } );
       }
     } // else functions.logger.info( "[odooToFirebase_Users] No update founded in Odoo.", {"odoo_session": odoo_session});
   } catch (err) {
@@ -1442,6 +1456,46 @@ export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdate
   return false;
 }
 
+export async function is_there_install_serviceTicket(odoo_session:any, user_id: any) {
+  const CustomHeaders: HeadersInit = {
+    "Content-Type": "application/json",
+    "Cookie": "session_id="+odoo_session,
+  };
+
+  const raw = JSON.stringify({
+    "params": {
+      "model": "helpdesk.ticket",
+      "offset": 0,
+      "fields": ["partner_id"],
+      "domain": ["&", ["partner_id", "=",
+        user_id], ["tag_ids", "=", 14]],
+    },
+  });
+
+  const params = {
+    headers: CustomHeaders,
+    method: "call",
+    body: raw,
+  };
+
+  try {
+    const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+    const data = await response.json();
+    const qtty_entries = data.result.length;
+    if (qtty_entries>0) {
+      functions.logger.info("[is_there_install_serviceTicket] Existe un ticket de instalacion.",
+          {"odoo_session": odoo_session, "ticket_id ": data.result.records.id});
+
+
+      return true;
+    }
+  } catch (err) {
+    functions.logger.error("[is_there_install_serviceTicket] ERROR. It seems there is no installation ticket " + err, {"odoo_session": odoo_session} );
+  }
+  return false;
+}
+
+
 export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: any) {
   let odoo_query_time = Date.now();// THIS IS THE TIME WHERE I MADE THE CHECK
 
@@ -1603,9 +1657,21 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
                 */
 
               let user_with_payment = await read_accountmove_reference(odoo_session, [ticket.partner_id[0]]);
-
+              console.log("user_with_payment ", user_with_payment);
+              console.log("user_with_payment.length", user_with_payment.length);
               if (user_with_payment.length>0) {
-                true;
+                let is_there = is_there_install_serviceTicket(odoo_session, ticket.partner_id[0]);
+                // check if has ticket already. if not, update invoice_reference_stack
+                if (!is_there) {
+                  let invoice_reference_stack_map = new Map();
+
+                  invoice_reference_stack_map.set(ticket.partner_id[0], ticket.name);
+
+                  const invoice_reference_stack_json = Object.fromEntries(invoice_reference_stack_map);
+                  FirebaseFcn.firebaseUpdate("invoice_reference_stack", invoice_reference_stack_json);
+
+                  functions.logger.info("Se ha añadido el registro a invoices references stack:  ", invoice_reference_stack_json);
+                }
               } else {
                 let invoice_reference_stack_map = new Map();
 
@@ -1618,7 +1684,10 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
               }
             }
           } else {
+            console.log("--1");
             if (is_in_reference_stack_keys) {
+              console.log("--2");
+
               FirebaseFcn.firebaseRemove("invoice_reference_stack/" + String(ticket.partner_id[0]));
             }
           }
@@ -3428,9 +3497,6 @@ export async function update_crm_data(odoo_session:any, crm_id: any, _data: any,
 
   });
 
-  console.log("CRM raw data: " + raw);
-
-
   const params = {
     headers: CustomHeaders,
     method: "call",
@@ -3440,11 +3506,16 @@ export async function update_crm_data(odoo_session:any, crm_id: any, _data: any,
   try {
     const response = await fetch(settings.odoo_url + "dataset/call_kw/crm.lead/write", params);
     const data = await response.json();
-    console.log("cmr response", data);
+    functions.logger.info( "[update_crm_data] Updating crm info with the following info", {
+      "query": raw,
+      "crm_id": crm_id,
+      "_data": _data,
+      "response": data,
+    });
 
     return true;
   } catch (error) {
-    functions.logger.error("[get_crm_data] ERROR 0211231653: " + error,
+    functions.logger.error("[update_crm_data] ERROR 0211231653: " + error,
         {"odoo_session": odoo_session,
           "crm_id": crm_id} );
     return false;
@@ -3470,9 +3541,6 @@ export async function update_user_data(odoo_session:any, user_id: any, _data: an
 
   });
 
-  console.log("RES PARTNER QUERY raw");
-
-  console.log(raw);
 
   const params = {
     headers: CustomHeaders,
@@ -3484,7 +3552,12 @@ export async function update_user_data(odoo_session:any, user_id: any, _data: an
     const response = await fetch(settings.odoo_url + "dataset/call_kw/res.partner/write", params);
     const data = await response.json();
 
-    console.log("user response", data);
+    functions.logger.info( "[update_user_data] Updating res.partner with the following info", {
+      "query": raw,
+      "user_id": user_id,
+      "_data": _data,
+      "response": data,
+    });
 
 
     return true;
@@ -3741,7 +3814,6 @@ export async function create_helpdesk_ticket(odoo_session:any, user_id: number, 
 
   return data.result;
 }
-
 
 export async function odooToFirebase_Users_test(odoo_session:any, lastupdateTimestamp:any) {
   if (lastupdateTimestamp==null) lastupdateTimestamp = 0;

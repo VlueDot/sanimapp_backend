@@ -4,6 +4,12 @@ import * as FirebaseFcn from "./Firebase_utils";
 import * as settings from "./GlobalSetting";
 import * as admin from "firebase-admin";
 
+// const timeoutSeconds_ = 540;
+// const schedule_= "every 10 minutes";
+const timeoutSeconds_ = 54;
+const schedule_= "every 1 minutes";
+
+
 // FROM FIREBASE TO ODOO
 export let firebaseToOdoo_Stops_update : any; // [IN PRODUCTION] if stops change in firebase, updates partner's tag in odoo
 export let firebaseToOdoo_Routes_update : any;// [IN PRODUCTION] if Route change in firebase, updates partner's tag in odoo
@@ -573,8 +579,8 @@ firebaseToOdoo_CRM_update = functions.database.ref("/notRegisteredUsers/{idTicke
 
 // odooToFirebase_syncUsers = functions.https.onRequest(async (request, response)=> {
 odooToFirebase_syncUsers = functions
-    .runWith({timeoutSeconds: 54})
-    .pubsub.schedule("every 1 minutes")
+    .runWith({timeoutSeconds: timeoutSeconds_})
+    .pubsub.schedule(schedule_)
     .timeZone("America/Lima")
     .onRun(async () =>{
       // this will run with certain periodicity. This will be the stable function.
@@ -617,8 +623,8 @@ odooToFirebase_syncUsers = functions
 
 // odooToFirebase_syncServices = functions.https.onRequest(async (request, response)=> {
 odooToFirebase_syncServices = functions
-    .runWith({timeoutSeconds: 54})
-    .pubsub.schedule("every 1 minutes")
+    .runWith({timeoutSeconds: timeoutSeconds_})
+    .pubsub.schedule(schedule_)
     .timeZone("America/Lima")
     .onRun(async () =>{
       // this will run with certain periodicity. This will be the stable function.
@@ -656,8 +662,8 @@ odooToFirebase_syncServices = functions
 
 // check_payments = functions.https.onRequest(async (request, response)=> {
 check_payments = functions
-    .runWith({timeoutSeconds: 54})
-    .pubsub.schedule("every 1 minutes")
+    .runWith({timeoutSeconds: timeoutSeconds_})
+    .pubsub.schedule(schedule_)
     .timeZone("America/Lima")
     .onRun(async () =>{
       const odoo_session = await OdooFcn.odoo_Login();
@@ -751,16 +757,15 @@ send_errors_mailreminder = functions
     .onRun(async () =>{
       try {
         const pendand_errors = await FirebaseFcn.firebaseGet("/illegal_entries_stack");
-        const pendand_errors_keys = Object.keys(pendand_errors);
-
-
-        let message_container = [];
-        for (let i = 0; i < pendand_errors_keys.length; i++) {
-          message_container.push(pendand_errors[pendand_errors_keys[i]] + "(User_id: " + pendand_errors_keys[i] + ")" );
-        }
-
         if (pendand_errors == null ) functions.logger.info( "[send_errors_mailreminder] No pendant error.");
         else {
+          const pendand_errors_keys = Object.keys(pendand_errors);
+
+
+          let message_container = [];
+          for (let i = 0; i < pendand_errors_keys.length; i++) {
+            message_container.push(pendand_errors[pendand_errors_keys[i]] + "(User_id: " + pendand_errors_keys[i] + ")" );
+          }
           const dateTimeEmail = false;
           const subject_str = "Sanimapp Daily Backend Alert";
           const welcome_str = "Esta es una alerta diaria";
@@ -1101,8 +1106,6 @@ Odoo_CreateUser = functions.https.onRequest( async (request, response)=> {
 });
 
 Odoo_update_user = functions.https.onRequest( async (request, response)=> {
-  console.log(request.body);
-
   let crm_data = {
     "phone": request.body.data.phone,
     "mobile": request.body.data.mobile,
@@ -1112,6 +1115,7 @@ Odoo_update_user = functions.https.onRequest( async (request, response)=> {
     "zip": request.body.data.zip,
     "country_id": request.body.data.country_id,
     "state_id": request.body.data.state_id,
+    "stage_id": request.body.data.stage_id,
     "city": request.body.data.city,
 
 
@@ -1133,6 +1137,14 @@ Odoo_update_user = functions.https.onRequest( async (request, response)=> {
     "vat": request.body.data.vat,
 
   };
+
+  functions.logger.info( "[Odoo_update_user] Updating user with the following info", {
+    "request.body": request.body,
+    "crm_data": crm_data,
+    "res_partner_data": res_partner_data,
+
+
+  });
 
   try {
     const odoo_session = await OdooFcn.odoo_Login();
