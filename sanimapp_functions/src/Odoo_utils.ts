@@ -4024,3 +4024,139 @@ export async function getItemsCollection(odoo_session:any) {
     return false;
   }
 }
+
+export async function readZones_Odoo(odoo_session:any) {
+  const CustomHeaders: HeadersInit = {
+    "Content-Type": "application/json",
+    "Cookie": "session_id="+odoo_session,
+  };
+
+  try {
+    const raw = JSON.stringify({
+      "params": {
+        "model": "crm.tag",
+        "fields": ["name"],
+        "offset": 0,
+        "domain": [],
+      },
+    });
+
+    const params = {
+      headers: CustomHeaders,
+      method: "post",
+      body: raw,
+    };
+
+    const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+
+
+    let data = await response.json();
+
+    let items = data.result.records;
+    let len =data.result.length;
+
+    // console.log("len", len);
+
+    let inventory_map = new Map();
+
+    for (let i = 0; i < len; i++) {
+      inventory_map.set( items[i].name, items[i].id);
+    }
+
+    return inventory_map;
+  } catch (error) {
+    functions.logger.error( "[readZones_Odoo] ERROR: " + error, {"odoo_session": odoo_session} );
+    return false;
+  }
+}
+
+
+export async function readMedia_Odoo(odoo_session:any) {
+  const CustomHeaders: HeadersInit = {
+    "Content-Type": "application/json",
+    "Cookie": "session_id="+odoo_session,
+  };
+
+  try {
+    const raw = JSON.stringify({
+      "params": {
+        "model": "utm.medium",
+        "fields": ["name"],
+        "offset": 0,
+        "domain": [],
+      },
+    });
+
+    const params = {
+      headers: CustomHeaders,
+      method: "post",
+      body: raw,
+    };
+
+    const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+
+
+    let data = await response.json();
+
+    let items = data.result.records;
+    let len =data.result.length;
+
+    // console.log("len", len);
+
+    let inventory_map = new Map();
+
+    for (let i = 0; i < len; i++) {
+      inventory_map.set( items[i].name, items[i].id);
+    }
+
+    return inventory_map;
+  } catch (error) {
+    functions.logger.error( "[readMedia_Odoo] ERROR: " + error, {"odoo_session": odoo_session} );
+    return false;
+  }
+}
+
+export async function readSources_Odoo(odoo_session:any) {
+  const CustomHeaders: HeadersInit = {
+    "Content-Type": "application/json",
+    "Cookie": "session_id="+odoo_session,
+  };
+
+  try {
+    const raw = JSON.stringify({
+      "params": {
+        "model": "utm.source",
+        "fields": ["name"],
+        "offset": 0,
+        "domain": [],
+      },
+    });
+
+    const params = {
+      headers: CustomHeaders,
+      method: "post",
+      body: raw,
+    };
+
+    const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+
+
+    let data = await response.json();
+
+    let items = data.result.records;
+    let len =data.result.length;
+
+    // console.log("len", len);
+
+    let inventory_map = new Map();
+
+    for (let i = 0; i < len; i++) {
+      inventory_map.set( items[i].name, items[i].id);
+    }
+
+    return inventory_map;
+  } catch (error) {
+    functions.logger.error( "[readSources_Odoo] ERROR: " + error, {"odoo_session": odoo_session} );
+    return false;
+  }
+}

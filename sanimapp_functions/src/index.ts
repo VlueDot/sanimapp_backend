@@ -36,6 +36,11 @@ export let Odoo_CRM_createUser: any; //  create user in Odoo and notRegisteredUs
 export let Odoo_CreateUser: any; // create user in Odoo and CRM opportunitie
 
 export let ReadInventory_Odoo: any; // create user in Odoo and CRM opportunitie
+export let ReadZones: any; // create user in Odoo and CRM opportunitie
+export let ReadMedia: any; // create user in Odoo and CRM opportunitie
+export let ReadSources: any; // create user in Odoo and CRM opportunitie
+export let ReadAgents: any; // create user in Odoo and CRM opportunitie
+export let ReadZonesMediaSources: any; // create user in Odoo and CRM opportunitie
 
 
 // Firebase Connection Settings
@@ -1086,7 +1091,7 @@ Odoo_CreateUser = functions.https.onRequest( async (request, response)=> {
       }
     } else {
       console.log("entry_exist", entry_exist);
-      await OdooFcn.odoo_Logout(odoo_session);
+      OdooFcn.odoo_Logout(odoo_session);
       functions.logger.error( "[Odoo_CreateUser] Skipping. User already exists.", {
         "odoo_session": odoo_session,
         "request": request.body,
@@ -1154,7 +1159,7 @@ Odoo_update_user = functions.https.onRequest( async (request, response)=> {
       const res2 = await OdooFcn.update_user_data(odoo_session, request.body.user_id, res_partner_data);
 
       const res = await OdooFcn.update_crm_data(odoo_session, request.body.crm_id, crm_data);
-      await OdooFcn.odoo_Logout(odoo_session);
+      OdooFcn.odoo_Logout(odoo_session);
       response.send({"result": res && res2});
     }
   } catch (error) {
@@ -1182,6 +1187,108 @@ ReadInventory_Odoo = functions.https.onRequest( async (request, response)=> {
     }
   } catch (error) {
     functions.logger.error( "[ReadInventory_Odoo] ERROR ", error);
+    response.send({"result": false});
+  }
+} );
+
+
+ReadZones = functions.https.onRequest( async (request, response)=> {
+  // return false if fail
+  // return list of inventory
+
+  try {
+    const odoo_session = await OdooFcn.odoo_Login();
+
+    if (odoo_session != null) {
+      let res = await OdooFcn.readZones_Odoo(odoo_session);
+      OdooFcn.odoo_Logout(odoo_session);
+
+      if (res != false) {
+        const res_json = Object.fromEntries(res);
+
+        response.send(res_json);
+      } else response.send({"result": false});
+    }
+  } catch (error) {
+    functions.logger.error( "[readZones_Odoo] ERROR ", error);
+    response.send({"result": false});
+  }
+} );
+
+ReadMedia = functions.https.onRequest( async (request, response)=> {
+  // return false if fail
+  // return list of inventory
+
+  try {
+    const odoo_session = await OdooFcn.odoo_Login();
+
+    if (odoo_session != null) {
+      let res = await OdooFcn.readMedia_Odoo(odoo_session);
+      OdooFcn.odoo_Logout(odoo_session);
+
+      if (res != false) {
+        const res_json = Object.fromEntries(res);
+
+        response.send(res_json);
+      } else response.send({"result": false});
+    }
+  } catch (error) {
+    functions.logger.error( "[readMedia_Odoo] ERROR ", error);
+    response.send({"result": false});
+  }
+} );
+
+ReadSources = functions.https.onRequest( async (request, response)=> {
+  // return false if fail
+  // return list of inventory
+
+  try {
+    const odoo_session = await OdooFcn.odoo_Login();
+
+    if (odoo_session != null) {
+      let res = await OdooFcn.readSources_Odoo(odoo_session);
+      OdooFcn.odoo_Logout(odoo_session);
+
+      if (res != false) {
+        const res_json = Object.fromEntries(res);
+
+        response.send(res_json);
+      } else response.send({"result": false});
+    }
+  } catch (error) {
+    functions.logger.error( "[readSources_Odoo] ERROR ", error);
+    response.send({"result": false});
+  }
+} );
+
+ReadZonesMediaSources = functions.https.onRequest( async (request, response)=> {
+  // return false if fail
+  // return list of inventory
+
+  try {
+    const odoo_session = await OdooFcn.odoo_Login();
+
+    if (odoo_session != null) {
+      let res1 = await OdooFcn.readZones_Odoo(odoo_session);
+      let res2 = await OdooFcn.readMedia_Odoo(odoo_session);
+      let res3 = await OdooFcn.readSources_Odoo(odoo_session);
+      OdooFcn.odoo_Logout(odoo_session);
+
+      if (res1 != false && res2 != false && res3 != false) {
+        const res1_json = Object.fromEntries(res1);
+        const res2_json = Object.fromEntries(res2);
+        const res3_json = Object.fromEntries(res3);
+        const res_json = {
+          "1": res1_json,
+          "2": res2_json,
+          "3": res3_json,
+        };
+
+        response.send(res_json);
+      } else response.send({"result": false});
+    }
+  } catch (error) {
+    functions.logger.error( "[ReadZonesMediaSources] ERROR ", error);
     response.send({"result": false});
   }
 } );
