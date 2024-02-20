@@ -1657,10 +1657,12 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
                 */
 
               let user_with_payment = await read_accountmove_reference(odoo_session, [ticket.partner_id[0]]);
-              console.log("user_with_payment ", user_with_payment);
-              console.log("user_with_payment.length", user_with_payment.length);
+              // console.log("user_with_payment ", user_with_payment);
+              // console.log("user_with_payment.length", user_with_payment.length);
               if (user_with_payment.length>0) {
-                let is_there = is_there_install_serviceTicket(odoo_session, ticket.partner_id[0]);
+                let is_there = await is_there_install_serviceTicket(odoo_session, ticket.partner_id[0]);
+
+
                 // check if has ticket already. if not, update invoice_reference_stack
                 if (!is_there) {
                   let invoice_reference_stack_map = new Map();
@@ -1668,6 +1670,8 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
                   invoice_reference_stack_map.set(ticket.partner_id[0], ticket.name);
 
                   const invoice_reference_stack_json = Object.fromEntries(invoice_reference_stack_map);
+                  // console.log("user_with_payment 2 ", invoice_reference_stack_json);
+
                   FirebaseFcn.firebaseUpdate("invoice_reference_stack", invoice_reference_stack_json);
 
                   functions.logger.info("Se ha añadido el registro a invoices references stack:  ", invoice_reference_stack_json);

@@ -675,7 +675,7 @@ check_payments = functions
       let user_with_payment = [];
 
       let invoice_reference_stack = await FirebaseFcn.firebaseGet("invoice_reference_stack");
-      console.log("invoice_reference_stack", invoice_reference_stack);
+      functions.logger.info("[check_payments] Invoice reference stack ", invoice_reference_stack);
       if (invoice_reference_stack) {
         let invoice_reference_stack_keys = Object.keys(invoice_reference_stack).sort();
         // let min = Number(invoice_reference_stack_keys[0])
@@ -683,11 +683,12 @@ check_payments = functions
           return Number(str);
         });
 
-        console.log("invoice_reference_stack_keys", invoice_reference_stack_keys_numbers);
+        // console.log("invoice_reference_stack_keys", invoice_reference_stack_keys_numbers);
 
         user_with_payment = await OdooFcn.read_accountmove_reference(odoo_session, invoice_reference_stack_keys_numbers);
 
-        console.log("user_with_payment", user_with_payment);
+
+        functions.logger.info("[check_payments] user_with_payment ", user_with_payment);
 
 
         for (let i = 0; i< user_with_payment.length; i++) {
