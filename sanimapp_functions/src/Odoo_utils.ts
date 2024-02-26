@@ -3,6 +3,7 @@ import * as settings from "./GlobalSetting";
 import * as functions from "firebase-functions";
 import * as FirebaseFcn from "./Firebase_utils";
 
+
 // const max_qtty_entries_per_session = 2500; // per 10 minutes
 const max_qtty_entries_per_session = 300;
 
@@ -143,7 +144,7 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
 
           for (let index=0; index< illegal_entries_stack_keys.length; index ++) warning_list_map.set(illegal_entries_stack_keys[index], illegal_entries_stack[illegal_entries_stack_keys[index]]);
 
-          console.log( "warning_list_map", warning_list_map);
+          functions.logger.warn( "warning_list_map", warning_list_map);
         }
       } catch (error) {
         functions.logger.error("[odooToFirebase_Users] ERROR 0211230156 ", error);
@@ -1594,8 +1595,9 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
       for (let i = 0; i < len; i++) {
         const ticket = tickets[i];
         const ticket_id = String(ticket["id"]);
-        odoo_query_time = Date.parse(ticket.write_date);
         try {
+          odoo_query_time = Date.parse(ticket.write_date);
+          console.log(ticket.write_date);
           let full_data : any;
           full_data= await verify_user_exist_create_modify(odoo_session, ticket);
           functions.logger.info("User full data crm: " + ticket_id, {"full_data": full_data});
@@ -2280,7 +2282,7 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
             "odoo_session": odoo_session,
             "ticket_id": ticket_id,
             "odoo_query_time": odoo_query_time,
-            "ticket_write_date": ticket[i].write_date,
+            // "ticket_write_date": ticket[i].write_date,
 
 
           } );
@@ -4159,6 +4161,130 @@ export async function readSources_Odoo(odoo_session:any) {
     }
 
     return inventory_map;
+  } catch (error) {
+    functions.logger.error( "[readSources_Odoo] ERROR: " + error, {"odoo_session": odoo_session} );
+    return false;
+  }
+}
+
+export async function checkUserNoCRM(odoo_session:any) {
+  const CustomHeaders: HeadersInit = {
+    "Content-Type": "application/json",
+    "Cookie": "session_id="+odoo_session,
+  };
+
+  try {
+    const raw = JSON.stringify({
+      "params": {
+        "model": "res.partner",
+        "fields": [
+          "write_date",
+          // "is_company",
+          "phone",
+          "mobile",
+          "display_name",
+          "vat",
+          "l10n_latam_identification_type_id",
+          "street",
+          "street_name",
+          "street2",
+          "country_id",
+          "zip",
+          "category_id",
+          "city",
+          "state_id",
+          "tz",
+          "tz_offset",
+          "user_id",
+          "same_vat_partner_id",
+          "city_id",
+          "category_id",
+          "function",
+        ],
+        "offset": 0,
+        "limit": 10,
+        "domain": [
+          "&",
+          [
+            "opportunity_ids",
+            "=",
+            false,
+          ],
+          [
+            "is_company",
+            "=",
+            false,
+          ],
+        ],
+      },
+    });
+
+    const params = {
+      headers: CustomHeaders,
+      method: "post",
+      body: raw,
+    };
+
+    const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+
+
+    let data = await response.json();
+
+
+    let user_data = data.result.records;
+    // let len =data.result.length;
+    console.log(user_data);
+
+    return user_data;
+  } catch (error) {
+    functions.logger.error( "[checkUserNoCRM] ERROR: " + error, {"odoo_session": odoo_session} );
+    return false;
+  }
+}
+
+
+export async function askcrmid(odoo_session:any, user_id : any) {
+  const CustomHeaders: HeadersInit = {
+    "Content-Type": "application/json",
+    "Cookie": "session_id="+odoo_session,
+  };
+
+  try {
+    const raw = JSON.stringify({
+      "params": {
+        "model": "res.partner",
+        "fields": [
+          "opportunity_ids",
+        ],
+        "offset": 0,
+        "domain": [
+          [
+            "id",
+            "=",
+            user_id,
+          ],
+        ],
+      },
+    });
+
+    const params = {
+      headers: CustomHeaders,
+      method: "post",
+      body: raw,
+    };
+
+    const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+
+
+    let data = await response.json();
+
+
+    let user_data = data.result.records;
+    // let len =data.result.length;
+
+    console.log("user_data ", user_data);
+
+    return user_data[0].opportunity_ids[0];
   } catch (error) {
     functions.logger.error( "[readSources_Odoo] ERROR: " + error, {"odoo_session": odoo_session} );
     return false;
