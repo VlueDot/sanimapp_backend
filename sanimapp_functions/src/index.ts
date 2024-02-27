@@ -715,7 +715,7 @@ check_payments = functions
             const subject_str = "Sanimapp: Nuevo Ticket de instalación #" + helpdesk_id + " ("+ user_data.name;
             const welcome_str = "Este es un mensaje del backend. ";
             const message_str = "Se registró el siguiente pago y se creo un ticket de instalacion.";
-            let message_container = ["[helpdesk_id: " + helpdesk_id + "] [partner_id: " + partner_id_to_remove + "] [Name: " + user_data.name + "]"];
+            let message_container = ["[helpdesk_id: <a target= '_blank' href='" +settings.odoo_url + "#id=" + helpdesk_id + "&model=helpdesk.ticket'>" + helpdesk_id + "</a>] [partner_id: " + partner_id_to_remove + "] [Name: " + user_data.name + "]"];
             FirebaseFcn.sendEmail(subject_str, welcome_str, dateTimeEmail, message_str, message_container);
           }
         }
@@ -1120,7 +1120,7 @@ Odoo_update_user = functions.https.onRequest( async (request, response)=> {
     "phone": request.body.data.phone,
     "mobile": request.body.data.mobile,
     "name": request.body.data.name,
-    "street": request.body.data.street,
+    "street_name": request.body.data.street,
     "street2": request.body.data.street2,
     "zip": request.body.data.zip,
     "country_id": request.body.data.country_id,
@@ -1135,7 +1135,7 @@ Odoo_update_user = functions.https.onRequest( async (request, response)=> {
     "phone": request.body.data.phone,
     "mobile": request.body.data.mobile,
     "name": request.body.data.name,
-    "street": request.body.data.street,
+    "street_name": request.body.data.street,
     "street2": request.body.data.street2,
     "zip": request.body.data.zip,
     "country_id": request.body.data.country_id,

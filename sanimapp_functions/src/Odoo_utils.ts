@@ -175,6 +175,7 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
         odoo_query_time = Date.parse(target_data[i].write_date);
 
         let user_state_from_firebase;
+        let user_status_name ="NaN"; // if NaN its error
         try {
           // check for categories
           // alternatively we could download every stops and categories. depending on demand or testings
@@ -196,7 +197,7 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
           // console.log("user_stop_data: ", user_stop_data);
           // console.log("user_route_data: ", user_route_data);
           console.log("user_status_data: ", user_status_data);
-
+          // [ { id: 358, name: 'usuario activo' } ]
           // FILTERS DEFINE STATES
           let legal_task = true;
           let reason;
@@ -217,8 +218,6 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
           // while(tsss > ts_2) {ts_2 = Date.now()}
 
           if (user_status_data.length == 1 || opportunity_id_len ==1) {
-            // console.log("Data_client/" + user_id +"/Data_client_2/Client_Type")
-
             user_state_from_firebase = await FirebaseFcn.firebaseGet("Data_client/" + user_id +"/Data_client_2/Client_Type" );
             let user_state2_from_firebase = await FirebaseFcn.firebaseGet("Data_client/" + user_id +"/Data_client_3/client_type" );
 
@@ -249,11 +248,21 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
               if (usuario_ganado_tags.includes(user_state_from_firebase)) user_state_from_firebase_Odoo_label = "Cliente ganado";
 
               // try {
-              // console.log("-----1", user_status_data[0].name, user_state_from_firebase_Odoo_label)
-
+              //   console.log("-----1", user_status_data[0].name, user_state_from_firebase_Odoo_label);
               // } catch (error) {
-              //   true
+              //   true;
               // }
+
+              // let printdata = {
+              //   "user_state_from_firebase": user_state_from_firebase,
+              //   "user_state_from_firebase_Odoo_label": user_state_from_firebase_Odoo_label,
+              //   "user_status_data[0].name ": user_status_data[0].name,
+              //   "user_status_name": user_status_name,
+              //   "legal_task": legal_task,
+              //   "reason": reason,
+              // };
+
+              // console.log(printdata);
 
               if (user_stop_data[0] == undefined) {
                 true;
@@ -301,6 +310,7 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
                   }
                 }
               }
+              // console.log(printdata);
             }
           } else {
             if (user_status_data.length == 0) {
@@ -337,7 +347,6 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
 
               // ESTADO ----------------------------------------------------------------
 
-              let user_status_name ="NaN"; // if NaN its error
 
               // console.log("user_status_data" , user_status_data)
               // check if is paid
@@ -350,7 +359,7 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
                 if (user_paid) {
                   if ( user_status_data[0].name == "Usuario por instalar") user_status_name = "Cliente por instalar";
                   else if ( user_status_data[0].name == "usuario inactivo") user_status_name = "Cliente desinstalado";
-                  else if ( user_status_data[0].name == "usuario activo" && user_route_data.length == 1) user_status_name = "Cliente normal";
+                  else if ( user_status_data[0].name == "usuario activo" && user_stop_data.length == 1) user_status_name = "Cliente Nuevo";
                   else if ( user_status_data[0].name == "usuario activo" && user_stop_data.length == 0 && user_state_from_firebase == "Cliente por instalar") {
                     user_status_name = "Cliente por instalar";
 
@@ -361,6 +370,8 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
                     let message_container = [" [partner_id: " + user_id + "] [Name: " + user_name + "]"];
                     await FirebaseFcn.sendEmail(subject_str, welcome_str, dateTimeEmail, message_str, message_container);
                   }
+
+                  // console.log("user_status_name: " + user_status_name);
                 } else {
                   user_status_name = user_state_from_firebase;
                 }
@@ -1263,6 +1274,8 @@ export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdate
               await modify_state_user(odoo_session, user_data, 453, "remove" );
 
               await modify_state_user(odoo_session, user_data, 358, "add" );
+
+              // tentative to turn here Cliente nuevo in firebase
 
               const dateTimeEmail = false;
               const subject_str = "Sanimapp: Ticket de instalación #" + id + " [TERMINADO] ("+ name;
@@ -4167,80 +4180,80 @@ export async function readSources_Odoo(odoo_session:any) {
   }
 }
 
-export async function checkUserNoCRM(odoo_session:any) {
-  const CustomHeaders: HeadersInit = {
-    "Content-Type": "application/json",
-    "Cookie": "session_id="+odoo_session,
-  };
+// export async function checkUserNoCRM(odoo_session:any) {
+//   const CustomHeaders: HeadersInit = {
+//     "Content-Type": "application/json",
+//     "Cookie": "session_id="+odoo_session,
+//   };
 
-  try {
-    const raw = JSON.stringify({
-      "params": {
-        "model": "res.partner",
-        "fields": [
-          "write_date",
-          // "is_company",
-          "phone",
-          "mobile",
-          "display_name",
-          "vat",
-          "l10n_latam_identification_type_id",
-          "street",
-          "street_name",
-          "street2",
-          "country_id",
-          "zip",
-          "category_id",
-          "city",
-          "state_id",
-          "tz",
-          "tz_offset",
-          "user_id",
-          "same_vat_partner_id",
-          "city_id",
-          "category_id",
-          "function",
-        ],
-        "offset": 0,
-        // "limit": 10,
-        "domain": [
-          "&",
-          [
-            "opportunity_ids",
-            "=",
-            false,
-          ],
-          [
-            "is_company",
-            "=",
-            false,
-          ],
-        ],
-      },
-    });
+//   try {
+//     const raw = JSON.stringify({
+//       "params": {
+//         "model": "res.partner",
+//         "fields": [
+//           "write_date",
+//           // "is_company",
+//           "phone",
+//           "mobile",
+//           "display_name",
+//           "vat",
+//           "l10n_latam_identification_type_id",
+//           "street",
+//           "street_name",
+//           "street2",
+//           "country_id",
+//           "zip",
+//           "category_id",
+//           "city",
+//           "state_id",
+//           "tz",
+//           "tz_offset",
+//           "user_id",
+//           "same_vat_partner_id",
+//           "city_id",
+//           "category_id",
+//           "function",
+//         ],
+//         "offset": 0,
+//         // "limit": 10,
+//         "domain": [
+//           "&",
+//           [
+//             "opportunity_ids",
+//             "=",
+//             false,
+//           ],
+//           [
+//             "is_company",
+//             "=",
+//             false,
+//           ],
+//         ],
+//       },
+//     });
 
-    const params = {
-      headers: CustomHeaders,
-      method: "post",
-      body: raw,
-    };
+//     const params = {
+//       headers: CustomHeaders,
+//       method: "post",
+//       body: raw,
+//     };
 
-    const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
-
-
-    let data = await response.json();
+//     const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
 
 
-    let user_data = data.result.records;
-    // let len =data.result.length;
-    console.log(user_data);
+//     let data = await response.json();
 
-    return user_data;
-  } catch (error) {
-    functions.logger.error( "[checkUserNoCRM] ERROR: " + error, {"odoo_session": odoo_session} );
-    return false;
-  }
-}
+
+//     let user_data = data.result.records;
+//     // let len =data.result.length;
+//     console.log(user_data);
+
+//     return user_data;
+//   } catch (error) {
+//     functions.logger.error( "[checkUserNoCRM] ERROR: " + error, {"odoo_session": odoo_session} );
+//     return false;
+//   }
+// }
 
 
 export async function askcrmid(odoo_session:any, user_id : any) {
