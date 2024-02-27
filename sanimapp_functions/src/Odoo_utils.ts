@@ -4202,7 +4202,7 @@ export async function checkUserNoCRM(odoo_session:any) {
           "function",
         ],
         "offset": 0,
-        "limit": 10,
+        // "limit": 10,
         "domain": [
           "&",
           [

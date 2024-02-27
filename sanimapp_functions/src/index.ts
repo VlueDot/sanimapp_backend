@@ -1299,65 +1299,74 @@ ReadZonesMediaSources = functions.https.onRequest( async (request, response)=> {
 } );
 
 
-CheckCRMLocal = functions.https.onRequest( async (request, response)=> {
-  // check users that dont have oportunity
-  // download data and form crm_json
-  //create crm_json in odoo.
+// CheckCRMLocal = functions.runWith(runtimeOpts).https.onRequest( async (request, response)=> {
+//   // check users that dont have oportunity
+//   // download data and form crm_json
+//   //create crm_json in odoo.
 
-  try {
-    const odoo_session = await OdooFcn.odoo_Login();
+//   try {
+//     const odoo_session = await OdooFcn.odoo_Login();
 
-    if (odoo_session != null) {
-      let user_dataset = await OdooFcn.checkUserNoCRM(odoo_session);
+//     if (odoo_session != null) {
+//       let user_dataset = await OdooFcn.checkUserNoCRM(odoo_session);
 
-      console.log("user_dataset ", user_dataset);
+//       // console.log("user_dataset ", user_dataset);
 
-      for(let user_data in user_dataset) {
-      //create crm_json
-      let user = user_dataset[user_data]
+//       for(let user_data in user_dataset) {
+//         console.log("------- " + user_data);
+//       //create crm_json
+//       let user = user_dataset[user_data]
 
-      let crm_json = {
-        "name": user.display_name,
-        "phone": user.phone,
-        "mobile": user.mobile,
-        "tag_ids": [2],
-        "campaign_id": 1,
-        "medium_id": 42,
-        "source_id": 1,
-        "color": 5,//11 purple
-        "stage_id": 358 in user.category_id? 4 : 3,
-        "referred": 'ACTUALIZADO MASIVAMENTE ',
-        "function": user.function,
-        "type": 'opportunity',
-        "user_id": 15,
-        // "priority": '3',
-        "partner_id": user.id
+//       console.log("user", user);
+//       // console.log(user.category_id)
 
-      }
+//       // if(user.category_id.includes(358)){
+//       //   console.log("category_id 358 ACTIVO")
+//       // }else console.log("--")
 
-      console.log("crm_json: " )
-      console.log(crm_json)
-      let crm_id = await OdooFcn.createTicketCRM(odoo_session, crm_json);
-      console.log("crm_id ", crm_id)
-      // OdooFcn.update_user_data(odoo_session, crm_id, {"color": 11});
+//       let crm_json = {
+//         "name": user.display_name,
+//         "phone": user.phone,
+//         "mobile": user.mobile,
+//         "tag_ids": [2],
+//         "campaign_id": 1,
+//         "medium_id": 42,
+//         "source_id": 1,
+//         "color": 5,//11 purple
+//         "stage_id": user.category_id.includes(358)? 4:3 ,
+//         "referred": 'ACTUALIZADO MASIVAMENTE ',
+//         "function": user.function,
+//         "type": 'opportunity',
+//         "user_id": 15,
+//         // "priority": '3',
+//         "partner_id": user.id
 
-    }
+//       }
 
-      OdooFcn.odoo_Logout(odoo_session);
+//       console.log("crm_json: " )
+//       console.log(crm_json)
+//       let crm_id = await OdooFcn.createTicketCRM(odoo_session, crm_json);
+//       console.log("crm_id ", crm_id)
 
 
-        response.send(
-           {
-            "user_id":1
+//     }
 
-          });
-      } else response.send({"result": false});
-    }
-   catch (error) {
-    functions.logger.error( "[CheckCRMLocal] ERROR ", error);
-    response.send({"result": false});
-  }
-} );
+//       OdooFcn.odoo_Logout(odoo_session);
+
+
+//         response.send(
+//            {
+//             "user_id":1
+
+//           });
+//       } else response.send({"result": false});
+//     }
+//    catch (error) {
+//     functions.logger.error( "[CheckCRMLocal] ERROR ", error);
+//     response.send({"result": false});
+//   }
+// } )
+
 
 askcrmid = functions.https.onRequest( async (request, response)=> {
   try {
