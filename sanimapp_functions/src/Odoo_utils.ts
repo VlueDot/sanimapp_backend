@@ -4180,80 +4180,80 @@ export async function readSources_Odoo(odoo_session:any) {
   }
 }
 
-// export async function checkUserNoCRM(odoo_session:any) {
-//   const CustomHeaders: HeadersInit = {
-//     "Content-Type": "application/json",
-//     "Cookie": "session_id="+odoo_session,
-//   };
+export async function checkUserNoCRM(odoo_session:any) {
+  const CustomHeaders: HeadersInit = {
+    "Content-Type": "application/json",
+    "Cookie": "session_id="+odoo_session,
+  };
 
-//   try {
-//     const raw = JSON.stringify({
-//       "params": {
-//         "model": "res.partner",
-//         "fields": [
-//           "write_date",
-//           // "is_company",
-//           "phone",
-//           "mobile",
-//           "display_name",
-//           "vat",
-//           "l10n_latam_identification_type_id",
-//           "street",
-//           "street_name",
-//           "street2",
-//           "country_id",
-//           "zip",
-//           "category_id",
-//           "city",
-//           "state_id",
-//           "tz",
-//           "tz_offset",
-//           "user_id",
-//           "same_vat_partner_id",
-//           "city_id",
-//           "category_id",
-//           "function",
-//         ],
-//         "offset": 0,
-//         // "limit": 10,
-//         "domain": [
-//           "&",
-//           [
-//             "opportunity_ids",
-//             "=",
-//             false,
-//           ],
-//           [
-//             "is_company",
-//             "=",
-//             false,
-//           ],
-//         ],
-//       },
-//     });
+  try {
+    const raw = JSON.stringify({
+      "params": {
+        "model": "res.partner",
+        "fields": [
+          "write_date",
+          // "is_company",
+          "phone",
+          "mobile",
+          "display_name",
+          "vat",
+          "l10n_latam_identification_type_id",
+          "street",
+          "street_name",
+          "street2",
+          "country_id",
+          "zip",
+          "category_id",
+          "city",
+          "state_id",
+          "tz",
+          "tz_offset",
+          "user_id",
+          "same_vat_partner_id",
+          "city_id",
+          "category_id",
+          "function",
+        ],
+        "offset": 0,
+        // "limit": 10,
+        "domain": [
+          "&",
+          [
+            "opportunity_ids",
+            "=",
+            false,
+          ],
+          [
+            "is_company",
+            "=",
+            false,
+          ],
+        ],
+      },
+    });
 
-//     const params = {
-//       headers: CustomHeaders,
-//       method: "post",
-//       body: raw,
-//     };
+    const params = {
+      headers: CustomHeaders,
+      method: "post",
+      body: raw,
+    };
 
-//     const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
-
-
-//     let data = await response.json();
+    const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
 
 
-//     let user_data = data.result.records;
-//     // let len =data.result.length;
-//     console.log(user_data);
+    let data = await response.json();
 
-//     return user_data;
-//   } catch (error) {
-//     functions.logger.error( "[checkUserNoCRM] ERROR: " + error, {"odoo_session": odoo_session} );
-//     return false;
-//   }
-// }
+
+    let user_data = data.result.records;
+    // let len =data.result.length;
+    console.log(user_data);
+
+    return user_data;
+  } catch (error) {
+    functions.logger.error( "[checkUserNoCRM] ERROR: " + error, {"odoo_session": odoo_session} );
+    return false;
+  }
+}
 
 
 export async function askcrmid(odoo_session:any, user_id : any) {
@@ -4300,6 +4300,139 @@ export async function askcrmid(odoo_session:any, user_id : any) {
     return user_data[0].opportunity_ids[0];
   } catch (error) {
     functions.logger.error( "[readSources_Odoo] ERROR: " + error, {"odoo_session": odoo_session} );
+    return false;
+  }
+}
+
+
+export async function RewriteTestUsers(odoo_session:any) {
+  try {
+    const CustomHeaders: HeadersInit = {
+      "Content-Type": "application/json",
+      "Cookie": "session_id="+odoo_session,
+    };
+
+
+    const raw = JSON.stringify({
+      "params": {
+        "model": "res.partner",
+        "fields": [
+          "id",
+          // "write_date",
+          // "is_company",
+          // "phone",
+          // "mobile",
+          "display_name",
+          "vat",
+          // "l10n_latam_identification_type_id",
+          // "street",
+          // "street_name",
+          // "street2",
+          // "country_id",
+          // "zip",
+          "category_id",
+          // "city",
+          "state_id",
+          // "tz",
+          // "tz_offset",
+          // "user_id",
+          // "same_vat_partner_id",
+          // "city_id",
+          // "category_id",
+          // "function",
+        ],
+        "offset": 0,
+        // "limit": 10,
+        "domain": [
+          // "&",
+          // [
+          //   "opportunity_ids",
+          //   "=",
+          //   false,
+          // ],
+          [
+            "is_company",
+            "=",
+            false,
+          ],
+        ],
+      },
+    });
+
+    const params = {
+      headers: CustomHeaders,
+      method: "post",
+      body: raw,
+    };
+
+
+    const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+
+
+    let data = await response.json();
+
+
+    let users_from_Odoo = data.result.records;
+
+
+    let users_from_firebase = await FirebaseFcn.firebaseGet("Data_client" );
+    // console.log(users_from_firebase);
+    const users_keys = Object.keys(users_from_firebase);
+    console.log(users_keys);
+
+    // const new_category_ids: Array<number> = category_ids.filter((id) => (id != idOdoo));
+
+
+    let total = 0;
+
+    for (let user of users_keys) {
+      try {
+        let odoo_user = users_from_Odoo.filter((odoo_e:any) => odoo_e.id == user);
+
+        // console.log(odoo_user);
+
+        let data_from_Odoo = {
+          "id": odoo_user[0].id,
+          "display_name": odoo_user[0].display_name,
+        };
+
+        let data_from_firebase = {
+          "display_name": users_from_firebase[user].Data_client_1.Name_1,
+
+
+        };
+
+        if ( data_from_firebase.display_name.includes( data_from_Odoo.display_name) || data_from_Odoo.display_name.includes( data_from_firebase.display_name)) {
+          null;
+        } else {
+          total = total + 1;
+          console.log(user);
+
+          try {
+            console.log( "user ", {
+              "data_from_firebase": data_from_firebase,
+              "data_from_Odoo": data_from_Odoo,
+
+
+            });
+          } catch (error) {
+            console.log( "NO ODOO user ", {
+              "data_from_firebase": data_from_firebase,
+            });
+          }
+        }
+      } catch (err) {
+        //  console.log( "err ", )
+
+      }
+    }
+    console.log( "total " + total );
+
+
+    // return user_data;
+    return [0];
+  } catch (error) {
+    functions.logger.error( "[checkUserNoCRM] ERROR: " + error, {"odoo_session": odoo_session} );
     return false;
   }
 }

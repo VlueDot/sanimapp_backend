@@ -44,6 +44,7 @@ export let ReadZonesMediaSources: any; // create user in Odoo and CRM opportunit
 
 export let CheckCRMLocal: any; // just local
 export let askcrmid: any; // just local
+export let RewriteTestUsers: any; // just local
 
 
 // Firebase Connection Settings
@@ -1120,8 +1121,8 @@ Odoo_update_user = functions.https.onRequest( async (request, response)=> {
     "phone": request.body.data.phone,
     "mobile": request.body.data.mobile,
     "name": request.body.data.name,
-    "street_name": request.body.data.street,
-    "street_number": " ",
+    "street": request.body.data.street,
+    // "street_number": " ",
     "street2": request.body.data.street2,
     "zip": request.body.data.zip,
     "country_id": request.body.data.country_id,
@@ -1387,3 +1388,34 @@ askcrmid = functions.https.onRequest( async (request, response)=> {
     response.send({"result": false});
   }
 } );
+
+
+// RewriteTestUsers = functions.https.onRequest( async (request, response)=> {
+//   // check users from ODOO
+//   // download data and form crm_json
+//   //create crm_json in odoo.
+
+//   try {
+//     const odoo_session = await OdooFcn.odoo_Login();
+
+//     if (odoo_session != null) {
+
+//       let differ = await OdooFcn.RewriteTestUsers(odoo_session);
+
+
+//       OdooFcn.odoo_Logout(odoo_session);
+
+
+//         response.send(
+//            {
+//             "differ": differ
+
+//           });
+//     }
+//     else response.send({"result": false});
+//     }
+//    catch (error) {
+//     functions.logger.error( "[CheckCRMLocal] ERROR ", error);
+//     response.send({"result": false});
+//   }
+// } )
