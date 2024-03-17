@@ -1202,7 +1202,7 @@ export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdate
           let ticket_type = "NaN";
           if (tag_ids.includes(26)) ticket_type = "Asistencia Técnica";
           if (tag_ids.includes(4)) ticket_type = "Asistencia Técnica";
-          if (tag_ids.includes(14)) ticket_type = "Instalación";
+          if (tag_ids.includes(278)) ticket_type = "Instalación"; //before 14
           if (tag_ids.includes(16)) ticket_type = "Desinstalación";
           if (tag_ids.includes(102)) ticket_type = "Conversión Eléctrica";
           if (tag_ids.includes(107)) ticket_type = "Desconexión Eléctrica";
@@ -1482,7 +1482,7 @@ export async function is_there_install_serviceTicket(odoo_session:any, user_id: 
       "offset": 0,
       "fields": ["partner_id"],
       "domain": ["&", ["partner_id", "=",
-        user_id], ["tag_ids", "=", 14]],
+        user_id], ["tag_ids", "=", 278]], //before 14
     },
   });
 
@@ -3813,7 +3813,7 @@ export async function create_helpdesk_ticket(odoo_session:any, user_id: number, 
           "description": "",
           "name": user_name,
           "team_id": 17,
-          "tag_ids": [14],
+          "tag_ids": [278], //before 14
           "priority": "3",
 
 
