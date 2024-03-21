@@ -1202,7 +1202,7 @@ export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdate
           let ticket_type = "NaN";
           if (tag_ids.includes(26)) ticket_type = "Asistencia Técnica";
           if (tag_ids.includes(4)) ticket_type = "Asistencia Técnica";
-          if (tag_ids.includes(278)) ticket_type = "Instalación"; //before 14
+          if (tag_ids.includes(278)) ticket_type = "Instalación"; // before 14
           if (tag_ids.includes(16)) ticket_type = "Desinstalación";
           if (tag_ids.includes(102)) ticket_type = "Conversión Eléctrica";
           if (tag_ids.includes(107)) ticket_type = "Desconexión Eléctrica";
@@ -1482,7 +1482,7 @@ export async function is_there_install_serviceTicket(odoo_session:any, user_id: 
       "offset": 0,
       "fields": ["partner_id"],
       "domain": ["&", ["partner_id", "=",
-        user_id], ["tag_ids", "=", 278]], //before 14
+        user_id], ["tag_ids", "=", 278]], // before 14
     },
   });
 
@@ -3813,7 +3813,7 @@ export async function create_helpdesk_ticket(odoo_session:any, user_id: number, 
           "description": "",
           "name": user_name,
           "team_id": 17,
-          "tag_ids": [278], //before 14
+          "tag_ids": [278], // before 14
           "priority": "3",
 
 
@@ -4313,23 +4313,21 @@ export async function RewriteTestUsers(odoo_session:any) {
     };
 
 
-    const raw = JSON.stringify({
+    let raw = JSON.stringify({
       "params": {
         "model": "res.partner",
         "fields": [
           "id",
           // "write_date",
           // "is_company",
-          // "phone",
-          // "mobile",
+          "phone",
+          "mobile",
           "display_name",
           "vat",
           // "l10n_latam_identification_type_id",
-          // "street",
-          // "street_name",
-          // "street2",
+          "street_name",
           // "country_id",
-          // "zip",
+          "zip",
           "category_id",
           // "city",
           "state_id",
@@ -4338,35 +4336,32 @@ export async function RewriteTestUsers(odoo_session:any) {
           // "user_id",
           // "same_vat_partner_id",
           // "city_id",
-          // "category_id",
+          "category_id",
           // "function",
+          "opportunity_ids",
         ],
         "offset": 0,
         // "limit": 10,
         "domain": [
-          // "&",
-          // [
-          //   "opportunity_ids",
-          //   "=",
-          //   false,
-          // ],
+
           [
             "is_company",
             "=",
             false,
           ],
+          // [ "id", "=", 30910]
         ],
       },
     });
 
-    const params = {
+    let params = {
       headers: CustomHeaders,
       method: "post",
       body: raw,
     };
 
 
-    const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+    let response = await fetch(settings.odoo_url + "dataset/search_read/", params);
 
 
     let data = await response.json();
@@ -4377,13 +4372,18 @@ export async function RewriteTestUsers(odoo_session:any) {
 
     let users_from_firebase = await FirebaseFcn.firebaseGet("Data_client" );
     // console.log(users_from_firebase);
-    const users_keys = Object.keys(users_from_firebase);
-    console.log(users_keys);
-
-    // const new_category_ids: Array<number> = category_ids.filter((id) => (id != idOdoo));
+    let users_keys = Object.keys(users_from_firebase);
+    // users_keys = ['30910']
+    // console.log(users_keys);
 
 
     let total = 0;
+    let ids2discriminate = [];
+
+    let categories_list = await getCategories(odoo_session);
+
+    let crm_data_from_Odoo;
+
 
     for (let user of users_keys) {
       try {
@@ -4391,9 +4391,19 @@ export async function RewriteTestUsers(odoo_session:any) {
 
         // console.log(odoo_user);
 
+
         let data_from_Odoo = {
           "id": odoo_user[0].id,
           "display_name": odoo_user[0].display_name,
+          "vat": odoo_user[0].vat,
+          "street_name": odoo_user[0].street_name,
+          "opportunity_id": odoo_user[0].opportunity_ids[0],
+          "phone": odoo_user[0].phone,
+          "mobile": odoo_user[0].mobile,
+          "zip": odoo_user[0].zip,
+          "category_id": odoo_user[0].category_id,
+
+
         };
 
         let data_from_firebase = {
@@ -4406,15 +4416,158 @@ export async function RewriteTestUsers(odoo_session:any) {
           null;
         } else {
           total = total + 1;
-          console.log(user);
+          console.log("------ ", user);
 
           try {
-            console.log( "user ", {
-              "data_from_firebase": data_from_firebase,
-              "data_from_Odoo": data_from_Odoo,
+            ids2discriminate.push(data_from_Odoo.id);
+
+            // download crm data
+            try {
+              raw = JSON.stringify({
+                "params": {
+                  "model": "crm.lead",
+                  "offset": 0,
+                  "fields": [
+                    "id", "partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
+                    "name", "phone", "mobile", "tag_ids", "create_uid", "create_date", "write_date", "street", "street2", "zip", "country_id", "state_id", "tag_ids", "user_id",
+
+                  ],
+                  "domain": [["partner_id", "=", data_from_Odoo.id]],
+                },
+              });
+
+              params = {
+                headers: CustomHeaders,
+                method: "post",
+                body: raw,
+              };
+
+              response = await fetch(settings.odoo_url + "dataset/search_read/", params);
 
 
-            });
+              let crm_data = await response.json();
+
+
+              crm_data_from_Odoo = crm_data.result.records[0];
+
+              console.log( "user ", {
+                "data_from_firebase": data_from_firebase,
+                "data_from_Odoo": data_from_Odoo,
+                "crm_data_from_Odoo": crm_data_from_Odoo,
+
+              });
+            } catch (error) {
+              console.log("there is an error. It seems like there is no crm data. user ", data_from_Odoo.id);
+            }
+
+            const tag_ids = crm_data_from_Odoo.tag_ids;
+            // tag_ids defines ticket type acording the relation below
+            let ticket_type = "Otro";
+            if (tag_ids.includes(2)) ticket_type = "Ventas-Pamplona";
+            if (tag_ids.includes(3)) ticket_type = "Ventas-Accu";
+
+            console.log("tag_ids", tag_ids);
+
+
+            let user_status_data;
+
+            let user_categories_filtered = await search_categories_Odoo( data_from_Odoo.category_id, categories_list );
+            // console.log("user_categories_filtered: ", user_categories_filtered);
+
+
+            // STOPS ----------------------------------------------------------------
+            const user_stop_data = user_categories_filtered.filter( (e:any) => e.name.includes("Paradero:"));
+            // ROUTES ----------------------------------------------------------------
+            const user_route_data = user_categories_filtered.filter( (e:any) => e.name.includes("Ruta:"));
+            // ESTADO ----------------------------------------------------------------
+
+            let Client_Type = "NaN";
+            const stage_id = Number(crm_data_from_Odoo.stage_id[0]);
+            switch (stage_id) {
+              case 1:
+                Client_Type = "Cliente Potencial";
+                break;
+              case 2:
+                Client_Type = "Cliente con firma";
+                break;
+              case 3:
+                Client_Type = "Cliente con Venta perdida";
+                break;
+              case 4:
+                // if (data_from_Odoo.category_id.includes(358)) Client_Type = "Cliente por instalar";
+                user_status_data = user_categories_filtered.filter( (e:any) => e.name.includes("usuario activo") || e.name.includes("usuario inactivo") || e.name.includes("Usuario por instalar"));
+                // 453 - usuario por instalar
+                // 358 - usuario activo
+                if (user_status_data[0].id == 358) Client_Type = "Cliente normal";
+                else if (user_status_data[0].id == 453) Client_Type = "Cliente por instalar";
+                else Client_Type = "Cliente ganado";
+                break;
+              default:
+                break;
+            }
+
+            console.log("client_type", Client_Type);
+
+            console.log("user_status_data: ", user_status_data);
+            console.log("user_route_data: ", user_route_data);
+            console.log("user_stop_data: ", user_stop_data);
+
+
+            const Data_client_1 = {
+              "Addr_reference": "NaN",
+              "Address": data_from_Odoo.street_name?data_from_Odoo.street_name: "NaN",
+              "Birth_date": "000000", // Created in app
+              "Campaign_month": crm_data_from_Odoo.campaign_id?crm_data_from_Odoo.campaign_id:"NaN", // Created in app
+              "Client_Community": "NaN",
+              "Country": "Perú",
+              "DNI": data_from_Odoo.vat? data_from_Odoo.vat: "NaN",
+              "How_know_us": crm_data_from_Odoo.medium_id?crm_data_from_Odoo.medium_id:"NaN", // Created in app
+              "How_know_us_method": crm_data_from_Odoo.source_id?crm_data_from_Odoo.source_id:"NaN", // Created in Odoo
+              "How_know_us_referals": crm_data_from_Odoo.referred?crm_data_from_Odoo.referred:"NaN",
+              "Last_name_1": "",
+              "Last_name_2": "",
+              "Lost_client_reason": "NaN",
+              "Name_1": data_from_Odoo.display_name? data_from_Odoo.display_name: "NaN",
+              "Name_2": "",
+              "Name_potencial": data_from_Odoo.display_name? data_from_Odoo.display_name: "NaN",
+              "Phone1": data_from_Odoo.phone,
+              "Phone2": data_from_Odoo.mobile,
+              "Sales_person": crm_data_from_Odoo.user_id[1],
+              "Sales_person_Commit": "NaN",
+              "Urine_preference": "NaN",
+              "Zone": ticket_type,
+              "ubigeo": data_from_Odoo.zip,
+            };
+
+            const Data_client_2 = {
+              "Client_Type": Client_Type,
+              "Group_Client_type": "Comercial",
+              "Lat": 0.0,
+              "Long": 0.0,
+              "Route": user_route_data[0]?.name? user_route_data[0].name: "NaN",
+              "Stops": user_stop_data[0]?.name? user_stop_data[0].name: "NaN",
+              "idRoute": user_route_data[0]?.id? user_route_data[0].id: 0,
+              "idStop": user_stop_data[0]?.id? user_stop_data[0].id: 0,
+            };
+
+            const Data_client_3 = {
+              "Addr": data_from_Odoo.street_name,
+              "Addr_reference": "NaN",
+              "Name_complete": data_from_Odoo.display_name,
+              "Phone1": data_from_Odoo.phone ? data_from_Odoo.phone : "NaN",
+              "Phone2": data_from_Odoo.mobile? data_from_Odoo.mobile : "NaN",
+              "client_coment_OPE": "NaN",
+              "client_type": Client_Type,
+            };
+
+            const dataClient_node = {
+              "Data_client_1": Data_client_1,
+              "Data_client_2": Data_client_2,
+              "Data_client_3": Data_client_3,
+            };
+
+            console.log("dataCient_node", dataClient_node);
+            FirebaseFcn.firebaseSet("Data_client/" + user, dataClient_node);
           } catch (error) {
             console.log( "NO ODOO user ", {
               "data_from_firebase": data_from_firebase,
@@ -4426,13 +4579,20 @@ export async function RewriteTestUsers(odoo_session:any) {
 
       }
     }
+
+
     console.log( "total " + total );
 
+    // se borra el nodo de firebase y se reescribe con la info de odoo.
 
+
+    // await update_node_data(ids2discriminate)
     // return user_data;
-    return [0];
+    return ids2discriminate;
   } catch (error) {
     functions.logger.error( "[checkUserNoCRM] ERROR: " + error, {"odoo_session": odoo_session} );
     return false;
   }
 }
+
+

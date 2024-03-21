@@ -750,10 +750,10 @@ exports.test = functions.runWith(runtimeOpts).https.onRequest( async (request, r
 
   // await OdooFcn.odooToFirebase_Users_test(odoo_session, lastupdateTimestamp_users);
 
-  const lastupdateTimestamp_crm = await FirebaseFcn.firebaseGet("/timestamp_collection/CMR_tickets_timestamp");
+  // const lastupdateTimestamp_crm = await FirebaseFcn.firebaseGet("/timestamp_collection/CMR_tickets_timestamp");
 
 
-  await OdooFcn.odooToFirebase_CRMTickets(odoo_session, lastupdateTimestamp_crm);
+  // await OdooFcn.odooToFirebase_CRMTickets(odoo_session, lastupdateTimestamp_crm);
 
 
   await OdooFcn.odoo_Logout(odoo_session);
@@ -1302,6 +1302,25 @@ ReadZonesMediaSources = functions.https.onRequest( async (request, response)=> {
 } );
 
 
+askcrmid = functions.https.onRequest( async (request, response)=> {
+  try {
+    const odoo_session = await OdooFcn.odoo_Login();
+
+    if (odoo_session != null) {
+      let crm_id = await OdooFcn.askcrmid(odoo_session, request.body.user_id);
+
+      OdooFcn.odoo_Logout(odoo_session);
+
+
+      response.send({"crm_id": crm_id});
+    } else response.send({"result": false});
+  } catch (error) {
+    functions.logger.error( "[askcrmid] ERROR ", error);
+    response.send({"result": false});
+  }
+} );
+
+
 // CheckCRMLocal = functions.runWith(runtimeOpts).https.onRequest( async (request, response)=> {
 //   // check users that dont have oportunity
 //   // download data and form crm_json
@@ -1369,26 +1388,6 @@ ReadZonesMediaSources = functions.https.onRequest( async (request, response)=> {
 //     response.send({"result": false});
 //   }
 // } )
-
-
-askcrmid = functions.https.onRequest( async (request, response)=> {
-  try {
-    const odoo_session = await OdooFcn.odoo_Login();
-
-    if (odoo_session != null) {
-      let crm_id = await OdooFcn.askcrmid(odoo_session, request.body.user_id);
-
-      OdooFcn.odoo_Logout(odoo_session);
-
-
-      response.send({"crm_id": crm_id});
-    } else response.send({"result": false});
-  } catch (error) {
-    functions.logger.error( "[askcrmid] ERROR ", error);
-    response.send({"result": false});
-  }
-} );
-
 
 // RewriteTestUsers = functions.https.onRequest( async (request, response)=> {
 //   // check users from ODOO
