@@ -1208,6 +1208,7 @@ export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdate
           if (tag_ids.includes(107)) ticket_type = "Desconexión Eléctrica";
           if (tag_ids.includes(49)) ticket_type = "Instalación Urinario";
 
+          // console.log("servCollKeys.includes(id) ", servCollKeys.includes(id), {servCollKeys});
           // Use saved data to write in firebase depending on each case
           if (servCollKeys.includes(id)) {// **************************************************************************************
             // if ticket already exists in Firebase (Service_Collection) then just update some params
@@ -1215,7 +1216,7 @@ export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdate
 
             const initialState = await FirebaseFcn.firebaseGet("/Service_collection/" + id);
 
-            console.log("initialState", initialState);
+            // console.log("initialState", initialState);
 
             const targetState = initialState;
 
@@ -1318,6 +1319,8 @@ export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdate
                 "stage_id": stage_id,
               });
             }
+            // console.log( "[odooToFirebase_ServiceTickets] target state is  ", targetState);
+
             if (initialState != targetState) {
               functions.logger.info( "[odooToFirebase_ServiceTickets] Tasks. ", {
                 "odoo_session": odoo_session,
@@ -4551,9 +4554,9 @@ export async function RewriteTestUsers(odoo_session:any) {
             };
 
             const Data_client_3 = {
-              "Addr": data_from_Odoo.street_name,
+              "Addr": data_from_Odoo.street_name? data_from_Odoo.street_name: "NaN",
               "Addr_reference": "NaN",
-              "Name_complete": data_from_Odoo.display_name,
+              "Name_complete": data_from_Odoo.display_name? data_from_Odoo.display_name: "NaN",
               "Phone1": data_from_Odoo.phone ? data_from_Odoo.phone : "NaN",
               "Phone2": data_from_Odoo.mobile? data_from_Odoo.mobile : "NaN",
               "client_coment_OPE": "NaN",
