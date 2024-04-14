@@ -95,8 +95,9 @@ export async function sendEmail(subject_str: string, welcome_str:string, dateTs:
     // to: ["alfa.vluedot@gmail.com"],
     to: ["alfa.vluedot@gmail.com",
       "pablo.centeno@sanima.pe",
-      "lucero.hurtado@sanima.pe",
+      "milagros.arcos@sanima.pe",
       "shirley.abanto@sanima.pe",
+      "gabriela.castro@sanima.pe",
     ],
     subject: environ + subject_str,
     html: `

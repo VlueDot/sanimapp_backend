@@ -1183,7 +1183,7 @@ export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdate
           console.log("stage_id", stage_id);
 
           let ticket_status = "NaN";
-          switch (stage_id) {
+          switch (stage_id) { // from odoo
             case 1:
               ticket_status = "Nuevo";
               break;
@@ -1226,10 +1226,11 @@ export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdate
 
               await modify_state_user(odoo_session, user_data, 358, "remove" );
               // just update if the current status is "Nuevo"
-              if (serviceColletion[id]["ticket_status"] === "Nuevo") {
+              if (initialState["ticket_status"] != "Nuevo") {
                 targetState["id_client"] = Number(partner_id);
                 targetState["ticket_commits"] = description;
                 targetState["ticket_name"] = name;
+                targetState["ticket_status"] = ticket_status;
                 targetState["ticket_type"] = ticket_type;
               }
             }
@@ -1242,7 +1243,7 @@ export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdate
               // just update if the current status is "Nuevo" or "En progreso"
 
               // If "Nuevo"
-              if (serviceColletion[id]["ticket_status"] === "Nuevo") {
+              if (initialState["ticket_status"] != "En progreso") {
                 targetState["id_client"] = Number(partner_id);
                 targetState["ticket_commits"]= description;
                 targetState["ticket_name"] = name;
@@ -1258,51 +1259,68 @@ export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdate
                   let message_container = ["[helpdesk_id: " + id + "] [partner_id: " + partner_id + "] [Name: " + name + "]"];
                   await FirebaseFcn.sendEmail(subject_str, welcome_str, dateTimeEmail, message_str, message_container);
                 }
-                // */
-              }
-
-              // If "En progreso"
-              if (serviceColletion[id]["ticket_status"] === "En progreso") {
-                targetState["id_client"] = Number(partner_id);
-                targetState["ticket_commits"] = description;
-                targetState["ticket_name"] = name;
               }
             }
 
             // if ticket status is "Terminado"-----------------------------------------------------------------------------------
-            if (ticket_status === "Terminado" && ticket_type == "Instalación") {
+            if (ticket_status === "Terminado") {
               // just update if the current status is "Nuevo" or "En progreso"
-              await modify_state_user(odoo_session, user_data, 453, "remove" );
+              if (ticket_type == "Instalación") {
+                await modify_state_user(odoo_session, user_data, 453, "remove" );
 
-              await modify_state_user(odoo_session, user_data, 358, "add" );
+                await modify_state_user(odoo_session, user_data, 358, "add" );
 
-              // tentative to turn here Cliente nuevo in firebase
+                // tentative to turn here Cliente nuevo in firebase
 
-              const dateTimeEmail = false;
-              const subject_str = "Sanimapp: Ticket de instalación #" + id + " [TERMINADO] ("+ name;
-              const welcome_str = "Este es un mensaje del backend. ";
-              const message_str = "Se registró ticket de instalación como terminado. El usuario se encuentra como activo, añadir al menos un paradero. ";
-              let message_container = ["[helpdesk_id: " + id + "] [partner_id: " + partner_id + "] [Name: " + name + "]"];
-              await FirebaseFcn.sendEmail(subject_str, welcome_str, dateTimeEmail, message_str, message_container);
-
-              // If "Nuevo"
-              if (serviceColletion[id]["ticket_status"] === "Nuevo") {
-                targetState["id_client"] = Number(partner_id);
-                targetState["ticket_commits"] = description;
-                targetState["ticket_name"] = name;
-                targetState["ticket_status"] = ticket_status;
-                targetState["ticket_type"] = ticket_type;
+                const dateTimeEmail = false;
+                const subject_str = "Sanimapp: Ticket de instalación #" + id + " [TERMINADO] ("+ name;
+                const welcome_str = "Este es un mensaje del backend. ";
+                const message_str = "Se registró ticket de instalación como terminado. El usuario se encuentra como activo, añadir al menos un paradero. ";
+                let message_container = ["[helpdesk_id: " + id + "] [partner_id: " + partner_id + "] [Name: " + name + "]"];
+                await FirebaseFcn.sendEmail(subject_str, welcome_str, dateTimeEmail, message_str, message_container);
+              } else {
+                const dateTimeEmail = false;
+                const subject_str = "Sanimapp: Ticket de "+ ticket_type +" #" + id + " [TERMINADO] ("+ name;
+                const welcome_str = "Este es un mensaje del backend. ";
+                const message_str = "Se registró ticket de "+ ticket_type +" como terminado.  ";
+                let message_container = ["[helpdesk_id: " + id + "] [partner_id: " + partner_id + "] [Name: " + name + "]"];
+                await FirebaseFcn.sendEmail(subject_str, welcome_str, dateTimeEmail, message_str, message_container);
               }
 
-              // If "En progreso"
-              if (serviceColletion[id]["ticket_status"] === "En progreso") {
+              // If "Nuevo" or en progreso
+              if (serviceColletion[id]["ticket_status"] != "Terminado") {
                 targetState["id_client"] = Number(partner_id);
                 targetState["ticket_commits"] = description;
                 targetState["ticket_name"] = name;
                 targetState["ticket_status"] = ticket_status;
                 targetState["ticket_type"] = ticket_type;
+
+                await FirebaseFcn.firebaseRemove("/Service_collection/" + id);
+                functions.logger.info( "[odooToFirebase_ServiceTickets] Ticket removed from Firebase (/Service_collection/" + id +").", {
+                  "ticket_id": id,
+                  "ticket_type": ticket_type,
+                  "initialState": initialState,
+                  "targetState": targetState,
+                });
               }
             }
+            // // if ticket status is "NaN"--------------------------------------------------------------------------------------
+            // if (ticket_status === "NaN") {
+            //   functions.logger.info( "[odooToFirebase_ServiceTickets] Tasks. ", {
+            //     "odoo_session": odoo_session,
+            //     "ticket_id": id,
+            //     "to-do-list": ["Remove ticket from Firebase. Ticket status not defined"],
+            //     "initialState": initialState,
+            //     "stage_id": stage_id,
+            //   });
+            //   await FirebaseFcn.firebaseRemove("/Service_collection/" + id);
+            //   functions.logger.info( "[odooToFirebase_ServiceTickets] Ticket removed from Firebase (/Service_collection/" + id +").", {
+            //     "ticket_id": id,
+            //     "initialState": initialState,
+            //     "stage_id": stage_id,
+            //   });
+            // }
+
             // if ticket status is "NaN"--------------------------------------------------------------------------------------
             if (ticket_status === "NaN") {
               functions.logger.info( "[odooToFirebase_ServiceTickets] Tasks. ", {
@@ -1319,6 +1337,7 @@ export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdate
                 "stage_id": stage_id,
               });
             }
+
             // console.log( "[odooToFirebase_ServiceTickets] target state is  ", targetState);
 
             if (initialState != targetState) {

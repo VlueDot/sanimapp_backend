@@ -757,7 +757,7 @@ exports.test = functions.runWith(runtimeOpts).https.onRequest( async (request, r
 
 
   await OdooFcn.odoo_Logout(odoo_session);
-  response.send("<p>[TEST] <br>firebaseType: "+firebaseType+"<br>odoo url: "+settings.odoo_url +"</p><p>odoo session: "+odoo_session +"</p><p>Everything's working fine</p>");
+  response.send("<p>[TEST] <br>firebaseType: "+firebaseType+"<br>odoo url: <a href='"+settings.odoo_url +"'>"+settings.odoo_url+"</a></p><p>odoo session: "+odoo_session +"</p><p>Everything's working fine</p>");
 });
 /*
 
@@ -1319,102 +1319,105 @@ askcrmid = functions.https.onRequest( async (request, response)=> {
     response.send({"result": false});
   }
 } );
+/*
+
+CheckCRMLocal = functions.runWith(runtimeOpts).https.onRequest( async (request, response)=> {
+  // check users that dont have oportunity
+  // download data and form crm_json
+  //create crm_json in odoo.
+
+  try {
+    const odoo_session = await OdooFcn.odoo_Login();
+
+    if (odoo_session != null) {
+      let user_dataset = await OdooFcn.checkUserNoCRM(odoo_session);
+
+      // console.log("user_dataset ", user_dataset);
+
+      for(let user_data in user_dataset) {
+        console.log("------- " + user_data);
+      //create crm_json
+      let user = user_dataset[user_data]
+
+      console.log("user", user);
+      // console.log(user.category_id)
+
+      // if(user.category_id.includes(358)){
+      //   console.log("category_id 358 ACTIVO")
+      // }else console.log("--")
+
+      let crm_json = {
+        "name": user.display_name,
+        "phone": user.phone,
+        "mobile": user.mobile,
+        "tag_ids": [2],
+        "campaign_id": 1,
+        "medium_id": 42,
+        "source_id": 1,
+        "color": 5,//11 purple
+        "stage_id": user.category_id.includes(358)? 4:3 ,
+        "referred": 'ACTUALIZADO MASIVAMENTE ',
+        "function": user.function,
+        "type": 'opportunity',
+        "user_id": 15,
+        // "priority": '3',
+        "partner_id": user.id
+
+      }
+
+      console.log("crm_json: " )
+      console.log(crm_json)
+      let crm_id = await OdooFcn.createTicketCRM(odoo_session, crm_json);
+      console.log("crm_id ", crm_id)
 
 
-// CheckCRMLocal = functions.runWith(runtimeOpts).https.onRequest( async (request, response)=> {
-//   // check users that dont have oportunity
-//   // download data and form crm_json
-//   //create crm_json in odoo.
+    }
 
-//   try {
-//     const odoo_session = await OdooFcn.odoo_Login();
-
-//     if (odoo_session != null) {
-//       let user_dataset = await OdooFcn.checkUserNoCRM(odoo_session);
-
-//       // console.log("user_dataset ", user_dataset);
-
-//       for(let user_data in user_dataset) {
-//         console.log("------- " + user_data);
-//       //create crm_json
-//       let user = user_dataset[user_data]
-
-//       console.log("user", user);
-//       // console.log(user.category_id)
-
-//       // if(user.category_id.includes(358)){
-//       //   console.log("category_id 358 ACTIVO")
-//       // }else console.log("--")
-
-//       let crm_json = {
-//         "name": user.display_name,
-//         "phone": user.phone,
-//         "mobile": user.mobile,
-//         "tag_ids": [2],
-//         "campaign_id": 1,
-//         "medium_id": 42,
-//         "source_id": 1,
-//         "color": 5,//11 purple
-//         "stage_id": user.category_id.includes(358)? 4:3 ,
-//         "referred": 'ACTUALIZADO MASIVAMENTE ',
-//         "function": user.function,
-//         "type": 'opportunity',
-//         "user_id": 15,
-//         // "priority": '3',
-//         "partner_id": user.id
-
-//       }
-
-//       console.log("crm_json: " )
-//       console.log(crm_json)
-//       let crm_id = await OdooFcn.createTicketCRM(odoo_session, crm_json);
-//       console.log("crm_id ", crm_id)
+      OdooFcn.odoo_Logout(odoo_session);
 
 
-//     }
+        response.send(
+           {
+            "user_id":1
 
-//       OdooFcn.odoo_Logout(odoo_session);
+          });
+      } else response.send({"result": false});
+    }
+   catch (error) {
+    functions.logger.error( "[CheckCRMLocal] ERROR ", error);
+    response.send({"result": false});
+  }
+} )
 
+RewriteTestUsers = functions.https.onRequest( async (request, response)=> {
+  // check users from ODOO
+  // download data and form crm_json
+  //create crm_json in odoo.
 
-//         response.send(
-//            {
-//             "user_id":1
+  try {
+    const odoo_session = await OdooFcn.odoo_Login();
 
-//           });
-//       } else response.send({"result": false});
-//     }
-//    catch (error) {
-//     functions.logger.error( "[CheckCRMLocal] ERROR ", error);
-//     response.send({"result": false});
-//   }
-// } )
+    if (odoo_session != null) {
 
-// RewriteTestUsers = functions.https.onRequest( async (request, response)=> {
-//   // check users from ODOO
-//   // download data and form crm_json
-//   //create crm_json in odoo.
-
-//   try {
-//     const odoo_session = await OdooFcn.odoo_Login();
-
-//     if (odoo_session != null) {
-
-//       let differ = await OdooFcn.RewriteTestUsers(odoo_session);
+      let differ = await OdooFcn.RewriteTestUsers(odoo_session);
 
 
-//       OdooFcn.odoo_Logout(odoo_session);
+      OdooFcn.odoo_Logout(odoo_session);
 
 
-//         response.send(
-//            {
-//             "differ": differ
+        response.send(
+           {
+            "differ": differ
 
-//           });
-//     }
-//     else response.send({"result": false});
-//     }
-//    catch (error) {
-//     functions.logger.error( "[CheckCRMLocal] ERROR ", error);
-//     response.send({"result": false});
-//   }
-// } )
+          });
+    }
+    else response.send({"result": false});
+    }
+   catch (error) {
+    functions.logger.error( "[CheckCRMLocal] ERROR ", error);
+    response.send({"result": false});
+  }
+} )
+
+
+*/
