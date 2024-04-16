@@ -4,10 +4,10 @@ import * as FirebaseFcn from "./Firebase_utils";
 import * as settings from "./GlobalSetting";
 import * as admin from "firebase-admin";
 
-const timeoutSeconds_ = 540;
-const schedule_= "every 10 minutes";
-// const timeoutSeconds_ = 54;
-// const schedule_= "every 1 minutes";
+// const timeoutSeconds_ = 540;
+// const schedule_= "every 10 minutes";
+const timeoutSeconds_ = 54;
+const schedule_= "every 1 minutes";
 
 
 // FROM FIREBASE TO ODOO
