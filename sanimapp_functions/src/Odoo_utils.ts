@@ -4,8 +4,8 @@ import * as functions from "firebase-functions";
 import * as FirebaseFcn from "./Firebase_utils";
 
 
-// const max_qtty_entries_per_session = 2500; // per 10 minutes
-const max_qtty_entries_per_session = 300;
+const max_qtty_entries_per_session = 2500; // per 10 minutes
+// const max_qtty_entries_per_session = 300;
 
 let info = {
   "odoo_session": 0,

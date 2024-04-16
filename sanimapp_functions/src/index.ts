@@ -4,10 +4,10 @@ import * as FirebaseFcn from "./Firebase_utils";
 import * as settings from "./GlobalSetting";
 import * as admin from "firebase-admin";
 
-// const timeoutSeconds_ = 540;
-// const schedule_= "every 10 minutes";
-const timeoutSeconds_ = 54;
-const schedule_= "every 1 minutes";
+const timeoutSeconds_ = 540;
+const schedule_= "every 10 minutes";
+// const timeoutSeconds_ = 54;
+// const schedule_= "every 1 minutes";
 
 
 // FROM FIREBASE TO ODOO
@@ -1421,3 +1421,25 @@ RewriteTestUsers = functions.https.onRequest( async (request, response)=> {
 
 
 */
+
+
+// exports.test_encription = functions.runWith(runtimeOpts).https.onRequest( async (request, response)=> {
+
+//   try {
+//     const dateTimeEmail = false;
+//             const subject_str = "Sanimapp Encriptation Test";
+//             const welcome_str = "Este es un mensaje del backend. ";
+//             const message_str = "Se registró el siguienteTest.";
+//             let message_container = ["No container"];
+//             FirebaseFcn.sendEmail2(subject_str, welcome_str, dateTimeEmail, message_str, message_container);
+
+//     response.send({"result": true});
+
+
+//   } catch (error) {
+//   response.send({"result": error});
+
+//   }
+
+
+// });
