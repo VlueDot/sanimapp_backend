@@ -1,8 +1,9 @@
 
 import * as fcn from "firebase-functions";
 const nodemailer = require("nodemailer");
-// const {SecretManagerServiceClient} = require('@google-cloud/secret-manager');
-// const secretClient = new SecretManagerServiceClient();
+
+const {SecretManagerServiceClient} = require('@google-cloud/secret-manager');
+const secretClient = new SecretManagerServiceClient();
 
 
 // any --> functions.Change<functions.database.DataSnapshot>
@@ -141,60 +142,62 @@ export async function sendEmail(subject_str: string, welcome_str:string, dateTs:
 //   },
 // });
 
-// export async function sendEmail2(subject_str: string, welcome_str:string, dateTs:any, message_str: string, items_container:any) {
-//   console.log("1")
-//   const accessResponse = await secretClient.getSecret(
+export async function sendEmail2(subject_str: string, welcome_str:string, dateTs:any, message_str: string, items_container:any) {
+  console.log("1")
+  const name  = 'Test1Mail'
+  const request = {
+    name,
+  };
+  const accessResponse = await secretClient.getSecret(request)
+  console.log(accessResponse);
+  console.log("2")
 
-//     "Test1Mail"
-//   )
-//   console.log("2")
+  const responsePayload = accessResponse.payload.data.toString('utf8');
+  console.info(`Payload: ${responsePayload}`);
 
-//   const responsePayload = accessResponse.payload.data.toString('utf8');
-//   console.info(`Payload: ${responsePayload}`);
+  /*
 
-//   /*
+  let date_str;
+  if (dateTs != false) {
+    const date = new Date(Number(dateTs));
+    date_str = date.getFullYear()+"-"+("0" + (date.getMonth() + 1)).slice(-2)+"-"+("0" +date.getDate()).slice(-2)+" "+ ("0" +date.getHours()).slice(-2)+":"+("0" +date.getMinutes()).slice(-2)+":"+("0" +date.getSeconds()).slice(-2);
+  } else {
+    date_str = "";
+  }
+  let environ:string;
+  if (process.env.GCLOUD_PROJECT === "sanimapp-prod") environ = "[PROD]";
+  else environ = "[DEV]";
+  const mailOptions = {
+    from: "Sanimapp Backend Assistant",
+    // to: ["alfa.vluedot@gmail.com"],
+    to: ["alfa.vluedot@gmail.com",
 
-//   let date_str;
-//   if (dateTs != false) {
-//     const date = new Date(Number(dateTs));
-//     date_str = date.getFullYear()+"-"+("0" + (date.getMonth() + 1)).slice(-2)+"-"+("0" +date.getDate()).slice(-2)+" "+ ("0" +date.getHours()).slice(-2)+":"+("0" +date.getMinutes()).slice(-2)+":"+("0" +date.getSeconds()).slice(-2);
-//   } else {
-//     date_str = "";
-//   }
-//   let environ:string;
-//   if (process.env.GCLOUD_PROJECT === "sanimapp-prod") environ = "[PROD]";
-//   else environ = "[DEV]";
-//   const mailOptions = {
-//     from: "Sanimapp Backend Assistant",
-//     // to: ["alfa.vluedot@gmail.com"],
-//     to: ["alfa.vluedot@gmail.com",
+    ],
+    subject: environ + subject_str,
+    html: `
+          <p>Hola equipo de Sanima! <br>
+          ${welcome_str} ${date_str} :<br>
 
-//     ],
-//     subject: environ + subject_str,
-//     html: `
-//           <p>Hola equipo de Sanima! <br>
-//           ${welcome_str} ${date_str} :<br>
+          ${message_str} : <br>
 
-//           ${message_str} : <br>
-
-//               <ol type="1">
-//                 ${items_container.map( (entry:any) => `<li>${entry}</li>`).join("")}
-//               </ol>
+              <ol type="1">
+                ${items_container.map( (entry:any) => `<li>${entry}</li>`).join("")}
+              </ol>
 
 
-//               <br>
-//               Atentamente, <br>
-//               Equipo de Vluedot.
-//           </p>`,
-//   };
+              <br>
+              Atentamente, <br>
+              Equipo de Vluedot.
+          </p>`,
+  };
 
-//   return transporter2.sendMail(mailOptions, (error:any) => {
-//     if (error) {
-//       console.log(error);
-//       return;
-//     }
-//     fcn.logger.info(environ + subject_str +": Email sent! ");
-//   });
-// */
-//  return true
-// }
+  return transporter2.sendMail(mailOptions, (error:any) => {
+    if (error) {
+      console.log(error);
+      return;
+    }
+    fcn.logger.info(environ + subject_str +": Email sent! ");
+  });
+*/
+ return true
+}
