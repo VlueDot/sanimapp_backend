@@ -4617,4 +4617,119 @@ export async function RewriteTestUsers(odoo_session:any) {
   }
 }
 
+export async function Script_RewriteUsers(odoo_session:any) {
+  // check users from ODOO and update usuario activo - cliente normal in firebase
+
+  try {
+    const CustomHeaders: HeadersInit = {
+      "Content-Type": "application/json",
+      "Cookie": "session_id="+odoo_session,
+    };
+
+
+    let raw = JSON.stringify({
+      "params": {
+        "model": "res.partner",
+        "fields": [
+          "id",
+          // "write_date",
+          // "is_company",
+          // "phone",
+          // "mobile",
+          // "display_name",
+          // "vat",
+          // "l10n_latam_identification_type_id",
+          // "street_name",
+          // "country_id",
+          // "zip",
+          // "category_id",
+          // "city",
+          // "state_id",
+          // "tz",
+          // "tz_offset",
+          // "user_id",
+          // "same_vat_partner_id",
+          // "city_id",
+          "category_id",
+          // "function",
+          // "opportunity_ids",
+        ],
+        "offset": 0,
+        // "limit": 10,
+        "domain": [
+
+          "&",
+          [
+            "category_id",
+            "in",
+            [453],
+          ],
+          [
+            "is_company",
+            "=",
+            false,
+          ],
+          // [ "id", "=", 30910]
+        ],
+      },
+    });
+
+    let params = {
+      headers: CustomHeaders,
+      method: "post",
+      body: raw,
+    };
+
+
+    let response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+
+
+    let data = await response.json();
+
+
+    let users_from_Odoo = data.result.records; // users from Odoo
+
+
+    let users_from_firebase = await FirebaseFcn.firebaseGet("Data_client" );
+    // console.log(users_from_firebase);
+    let users_from_fiebase_keys = Object.keys(users_from_firebase);
+    users_from_fiebase_keys;
+    // users_keys = ['30910']
+    // console.log(users_keys);
+
+
+    let categories_list = await getCategories(odoo_session);
+
+    const stops_list =categories_list.filter((e:any) => e.name.includes("Paradero:"));
+    let stops_list_ids: any = [];
+    for (let each of stops_list) {
+      stops_list_ids.push(each.id);
+    }
+
+
+    // STOPS ----------------------------------------------------------------
+    // const user_stop_data = user_categories_filtered.filter( (e:any) => e.name.includes("Paradero:"));
+    // // ROUTES ----------------------------------------------------------------
+    // const user_route_data = user_categories_filtered.filter( (e:any) => e.name.includes("Ruta:"));
+
+    for (let user_from_odoo of users_from_Odoo) {
+      let user_whohas_stop = user_from_odoo.filter((odoo_e:any) => odoo_e.category_id in stops_list_ids);
+
+      console.log( user_whohas_stop);
+    }
+
+
+    // console.log( "total " + total );
+
+    // se borra el nodo de firebase y se reescribe con la info de odoo.
+
+
+    // await update_node_data(ids2discriminate)
+    // return user_data;
+    return true;
+  } catch (error) {
+    functions.logger.error( "[checkUserNoCRM] ERROR: " + error, {"odoo_session": odoo_session} );
+    return false;
+  }
+}
 

@@ -45,6 +45,7 @@ export let ReadZonesMediaSources: any; // create user in Odoo and CRM opportunit
 export let CheckCRMLocal: any; // just local
 export let askcrmid: any; // just local
 export let RewriteTestUsers: any; // just local
+export let Script_RewriteUsers: any; // script to rewrite users in odoo and Firebase
 
 
 // Firebase Connection Settings
@@ -1389,38 +1390,63 @@ CheckCRMLocal = functions.runWith(runtimeOpts).https.onRequest( async (request, 
   }
 } )
 
+
 RewriteTestUsers = functions.https.onRequest( async (request, response)=> {
   // check users from ODOO
   // download data and form crm_json
-  //create crm_json in odoo.
+  // create crm_json in odoo.
 
   try {
     const odoo_session = await OdooFcn.odoo_Login();
 
     if (odoo_session != null) {
-
       let differ = await OdooFcn.RewriteTestUsers(odoo_session);
 
 
       OdooFcn.odoo_Logout(odoo_session);
 
 
-        response.send(
-           {
-            "differ": differ
+      response.send(
+          {
+            "differ": differ,
 
           });
-    }
-    else response.send({"result": false});
-    }
-   catch (error) {
+    } else response.send({"result": false});
+  } catch (error) {
     functions.logger.error( "[CheckCRMLocal] ERROR ", error);
     response.send({"result": false});
   }
-} )
-
+} );
 
 */
+
+// Script_RewriteUsers = functions.https.onRequest( async (request, response)=> {
+//   // check users from ODOO and update usuario activo - cliente normal in firebase
+
+//   try {
+//     const odoo_session = await OdooFcn.odoo_Login();
+
+//     if (odoo_session != null) {
+
+//       let differ = await OdooFcn.Script_RewriteUsers(odoo_session);
+
+
+//       OdooFcn.odoo_Logout(odoo_session);
+
+
+//         response.send(
+//            {
+//             "differ": differ
+
+//           });
+//     }
+//     else response.send({"result": false});
+//     }
+//    catch (error) {
+//     functions.logger.error( "[CheckCRMLocal] ERROR ", error);
+//     response.send({"result": false});
+//   }
+// } )
 
 
 // exports.test_encription = functions.runWith(runtimeOpts).https.onRequest( async (request, response)=> {
