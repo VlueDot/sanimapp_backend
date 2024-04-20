@@ -1426,14 +1426,25 @@ RewriteTestUsers = functions.https.onRequest( async (request, response)=> {
 exports.test_encription = functions.runWith(runtimeOpts).https.onRequest( async (request, response)=> {
 
   try {
+    const odoo_session = await OdooFcn.odoo_Login();
+
+    if (odoo_session != null) {
+
+      console.log(odoo_session);
+      OdooFcn.odoo_Logout(odoo_session);}}
+      catch (error) {console.log(error);}
+
+  try {
     const dateTimeEmail = false;
-            const subject_str = "Sanimapp Encriptation Test";
-            const welcome_str = "Este es un mensaje del backend. ";
-            const message_str = "Se registró el siguienteTest.";
-            let message_container = ["No container"];
-            FirebaseFcn.sendEmail2(subject_str, welcome_str, dateTimeEmail, message_str, message_container);
+    const subject_str = "Sanimapp Encriptation Test";
+    const welcome_str = "Este es un mensaje del backend. ";
+    const message_str = "Encriptation test.";
+    let message_container = ["No container"];
+    FirebaseFcn.sendEmail(subject_str, welcome_str, dateTimeEmail, message_str, message_container);
 
     response.send({"result": true});
+
+
 
 
   } catch (error) {

@@ -21,7 +21,7 @@ let info = {
 
 
 export async function odoo_Login() {
-  const response = await fetch(settings.odoo_url + "session/authenticate", settings.odoo_access);
+  const response = await fetch(settings.odoo_url + "session/authenticate", await settings.odoo_access());
   const data = await response.json();
   const data_headers = await response.headers.get("set-cookie");
   const odoo_session = data_headers?.split("=", 2)[1].split(";", 1)[0];
