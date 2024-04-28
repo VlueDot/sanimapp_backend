@@ -2,7 +2,8 @@ import * as functions from "firebase-functions";
 import * as OdooFcn from "./Odoo_utils";
 import * as FirebaseFcn from "./Firebase_utils";
 import * as settings from "./GlobalSetting";
-import * as admin from "firebase-admin";
+
+import * as auth2 from "@firebase/auth";
 
 // const timeoutSeconds_ = 540;
 // const schedule_= "every 10 minutes";
@@ -45,16 +46,6 @@ export let ReadZonesMediaSources: any; // create user in Odoo and CRM opportunit
 export let CheckCRMLocal: any; // just local
 export let askcrmid: any; // just local
 export let RewriteTestUsers: any; // just local
-
-
-// Firebase Connection Settings
-const serviceAccount = require( settings.get_serviceAccount() );
-export const urldatabase = settings.get_urldatabase();
-
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  databaseURL: urldatabase,
-});
 
 
 firebase_Stops_UsersQuantity_update = functions.database.ref("stops/{idStopFb}").onUpdate( async (change, context)=>{
@@ -1302,23 +1293,24 @@ ReadZonesMediaSources = functions.https.onRequest( async (request, response)=> {
 } );
 
 
-askcrmid = functions.https.onRequest( async (request, response)=> {
-  try {
-    const odoo_session = await OdooFcn.odoo_Login();
+askcrmid = functions.https.
+    onRequest( async (request, response)=> {
+      try {
+        const odoo_session = await OdooFcn.odoo_Login();
 
-    if (odoo_session != null) {
-      let crm_id = await OdooFcn.askcrmid(odoo_session, request.body.user_id);
+        if (odoo_session != null) {
+          let crm_id = await OdooFcn.askcrmid(odoo_session, request.body.user_id);
 
-      OdooFcn.odoo_Logout(odoo_session);
+          OdooFcn.odoo_Logout(odoo_session);
 
 
-      response.send({"crm_id": crm_id});
-    } else response.send({"result": false});
-  } catch (error) {
-    functions.logger.error( "[askcrmid] ERROR ", error);
-    response.send({"result": false});
-  }
-} );
+          response.send({"crm_id": crm_id});
+        } else response.send({"result": false});
+      } catch (error) {
+        functions.logger.error( "[askcrmid] ERROR ", error);
+        response.send({"result": false});
+      }
+    } );
 /*
 
 CheckCRMLocal = functions.runWith(runtimeOpts).https.onRequest( async (request, response)=> {
@@ -1423,34 +1415,77 @@ RewriteTestUsers = functions.https.onRequest( async (request, response)=> {
 */
 
 
-exports.test_encription = functions.runWith(runtimeOpts).https.onRequest( async (request, response)=> {
+import {initializeApp} from "@firebase/app";
 
+
+exports.ClientSym = functions.runWith(runtimeOpts).https.onRequest( async (request, response)=> {
   try {
+    const firebaseConfig = {
+      databaseURL: FirebaseFcn.urldatabase,
+      apiKey: "AIzaSyBBMhFP8CrXaOPCbHhcywsJu2a8J8rwF-g",
+    };
+    let app = initializeApp(firebaseConfig);
+
+    let email = "rvin.rdgz@gmail.com";
+    let password = "Vlu3dot";
+
+
+    let result = await auth2.signInWithEmailAndPassword(auth2.getAuth(app), email, password);
+    let token = await result.user.getIdToken();
+
+    let params = {
+      method: "post",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        "token": token,
+      }),
+    };
+    try {
+      let data = await fetch("https://us-central1-sanimappdev.cloudfunctions.net/testHttpsRequest", params );
+
+
+      console.log(await data.json());
+    } catch (error) {
+      console.log(error);
+    }
+
+
+    response.send({"result": token});
+  } catch (error) {
+    response.send({"resultError": error});
+  }
+});
+
+
+exports.testHttpsRequest = functions.runWith({
+  timeoutSeconds: 540,
+  secrets: settings.ALL_SECRETS,
+}).https.onRequest( async (request, response)=> {
+  let token = await FirebaseFcn.checkToken(request.body.token);
+
+
+  if (token) {
     const odoo_session = await OdooFcn.odoo_Login();
 
-    if (odoo_session != null) {
+    console.log(odoo_session);
 
-      console.log(odoo_session);
-      OdooFcn.odoo_Logout(odoo_session);}}
-      catch (error) {console.log(error);}
+    OdooFcn.odoo_Logout(odoo_session);
 
-  try {
+    console.log("here is treasure");
+    let Test= await FirebaseFcn.firebaseGet("/permissionTest/read");
+    console.log(Test);
+
     const dateTimeEmail = false;
-    const subject_str = "Sanimapp Encriptation Test";
-    const welcome_str = "Este es un mensaje del backend. ";
-    const message_str = "Encriptation test.";
-    let message_container = ["No container"];
-    FirebaseFcn.sendEmail(subject_str, welcome_str, dateTimeEmail, message_str, message_container);
+    const subject_str = "Sanimapp Backend testHttpsRequest";
+    const welcome_str = "Esta es una alerta testHttpsRequest";
+    const message_str = "Se registró testHttpsRequest";
+    await FirebaseFcn.sendEmail(subject_str, welcome_str, dateTimeEmail, message_str, [""]);
 
-    response.send({"result": true});
-
-
-
-
-  } catch (error) {
-  response.send({"result": error});
-
+    response.send({"data": JSON.stringify(Test)});
+  } else {
+    console.log("CheckToken returned false");
+    response.send("resultError: CheckToken returned false");
   }
-
-
 });
+
+

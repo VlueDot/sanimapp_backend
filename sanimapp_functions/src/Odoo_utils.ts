@@ -38,6 +38,25 @@ export async function odoo_Login() {
   return null;
 }
 
+export async function odoo_Login2(allsecrets:any) {
+  console.log(allsecrets);
+  const response = await fetch(settings.odoo_url + "session/authenticate", await settings.odoo_access2(allsecrets));
+  const data = await response.json();
+  const data_headers = await response.headers.get("set-cookie");
+  const odoo_session = data_headers?.split("=", 2)[1].split(";", 1)[0];
+
+  if (response.status === 200) {
+    try {
+      // functions.logger.info("[odoo_Login] Odoo Authentication Succeeded.", {"odoo_session": odoo_session, "db": settings.odoo_db});
+      return odoo_session;
+    } catch (error) {
+      functions.logger.error("[odoo_Login] Odoo Authentication Failed: " + data["error"]["message"] );
+    }
+  } else functions.logger.error("[odoo_Login] OdooLogin Error: unexpected " + response.status );
+
+  return null;
+}
+
 export async function odoo_Logout(odoo_session:any) {
   const CustomHeaders: HeadersInit = {
     "Content-Type": "application/json",

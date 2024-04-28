@@ -1,14 +1,31 @@
 
 import * as fcn from "firebase-functions";
-import * as global from "./GlobalSetting";
+import * as settings from "./GlobalSetting";
+import * as auth from "firebase-admin/auth";
+import * as admin from "firebase-admin";
+
 
 const nodemailer = require("nodemailer");
 
 
-
-
 // any --> functions.Change<functions.database.DataSnapshot>
+export const urldatabase = settings.get_urldatabase();
 
+export function initapp() {
+  try {
+    admin.initializeApp({
+      credential: admin.credential.cert(
+          {projectId: process.env.credential_projectId,
+            privateKey: process.env.credential_privateKey,
+            clientEmail: process.env.credential_clientEmail}),
+      databaseURL: urldatabase,
+    });
+
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
 
 export async function updateCRMOdoo(chg:fcn.Change<fcn.database.DataSnapshot>) {
   console.log(chg.before.val());
@@ -21,8 +38,6 @@ export async function updateCRMOdoo(chg:fcn.Change<fcn.database.DataSnapshot>) {
   else return "Error";
 }
 
-
-import * as admin from "firebase-admin";
 
 export async function firebaseSet(ref: string, data:any) {
   try {
@@ -74,19 +89,17 @@ export async function firebaseRemove(ref: string) {
 }
 
 
-
 export async function sendEmail(subject_str: string, welcome_str:string, dateTs:any, message_str: string, items_container:any) {
-  
   let transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 465,
     secure: true,
     auth: {
-      user: await global.getSecret("Vluedot_LogMail"),
-      pass: await global.getSecret("Vluedot_LogMail_password"),
+      user: process.env.Vluedot_LogMail,
+      pass: process.env.Vluedot_LogMail_password,
     },
   });
-  
+
   let date_str;
   if (dateTs != false) {
     const date = new Date(Number(dateTs));
@@ -134,9 +147,16 @@ export async function sendEmail(subject_str: string, welcome_str:string, dateTs:
   });
 }
 
-// ---------------------------------------------------------------- test mail
+
+export async function checkToken(idToken: string) {
+  try {
+    initapp();
+
+    const claims = await auth.getAuth(admin.app()).verifyIdToken(idToken);
 
 
-
-
-
+    return claims.email_verified;
+  } catch (error) {
+    return false;
+  }
+}
