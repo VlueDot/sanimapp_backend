@@ -28,23 +28,7 @@ export async function odoo_access() {
   };
 }
 
-export async function odoo_access2(params:any) {
-  console.log(params);
-  console.log(params.Odoo_BackendAccessMail);
-  return {
-    headers: {"Content-Type": "application/json"},
-    method: "post",
-    body: JSON.stringify(
 
-        {
-          "params": {
-            "db": odoo_db,
-            "login": params.Odoo_BackendAccessMail,
-            "password": params.Odoo_BackendAccessMail_password,
-
-          }}),
-  };
-}
 
 
 function get_odoo_url() {

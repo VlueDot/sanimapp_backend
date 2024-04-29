@@ -112,12 +112,11 @@ export async function sendEmail(subject_str: string, welcome_str:string, dateTs:
   else environ = "[DEV]";
   const mailOptions = {
     from: "Sanimapp Backend Assistant",
-    // to: ["alfa.vluedot@gmail.com"],
     to: ["alfa.vluedot@gmail.com",
-      // "pablo.centeno@sanima.pe",
-      // "milagros.arcos@sanima.pe",
-      // "shirley.abanto@sanima.pe",
-      // "gabriela.castro@sanima.pe",
+      "pablo.centeno@sanima.pe",
+      "milagros.arcos@sanima.pe",
+      "shirley.abanto@sanima.pe",
+      "gabriela.castro@sanima.pe",
     ],
     subject: environ + subject_str,
     html: `
@@ -146,6 +145,8 @@ export async function sendEmail(subject_str: string, welcome_str:string, dateTs:
     fcn.logger.info(environ + subject_str +": Email sent! ");
   });
 }
+
+// import {initializeApp} from "@firebase/app";
 
 
 export async function checkToken(idToken: string) {
