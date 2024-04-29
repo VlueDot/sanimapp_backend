@@ -29,8 +29,6 @@ export async function odoo_access() {
 }
 
 
-
-
 function get_odoo_url() {
   if ( process.env.GCLOUD_PROJECT == "sanimapp-prod") {
     return "https://oxe360-ooc-sanisol-150.odoo.com/web/";
