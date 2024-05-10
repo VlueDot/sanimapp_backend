@@ -19,6 +19,9 @@
   },
   "main": "lib/index.js",
   "dependencies": {
+    "@firebase/app": "^0.10.1",
+    "@firebase/auth": "^1.7.1",
+    "@firebase/auth-types": "^0.12.1",
     "@google-cloud/secret-manager": "^5.3.0",
     "@types/node-fetch": "^2.6.11",
     "firebase-admin": "^11.5.0",

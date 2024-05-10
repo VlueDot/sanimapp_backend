@@ -1,20 +1,31 @@
 const dev = "oxe360-ooc-sanisol-150-staging-15-0-12768682";
 // https://oxe360-ooc-sanisol-150-staging-15-0-10504135.dev.odoo.com/
 const prod = "oxe360-ooc-sanisol-150-prd-15-0-8745362";
+
+export const ALL_SECRETS =
+["Odoo_BackendAccessMail", "Odoo_BackendAccessMail_password",
+  "Vluedot_LogMail", "Vluedot_LogMail_password",
+  "credential_projectId", "credential_privateKey", "credential_clientEmail",
+];
+
 export const odoo_db = get_odoo_db();
 export const odoo_url = get_odoo_url();
 
-export const odoo_access = {
-  headers: {"Content-Type": "application/json"},
-  method: "post",
-  body: JSON.stringify(
+export async function odoo_access() {
+  return {
+    headers: {"Content-Type": "application/json"},
+    method: "post",
+    body: JSON.stringify(
 
-      {
-        "params": {
-          "db": odoo_db,
-          "login": "pablo@sanima.pe",
-          "password": "Sanima2021",
-        }})};
+        {
+          "params": {
+            "db": odoo_db,
+            "login": process.env.Odoo_BackendAccessMail,
+            "password": process.env.Odoo_BackendAccessMail_password,
+
+          }}),
+  };
+}
 
 
 function get_odoo_url() {
@@ -56,3 +67,14 @@ export function get_urldatabase() {
     return "https://sanimappdev-default-rtdb.firebaseio.com";
   }
 }
+
+
+// const {SecretManagerServiceClient} = require("@google-cloud/secret-manager");
+// const secretClient = new SecretManagerServiceClient();
+
+// export async function getSecret(secret: string) {
+//   // console.log(process.env.GCLOUD_PROJECT);
+//   const name = "projects/"+process.env.GCLOUD_PROJECT+"/secrets/"+secret+"/versions/latest";
+//   const [accessResponse] = await secretClient.accessSecretVersion({name});
+//   return accessResponse.payload["data"].toString("utf8");
+// }
