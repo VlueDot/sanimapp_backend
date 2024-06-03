@@ -717,14 +717,23 @@ odooToFirebase_syncServices = functions
     });
 
 
-// check_payments = functions.https.onRequest(async (request, response)=> {
-check_payments = functions
-    .runWith(
-        {timeoutSeconds: timeoutSeconds_,
-          secrets: settings.ALL_SECRETS})
-    .pubsub.schedule(schedule_)
-    .timeZone("America/Lima")
-    .onRun(async () =>{
+check_payments = functions.https.onRequest(async (request, response)=> {
+// check_payments = functions
+//     .runWith(
+//         {timeoutSeconds: timeoutSeconds_,
+//           secrets: settings.ALL_SECRETS})
+//     .pubsub.schedule(schedule_)
+//     .timeZone("America/Lima")
+//     .onRun(async () =>{
+
+/*
+
+invoice_reference_stack will change
+{"partner_id": partner_id,
+  "partner_name": partner_name,
+  "order_id_name":order_id_name,}
+
+*/
       FirebaseFcn.initapp();
       const odoo_session = await OdooFcn.odoo_Login();
       let user_with_payment = [];
@@ -771,10 +780,10 @@ check_payments = functions
             FirebaseFcn.sendEmail(subject_str, welcome_str, dateTimeEmail, message_str, message_container);
           }
         }
-        return true;
+        // return true;
       }
-      return false;
-      // response.send("check_payments. odoo_session: .." + odoo_session?.substring(odoo_session.length - 5));
+      // return false;
+      response.send("check_payments. odoo_session: .." + odoo_session?.substring(odoo_session.length - 5));
     });
 
 

@@ -1637,9 +1637,7 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
           let full_data : any;
           full_data= await verify_user_exist_create_modify(odoo_session, ticket);
           functions.logger.info("User full data crm: " + ticket_id, {"full_data": full_data});
-
           let is_in_reference_stack_keys = invoice_reference_stack_keys?.includes(String(ticket.partner_id[0]));
-          // let is_any_order_line = await is_there_order_line(odoo_session, ticket.partner_id[0]);
 
           // Saving info to write in firebase--------------------------------------------------------------------------------------------
           const stage_id = Number(ticket["stage_id"][0]);
@@ -1671,30 +1669,13 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
 
             console.log("is_in_reference_stack_keys", is_in_reference_stack_keys);
 
+
+
             if (!is_in_reference_stack_keys) {
-              /*
-                if (!is_any_order_line) {
-                   let sale_order_status= await create_sale_order_and_invoice(odoo_session, ticket.id, ticket.name, ticket.partner_id[0]);
-                  if (sale_order_status == false) {
-                    console.log("error 404. create_sale_order_and_invoice not working well");
-                  } else {
-                    console.log("create_sale_order_and_invoice ok");
-                  }
-                  console.log("create_sale_order_and_invoice is not working anymore.");
 
-                } else {
-                  // crea item en la lista
-                  let invoice_reference_stack_map = new Map();
-
-                  invoice_reference_stack_map.set(ticket.partner_id[0], ticket.name);
-
-                  const invoice_reference_stack_json = Object.fromEntries(invoice_reference_stack_map);
-                  FirebaseFcn.firebaseUpdate("invoice_reference_stack", invoice_reference_stack_json);
-                }
-
-                */
-
-              let user_with_payment = await read_accountmove_reference(odoo_session, [ticket.partner_id[0]]);
+              try {
+                
+                let user_with_payment = await read_accountmove_reference(odoo_session, [ticket.partner_id[0]]);
               // console.log("user_with_payment ", user_with_payment);
               // console.log("user_with_payment.length", user_with_payment.length);
               if (user_with_payment.length>0) {
@@ -1724,6 +1705,13 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
 
                 functions.logger.info("Se ha añadido el registro a invoices references stack:  ", invoice_reference_stack_json);
               }
+
+                
+              } catch (error) {
+                functions.logger.error("[odooToFirebase_CRMTickets] Error 030620241738 Something bad happer" );
+              
+              }
+              
             }
           } else {
             console.log("--1");
@@ -3386,21 +3374,31 @@ export async function create_user_in_Odoo2(odoo_session: any, crm_ticket_id: any
 // }
 
 export async function read_accountmove_reference(odoo_session:any, array: any) {
+  //invoice_origin_array map 
+  //{partner_id  invoice_origin
+
+  //first from array obtain order_id 
+
+
   const CustomHeaders: HeadersInit = {
     "Content-Type": "application/json",
     "Cookie": "session_id="+odoo_session,
-  };
+  }; 
 
-  const raw = JSON.stringify({
-    "params": {
-      "model": "account.move",
-      "fields": ["partner_id", "ref"],
-      "offset": 0,
-      "domain": ["&", ["partner_id", "in", array], ["ref", "!=", ""]],
-    },
+ 
+
+
+  let raw = JSON.stringify({
+    "params":{
+      "model": "sale.order.line",
+      "fields":["order_id","order_partner_id"],
+      "domain":[["order_partner_id","in", array], ["name","ilike","Instalación baño al contado"]]
+  
+    }
+    
   });
 
-  const params_read = {
+  let params_read = {
     headers: CustomHeaders,
     method: "post",
     body: raw,
@@ -3409,22 +3407,61 @@ export async function read_accountmove_reference(odoo_session:any, array: any) {
   try {
     const response_read = await fetch(settings.odoo_url + "dataset/search_read", params_read);
     const data_read = await response_read.json();
+    let order_ids: any
+    if(data_read.result.length>0){
 
-    // console.log("data_read", data_read)
+      for (let i =0; i<data_read.result.length; i++) {
+        order_ids.push(data_read.result.records[i].order_id[1]);
+      }
 
-    let user_payment = [];
 
-    for (let i =0; i<data_read.result.length; i++) {
-      user_payment.push(data_read.result.records[i].partner_id[0]);
+      raw = JSON.stringify({
+        "params": {
+          "model": "account.move",
+          "fields": ["partner_id", "ref"],
+          "offset": 0,
+          "domain": ["&", ["partner_id", "in", [array]], ["ref", "!=", ""], ["invoice_origin","in", order_ids]],
+        },
+        
+      });
+
+      params_read = {
+        headers: CustomHeaders,
+        method: "post",
+        body: raw,
+      };
+
+      try {
+        const response_read = await fetch(settings.odoo_url + "dataset/search_read", params_read);
+        const data_read = await response_read.json();
+    
+        // console.log("data_read", data_read)
+    
+        let user_payment = [];
+    
+        for (let i =0; i<data_read.result.length; i++) {
+          user_payment.push(data_read.result.records[i].partner_id[0]);
+        }
+    
+    
+        return user_payment;
+      } catch (error) {
+        functions.logger.error("[read_accountmove_reference] ERROR 2410231411: " + error, {"odoo_session": odoo_session, "array": array} );
+        return [];
+      }
+
     }
-
-
-    return user_payment;
-  } catch (error) {
-    functions.logger.error("[read_accountmove_reference] ERROR 2410231411: " + error, {"odoo_session": odoo_session, "array": array} );
+    functions.logger.info("[read_accountmove_reference] No data fetched")
+    return [];
+  
   }
 
-  return [];
+  catch (error) {
+    functions.logger.error("[read_accountmove_reference] ERROR 0306241658: " + error, {"odoo_session": odoo_session, "array": array} );
+    return [];
+  }
+  
+
 }
 
 export async function verify_user_exist_create_modify(odoo_session:any, crm_data :any) {
@@ -3711,38 +3748,50 @@ export async function get_user_data(odoo_session:any, user_id: number, since_tim
   }
 }
 
-export async function is_there_order_line(odoo_session:any, user_id: number) {
-  const CustomHeaders: HeadersInit = {
-    "Content-Type": "application/json",
-    "Cookie": "session_id="+odoo_session,
-  };
+// export async function is_there_order_line(odoo_session:any, user_id: number) {
+//   //busca por un order que tenga instalacion de baño al contado, devuelve
+//   // {"partner_id": partner_id,
+//   // "partner_name": partner_name,
+//   // "order_id_name":order_id_name,}
+//   // 
 
-  const raw = JSON.stringify({
-    "params": {
-      "model": "sale.order.line",
-      "fields": [],
-      "offset": 0,
-      "domain": [["order_partner_id", "=", user_id], ["name", "ilike", "Instalación baño al contado"]],
-    },
-  });
+//   const CustomHeaders: HeadersInit = {
+//     "Content-Type": "application/json",
+//     "Cookie": "session_id="+odoo_session,
+//   };
 
-  const params = {
-    headers: CustomHeaders,
-    method: "call",
-    body: raw,
-  };
+//   const raw = JSON.stringify({
+//     "params": {
+//       "model": "sale.order.line",
+//       "fields":["order_id","order_partner_id"],
+//       "offset": 0,
+//       "domain": [["order_partner_id", "=", user_id],
+//        ["name", "ilike", "Instalación baño al contado"],
+        
+//       ],
+//     },
+//   });
 
-  try {
-    const response = await fetch(settings.odoo_url + "dataset/search_read", params);
-    const data = await response.json();
-    return data.result.length>0;
-  } catch (error) {
-    functions.logger.error("[get_crm_data] ERROR 2210232307: " + error,
-        {"odoo_session": odoo_session,
-          "user_id": user_id} );
-    return false;
-  }
-}
+//   const params = {
+//     headers: CustomHeaders,
+//     method: "call",
+//     body: raw,
+//   };
+
+//   try {
+//     const response = await fetch(settings.odoo_url + "dataset/search_read", params);
+//     const data = await response.json();
+//     const res =  {"partner_id": data.result.order_partner_id[0],
+//                   "partner_name":  data.result.order_partner_id[1],
+//                   "order_id_name": data.result.order_id[0],}
+//     return res
+//   } catch (error) {
+//     functions.logger.error("[get_crm_data] ERROR 2210232307: " + error,
+//         {"odoo_session": odoo_session,
+//           "user_id": user_id} );
+//     return false
+//   }
+// }
 
 export async function modify_state_user(odoo_session:any, user_data: any, state: number, mode: string) {
   // 453 - usuario por instalar
