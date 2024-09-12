@@ -1,5 +1,5 @@
-const dev = "oxe360-ooc-sanisol-150-staging-15-0-12768682";
-// https://oxe360-ooc-sanisol-150-staging-15-0-10504135.dev.odoo.com/
+const dev = "oxe360-ooc-sanisol-150-staging-15-0-15065674";
+// https://oxe360-ooc-sanisol-150-staging-15-0-15065674.dev.odoo.com
 const prod = "oxe360-ooc-sanisol-150-prd-15-0-8745362";
 
 export const ALL_SECRETS =

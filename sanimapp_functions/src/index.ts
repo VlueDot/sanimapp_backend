@@ -627,14 +627,14 @@ firebaseToOdoo_CRM_update = functions
       }
     });
 
-// odooToFirebase_syncUsers = functions.https.onRequest(async (request, response)=> {
-odooToFirebase_syncUsers = functions
-    .runWith(
-        {timeoutSeconds: timeoutSeconds_,
-          secrets: settings.ALL_SECRETS})
-    .pubsub.schedule(schedule_)
-    .timeZone("America/Lima")
-    .onRun(async () =>{
+odooToFirebase_syncUsers = functions.https.onRequest(async (request, response)=> {
+// odooToFirebase_syncUsers = functions
+//     .runWith(
+//         {timeoutSeconds: timeoutSeconds_,
+//           secrets: settings.ALL_SECRETS})
+//     .pubsub.schedule(schedule_)
+//     .timeZone("America/Lima")
+//     .onRun(async () =>{
       // this will run with certain periodicity. This will be the stable function.
       // Here will be everything at the moment. eventually we will separate them to test each one of these.
 
@@ -666,12 +666,12 @@ odooToFirebase_syncUsers = functions
             });
           }
         }
-        // response.send("odooToFirebase_syncUsers. odoo_session: .." + odoo_session?.substring(odoo_session.length - 5));
-        return true;
+        response.send("odooToFirebase_syncUsers. odoo_session: .." + odoo_session?.substring(odoo_session.length - 5));
+        // return true;
       } catch (error) {
         functions.logger.error( "[odooToFirebase_syncUsers] ERROR at Start. ", error);
-        // response.send("odooToFirebase_syncUsers Error: "+error);
-        return false;
+        response.send("odooToFirebase_syncUsers Error: "+error);
+        // return false;
       }
     });
 
@@ -717,16 +717,22 @@ odooToFirebase_syncServices = functions
     });
 
 
-check_payments = functions.https.onRequest(async (request, response)=> {
 // check_payments = functions
-//     .runWith(
-//         {timeoutSeconds: timeoutSeconds_,
-//           secrets: settings.ALL_SECRETS})
-//     .pubsub.schedule(schedule_)
-//     .timeZone("America/Lima")
-//     .onRun(async () =>{
+// .runWith({
+//   timeoutSeconds: 540,
+//   secrets: settings.ALL_SECRETS,
+// })
+// .https.onRequest(async (request, response)=> {
 
-/*
+
+check_payments = functions
+    .runWith(
+        {timeoutSeconds: timeoutSeconds_,
+          secrets: settings.ALL_SECRETS})
+    .pubsub.schedule(schedule_)
+    .timeZone("America/Lima")
+    .onRun(async () =>{
+      /*
 
 invoice_reference_stack will change
 {"partner_id": partner_id,
@@ -780,19 +786,27 @@ invoice_reference_stack will change
             FirebaseFcn.sendEmail(subject_str, welcome_str, dateTimeEmail, message_str, message_container);
           }
         }
-        // return true;
+        return true;
       }
-      // return false;
-      response.send("check_payments. odoo_session: .." + odoo_session?.substring(odoo_session.length - 5));
+      return false;
+      // response.send("check_payments. odoo_session: .." + odoo_session?.substring(odoo_session.length - 5));
     });
 
 
 exports.test = functions
-    .runWith({secrets: settings.ALL_SECRETS, timeoutSeconds: 540})
+    .runWith({secrets: settings.ALL_SECRETS, timeoutSeconds: 54})
     .https.onRequest( async (request, response)=> {
       FirebaseFcn.initapp();
       const odoo_session = await OdooFcn.odoo_Login();
       const firebaseType = await FirebaseFcn.firebaseGet("/firebaseType");
+
+      const lastupdateTimestamp_crm = await FirebaseFcn.firebaseGet("/timestamp_collection/CMR_tickets_timestamp");
+        // const lastupdateTimestamp_users = await FirebaseFcn.firebaseGet("/timestamp_collection/ussersTimeStamp");
+
+
+
+      OdooFcn.test(odoo_session, lastupdateTimestamp_crm)
+      // OdooFcn.test( lastupdateTimestamp_crm)
 
 
       // OdooFcn.odooToFirebase_Campaigns(odoo_session, lastupdateTimestamp_campaigns);
@@ -815,8 +829,9 @@ exports.test = functions
       // await OdooFcn.odooToFirebase_CRMTickets(odoo_session, lastupdateTimestamp_crm);
 
 
-      await OdooFcn.odoo_Logout(odoo_session);
-      response.send("<p>[TEST] <br>firebaseType: "+firebaseType+"<br>odoo url: <a href='"+settings.odoo_url +"'>"+settings.odoo_url+"</a></p><p>odoo session: "+odoo_session +"</p><p>Everything's working fine</p>");
+      // await OdooFcn.odoo_Logout(odoo_session);
+      response.send("<p>[TEST] <br>firebaseType: "+firebaseType+"<br>odoo url: <a href='"+settings.odoo_url +"'>"+settings.odoo_url+"</a></p><p>odoo session: "+"odoo_session" +"</p><p>Everything's working fine</p>");
+      // response.send("<p>[TEST] <br>firebaseType: "+firebaseType+"<br>odoo url: <a href='"+settings.odoo_url +"'>"+settings.odoo_url+"</a></p><p>odoo session: "+odoo_session +"</p><p>Everything's working fine</p>");
     });
 /*
 

@@ -100,23 +100,46 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
 
 
   try {
-    const raw = JSON.stringify({
-      "params": {
-        "model": "res.partner",
-        "offset": 0,
-        "fields": [
-          "id", "name", "phone", "mobile", "zip",
-          "vat", "street", "street2", "city", "country_id", "display_name", "category_id", "write_date", "opportunity_ids"],
-        "domain": [["write_date", ">", date_str]],
-      },
-    });
+    const raw = JSON.stringify(
+      {
+        "params": {
+            "model": "res.partner",
+            "method": "search_read",
+            "kwargs": {},
+            "args": [
+              [["write_date", ">", date_str]],
+              [
+                "id", "name", "phone", "mobile", "zip",
+                "vat", "street", "street2", "city", "country_id", "display_name", "category_id", "write_date", "opportunity_ids"],
+             
+            ]
+        }
+    }
+
+
+    //   {
+    //   "params": {
+    //     "model": "res.partner",
+    //     "offset": 0,
+    //     "fields": [
+    //       "id", "name", "phone", "mobile", "zip",
+    //       "vat", "street", "street2", "city", "country_id", "display_name", "category_id", "write_date", "opportunity_ids"],
+    //     "domain": [["write_date", ">", date_str]],
+    //   },
+
+    // }
+  
+  );
+
+
 
     const params = {
       headers: CustomHeaders,
       method: "post",
       body: raw,
     };
-    const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+    // const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+    const response = await fetch(settings.odoo_url + "dataset/call_kw/", params);
     let odoo_query_time = Date.now();
     let data;
     data = await response.json();
@@ -673,7 +696,12 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
                 try {
                   functions.logger.info( "[odooToFirebase_Users] updating route in Odoo.", info);
 
-                  const raw = JSON.stringify({
+                  const raw = JSON.stringify(
+
+                    
+                    
+                    
+                    {
                     "params": {
                       "model": "res.partner",
                       "method": "write",
@@ -691,7 +719,10 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
                     body: raw,
                   };
 
-                  await fetch(settings.odoo_url + "dataset/call_kw/res.partner/write", params);
+                  // await fetch(settings.odoo_url + "dataset/call_kw/res.partner/write", params);
+                  await fetch(settings.odoo_url + "dataset/call_kw/", params);
+
+                  
                 } catch (err) {
                   functions.logger.error( "[odooToFirebase_Users] Error updating route in Odoo: " + err, info);
                 }
@@ -979,14 +1010,34 @@ export async function odooToFirebase_Campaigns(odoo_session:any, lastupdateTimes
     "Cookie": "session_id="+odoo_session,
   };
 
-  const raw = JSON.stringify({
-    "params": {
-      "model": "utm.campaign",
-      "offset": 0,
-      "fields": ["display_name"],
-      "domain": [["write_date", ">", date_str]],
-    },
-  });
+  const raw = JSON.stringify(
+
+
+
+    {
+      "params": {
+          "model": "utm.campaign",
+          "method": "search_read",
+          "kwargs": {},
+          "args": [
+            [["write_date", ">", date_str]],
+            ["display_name"],
+          ]
+      }
+  }
+    
+  //   {
+  //   "params": {
+  //     "model": "utm.campaign",
+  //     "offset": 0,
+  //     "fields": ["display_name"],
+  //     "domain": [["write_date", ">", date_str]],
+  //   },
+  // }
+
+
+
+);
 
   const params = {
     headers: CustomHeaders,
@@ -1000,7 +1051,9 @@ export async function odooToFirebase_Campaigns(odoo_session:any, lastupdateTimes
   let odoo_res = false;
 
   try {
-    response = await fetch(settings.odoo_url + "dataset/search_read", params);
+    // response = await fetch(settings.odoo_url + "dataset/search_read", params);
+    response = await fetch(settings.odoo_url + "dataset/call_kw", params);
+
     data = await response.json();
     target_data = data["result"]["records"];
 
@@ -1105,14 +1158,34 @@ export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdate
     "Cookie": "session_id="+odoo_session,
   };
 
-  const raw = JSON.stringify({
-    "params": {
-      "model": "helpdesk.ticket",
-      "offset": 0,
-      "fields": ["create_date", "partner_id", "description", "name", "stage_id", "tag_ids", "write_date"],
-      "domain": [["write_date", ">", date_str]],
-    },
-  });
+  const raw = JSON.stringify(
+
+    {
+      "params": {
+          "model": "helpdesk.ticket",
+          "method": "search_read",
+          "kwargs": {},
+          "args": [
+            [["write_date", ">", date_str]],
+            ["create_date", "partner_id", "description", "name", "stage_id", "tag_ids", "write_date"],
+          ]
+      }
+  }
+
+    
+    
+    
+    
+  //   {
+  //   "params": {
+  //     "model": "helpdesk.ticket",
+  //     "offset": 0,
+  //     "fields": ["create_date", "partner_id", "description", "name", "stage_id", "tag_ids", "write_date"],
+  //     "domain": [["write_date", ">", date_str]],
+  //   },
+  // }
+
+);
 
   const params = {
     headers: CustomHeaders,
@@ -1121,7 +1194,9 @@ export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdate
   };
 
   try {
-    const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+    // const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+    const response = await fetch(settings.odoo_url + "dataset/call_kw/", params);
+
     const data = await response.json();
     const qtty_entries = data.result.length;
     if (qtty_entries>0) {
@@ -1499,15 +1574,34 @@ export async function is_there_install_serviceTicket(odoo_session:any, user_id: 
     "Cookie": "session_id="+odoo_session,
   };
 
-  const raw = JSON.stringify({
-    "params": {
-      "model": "helpdesk.ticket",
-      "offset": 0,
-      "fields": ["partner_id"],
-      "domain": ["&", ["partner_id", "=",
-        user_id], ["tag_ids", "=", 278]], // before 14
-    },
-  });
+  const raw = JSON.stringify(
+
+    {
+      "params": {
+          "model": "helpdesk.ticket",
+          "method": "search_read",
+          "kwargs": {},
+          "args": [
+            ["&", ["partner_id", "=",
+              user_id], ["tag_ids", "=", 278]], // before 14
+              ["partner_id"],
+          ]
+      }
+  }
+
+    
+    
+  //   {
+  //   "params": {
+  //     "model": "helpdesk.ticket",
+  //     "offset": 0,
+  //     "fields": ["partner_id"],
+  //     "domain": ["&", ["partner_id", "=",
+  //       user_id], ["tag_ids", "=", 278]], // before 14
+  //   },
+  // }
+
+);
 
   const params = {
     headers: CustomHeaders,
@@ -1516,7 +1610,8 @@ export async function is_there_install_serviceTicket(odoo_session:any, user_id: 
   };
 
   try {
-    const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+    const response = await fetch(settings.odoo_url + "dataset/call_kw/", params);
+    // const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
     const data = await response.json();
     const qtty_entries = data.result.length;
     if (qtty_entries>0) {
@@ -1532,6 +1627,7 @@ export async function is_there_install_serviceTicket(odoo_session:any, user_id: 
   return false;
 }
 
+// function transformRaw(raw: string)
 
 export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTimestamp: any) {
   let odoo_query_time = Date.now();// THIS IS THE TIME WHERE I MADE THE CHECK
@@ -1548,18 +1644,40 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
     "Cookie": "session_id="+odoo_session,
   };
 
-  const raw = JSON.stringify({
-    "params": {
-      "model": "crm.lead",
-      "offset": 0,
-      "fields": [
-        "id", "partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
-        "name", "phone", "mobile", "tag_ids", "create_uid", "create_date", "write_date", "street", "street2", "zip", "country_id", "state_id", "tag_ids", "user_id",
+  const raw = JSON.stringify(
 
-      ],
-      "domain": ["&", ["write_date", ">", date_str], ["partner_id", "!=", false]],
-    },
-  });
+    {
+      "params": {
+          "model": "crm.lead",
+          "method": "search_read",
+          "kwargs": {},
+          "args": [
+            ["&", ["write_date", ">", date_str], ["partner_id", "!=", false]],
+              [
+                "id", "partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
+                "name", "phone", "mobile", "tag_ids", "create_uid", "create_date", "write_date", "street", "street2", "zip", "country_id", "state_id", "tag_ids", "user_id",
+        
+              ],
+          ]
+      }
+  }
+    
+  //   {
+  //   "params": {
+  //     "model": "crm.lead",
+  //     "offset": 0,
+  //     "fields": [
+  //       "id", "partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
+  //       "name", "phone", "mobile", "tag_ids", "create_uid", "create_date", "write_date", "street", "street2", "zip", "country_id", "state_id", "tag_ids", "user_id",
+
+  //     ],
+  //     "domain": ["&", ["write_date", ">", date_str], ["partner_id", "!=", false]],
+  //   },
+  // }
+
+);
+
+  // let raw2 = transformRaw(raw);
 
   // sales person is user_id
 
@@ -1582,7 +1700,9 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
   }
 
   try {
-    const response = await fetch(settings.odoo_url + "dataset/search_read", params);
+    // const response = await fetch(settings.odoo_url + "dataset/search_read", params);
+    const response = await fetch(settings.odoo_url + "dataset/call_kw", params);
+
     const data = await response.json();
 
     // functions.logger.info( "[odooToFirebase_CRMTickets] tickets:", {
@@ -1670,48 +1790,41 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
             console.log("is_in_reference_stack_keys", is_in_reference_stack_keys);
 
 
-
             if (!is_in_reference_stack_keys) {
-
               try {
-                
                 let user_with_payment = await read_accountmove_reference(odoo_session, [ticket.partner_id[0]]);
-              // console.log("user_with_payment ", user_with_payment);
-              // console.log("user_with_payment.length", user_with_payment.length);
-              if (user_with_payment.length>0) {
-                let is_there = await is_there_install_serviceTicket(odoo_session, ticket.partner_id[0]);
+                // console.log("user_with_payment ", user_with_payment);
+                // console.log("user_with_payment.length", user_with_payment.length);
+                if (user_with_payment.length>0) {
+                  let is_there = await is_there_install_serviceTicket(odoo_session, ticket.partner_id[0]);
 
 
-                // check if has ticket already. if not, update invoice_reference_stack
-                if (!is_there) {
+                  // check if has ticket already. if not, update invoice_reference_stack
+                  if (!is_there) {
+                    let invoice_reference_stack_map = new Map();
+
+                    invoice_reference_stack_map.set(ticket.partner_id[0], ticket.name);
+
+                    const invoice_reference_stack_json = Object.fromEntries(invoice_reference_stack_map);
+                    // console.log("user_with_payment 2 ", invoice_reference_stack_json);
+
+                    FirebaseFcn.firebaseUpdate("invoice_reference_stack", invoice_reference_stack_json);
+
+                    functions.logger.info("Se ha añadido el registro a invoices references stack:  ", invoice_reference_stack_json);
+                  }
+                } else {
                   let invoice_reference_stack_map = new Map();
 
                   invoice_reference_stack_map.set(ticket.partner_id[0], ticket.name);
 
                   const invoice_reference_stack_json = Object.fromEntries(invoice_reference_stack_map);
-                  // console.log("user_with_payment 2 ", invoice_reference_stack_json);
-
                   FirebaseFcn.firebaseUpdate("invoice_reference_stack", invoice_reference_stack_json);
 
                   functions.logger.info("Se ha añadido el registro a invoices references stack:  ", invoice_reference_stack_json);
                 }
-              } else {
-                let invoice_reference_stack_map = new Map();
-
-                invoice_reference_stack_map.set(ticket.partner_id[0], ticket.name);
-
-                const invoice_reference_stack_json = Object.fromEntries(invoice_reference_stack_map);
-                FirebaseFcn.firebaseUpdate("invoice_reference_stack", invoice_reference_stack_json);
-
-                functions.logger.info("Se ha añadido el registro a invoices references stack:  ", invoice_reference_stack_json);
-              }
-
-                
               } catch (error) {
                 functions.logger.error("[odooToFirebase_CRMTickets] Error 030620241738 Something bad happer" );
-              
               }
-              
             }
           } else {
             console.log("--1");
@@ -2371,14 +2484,32 @@ export async function getCategories(odoo_session:any) {
       "Cookie": "session_id="+odoo_session,
     };
 
-    const raw = JSON.stringify({
-      "params": {
-        "model": "res.partner.category",
-        "fields": ["id", "name"],
-        "offset": 0,
-        "domain": [],
-      },
-    });
+    const raw = JSON.stringify(
+
+      {
+        "params": {
+            "model": "res.partner.category",
+            "method": "search_read",
+            "kwargs": {},
+            "args": [
+              [],
+              ["id", "name"]
+            ]
+        }
+    }
+      
+      
+      
+    //   {
+    //   "params": {
+    //     "model": "res.partner.category",
+    //     "fields": ["id", "name"],
+    //     "offset": 0,
+    //     "domain": [],
+    //   },
+    // }
+  
+  );
 
     let params = {
       headers: CustomHeaders,
@@ -2386,7 +2517,9 @@ export async function getCategories(odoo_session:any) {
       body: raw,
     };
 
-    let response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+    // let response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+    let response = await fetch(settings.odoo_url + "dataset/call_kw/", params);
+
 
     let data = await response.json();
     list = data.result.records;
@@ -2405,14 +2538,31 @@ export async function firebaseToOdoo_DeleteStopLabels(odoo_session:any, idOdoo: 
     "Cookie": "session_id="+odoo_session,
   };
 
-  const raw_read = JSON.stringify({
-    "params": {
-      "model": "res.partner",
-      "fields": [],
-      "offset": 0,
-      "domain": [["id", "like", partnerId]],
-    },
-  });
+  const raw_read = JSON.stringify(
+
+    {
+      "params": {
+          "model": "res.partner",
+          "method": "search_read",
+          "kwargs": {},
+          "args": [
+            [["id", "like", partnerId]],
+            []
+          ]
+      }
+  }
+    
+    
+  //   {
+  //   "params": {
+  //     "model": "res.partner",
+  //     "fields": [],
+  //     "offset": 0,
+  //     "domain": [["id", "like", partnerId]],
+  //   },
+  // }
+
+);
 
   const params_read = {
     headers: CustomHeaders,
@@ -2420,7 +2570,9 @@ export async function firebaseToOdoo_DeleteStopLabels(odoo_session:any, idOdoo: 
     body: raw_read,
   };
 
-  const response_read = await fetch(settings.odoo_url + "dataset/search_read", params_read);
+  // const response_read = await fetch(settings.odoo_url + "dataset/search_read", params_read);
+  const response_read = await fetch(settings.odoo_url + "dataset/call_kw", params_read);
+
   const data_read = await response_read.json();
   const category_ids: Array<number> = data_read["result"]["records"][0]["category_id"];
   // console.log("category_ids", category_ids);
@@ -2515,14 +2667,31 @@ export async function verifyIfodooWriteInFirebase(odoo_session:any, idOdoo: numb
     "Cookie": "session_id="+odoo_session,
   };
 
-  const raw = JSON.stringify({
-    "params": {
-      "model": "res.partner.category",
-      "fields": ["id", "name"],
-      "offset": 0,
-      "domain": ["&", ["id", "=", idOdoo], ["write_date", ">", date_str]],
-    },
-  });
+  const raw = JSON.stringify(
+    
+    {
+      "params": {
+          "model": "res.partner.category",
+          "method": "search_read",
+          "kwargs": {},
+          "args": [
+            ["&", ["id", "=", idOdoo], ["write_date", ">", date_str]],
+            ["id", "name"],
+          ]
+      }
+  }
+    
+    
+  //   {
+  //   "params": {
+  //     "model": "res.partner.category",
+  //     "fields": ["id", "name"],
+  //     "offset": 0,
+  //     "domain": ["&", ["id", "=", idOdoo], ["write_date", ">", date_str]],
+  //   },
+  // }
+
+);
 
   const params = {
     headers: CustomHeaders,
@@ -2530,7 +2699,9 @@ export async function verifyIfodooWriteInFirebase(odoo_session:any, idOdoo: numb
     body: raw,
   };
 
-  const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+  // const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+  const response = await fetch(settings.odoo_url + "dataset/call_kw/", params);
+
   const data = await response.json();
 
   const len: number = data["result"]["length"];
@@ -2544,15 +2715,33 @@ async function contactInfoById(odoo_session:any, id_client: any) {
     "Cookie": "session_id="+odoo_session,
   };
 
-  const raw = JSON.stringify({
-    "params": {
-      "model": "res.partner",
-      "fields": ["id", "phone", "mobile", "comment", "name", "vat", "street", "street2", "city",
-        "country_id", "display_name", "category_id", "zip"],
-      "offset": 0,
-      "domain": [["id", "=", id_client]],
-    },
-  });
+  const raw = JSON.stringify(
+    
+    {
+      "params": {
+          "model": "res.partner",
+          "method": "search_read",
+          "kwargs": {},
+          "args": [
+            [["id", "=", id_client]],
+            ["id", "phone", "mobile", "comment", "name", "vat", "street", "street2", "city",
+              "country_id", "display_name", "category_id", "zip"],
+          ]
+      }
+  }
+
+    
+  //   {
+  //   "params": {
+  //     "model": "res.partner",
+  //     "fields": ["id", "phone", "mobile", "comment", "name", "vat", "street", "street2", "city",
+  //       "country_id", "display_name", "category_id", "zip"],
+  //     "offset": 0,
+  //     "domain": [["id", "=", id_client]],
+  //   },
+  // }
+
+);
 
   const params = {
     headers: CustomHeaders,
@@ -2560,7 +2749,9 @@ async function contactInfoById(odoo_session:any, id_client: any) {
     body: raw,
   };
   try {
-    const response = await fetch(settings.odoo_url + "dataset/search_read", params);
+    // const response = await fetch(settings.odoo_url + "dataset/search_read", params);
+    const response = await fetch(settings.odoo_url + "dataset/call_kw", params);
+
     const data = await response.json();
     const len = data["result"]["length"];
 
@@ -2616,14 +2807,32 @@ export async function firebaseToOdoo_ActiveOrInstall(odoo_session:any, partnerId
     "Cookie": "session_id="+odoo_session,
   };
 
-  const raw_read = JSON.stringify({
-    "params": {
-      "model": "res.partner",
-      "fields": [],
-      "offset": 0,
-      "domain": [["id", "like", partnerId]],
-    },
-  });
+  const raw_read = JSON.stringify(
+
+    {
+      "params": {
+          "model": "res.partner",
+          "method": "search_read",
+          "kwargs": {},
+          "args": [
+            [["id", "like", partnerId]],
+            [],
+          ]
+      }
+  }
+
+    
+    
+  //   {
+  //   "params": {
+  //     "model": "res.partner",
+  //     "fields": [],
+  //     "offset": 0,
+  //     "domain": [["id", "like", partnerId]],
+  //   },
+  // }
+
+);
 
   const params_read = {
     headers: CustomHeaders,
@@ -2631,7 +2840,9 @@ export async function firebaseToOdoo_ActiveOrInstall(odoo_session:any, partnerId
     body: raw_read,
   };
 
-  const response_read = await fetch(settings.odoo_url + "dataset/search_read", params_read);
+  // const response_read = await fetch(settings.odoo_url + "dataset/search_read", params_read);
+  const response_read = await fetch(settings.odoo_url + "dataset/call_kw", params_read);
+
   const data_read = await response_read.json();
   const category_ids: Array<number> = data_read["result"]["records"][0]["category_id"];
   // console.log("category_ids", category_ids);
@@ -2947,17 +3158,37 @@ export async function readTicketCRM(odoo_session:any, lastupdateTimestamp: any, 
     "Cookie": "session_id="+odoo_session,
   };
 
-  const raw = JSON.stringify({
-    "params": {
-      "model": "crm.lead",
-      "offset": 0,
-      "fields": [
-        "partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
-        "name", "phone", "mobile", "tag_ids", "user_id", "create_date", "write_date", "color",
-      ],
-      "domain": ["&", ["name", "=", args.name], ["write_date", ">", date_str], ["user_id", "=", args.user_id]],
-    },
-  });
+  const raw = JSON.stringify(
+    
+    {
+      "params": {
+          "model": "crm.lead",
+          "method": "search_read",
+          "kwargs": {},
+          "args": [
+            ["&", ["name", "=", args.name], ["write_date", ">", date_str], ["user_id", "=", args.user_id]],
+            [
+              "partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
+              "name", "phone", "mobile", "tag_ids", "user_id", "create_date", "write_date", "color",
+            ],
+          ]
+      }
+  }
+
+    
+  //   {
+  //   "params": {
+  //     "model": "crm.lead",
+  //     "offset": 0,
+  //     "fields": [
+  //       "partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
+  //       "name", "phone", "mobile", "tag_ids", "user_id", "create_date", "write_date", "color",
+  //     ],
+  //     "domain": ["&", ["name", "=", args.name], ["write_date", ">", date_str], ["user_id", "=", args.user_id]],
+  //   },
+  // }
+  
+);
 
   const params = {
     headers: CustomHeaders,
@@ -2966,7 +3197,9 @@ export async function readTicketCRM(odoo_session:any, lastupdateTimestamp: any, 
   };
 
   try {
-    const response = await fetch(settings.odoo_url + "dataset/search_read", params);
+    // const response = await fetch(settings.odoo_url + "dataset/search_read", params);
+    const response = await fetch(settings.odoo_url + "dataset/call_kw", params);
+
     const data = await response.json();
     const len = data.result.length;
 
@@ -3374,29 +3607,44 @@ export async function create_user_in_Odoo2(odoo_session: any, crm_ticket_id: any
 // }
 
 export async function read_accountmove_reference(odoo_session:any, array: any) {
-  //invoice_origin_array map 
-  //{partner_id  invoice_origin
+  // invoice_origin_array map
+  // {partner_id  invoice_origin
 
-  //first from array obtain order_id 
+  // first from array obtain order_id
 
 
   const CustomHeaders: HeadersInit = {
     "Content-Type": "application/json",
     "Cookie": "session_id="+odoo_session,
-  }; 
-
- 
+  };
 
 
-  let raw = JSON.stringify({
-    "params":{
-      "model": "sale.order.line",
-      "fields":["order_id","order_partner_id"],
-      "domain":[["order_partner_id","in", array], ["name","ilike","Instalación baño al contado"]]
-  
-    }
+  let raw = JSON.stringify(
     
-  });
+    {
+      "params": {
+          "model": "sale.order.line",
+          "method": "search_read",
+          "kwargs": {},
+          "args": [
+            [["order_partner_id", "in", array], ["name", "ilike", "Instalación baño al contado"]],
+            ["order_id", "order_partner_id"],
+          ]
+      }
+  }
+    
+
+  //   {
+  //   "params": {
+  //     "model": "sale.order.line",
+  //     "fields": ["order_id", "order_partner_id"],
+  //     "domain": [["order_partner_id", "in", array], ["name", "ilike", "Instalación baño al contado"]],
+
+  //   },
+
+  // }
+
+);
 
   let params_read = {
     headers: CustomHeaders,
@@ -3405,25 +3653,45 @@ export async function read_accountmove_reference(odoo_session:any, array: any) {
   };
 
   try {
-    const response_read = await fetch(settings.odoo_url + "dataset/search_read", params_read);
-    const data_read = await response_read.json();
-    let order_ids: any
-    if(data_read.result.length>0){
+    // const response_read = await fetch(settings.odoo_url + "dataset/search_read", params_read);
+    const response_read = await fetch(settings.odoo_url + "dataset/call_kw", params_read);
 
+    const data_read = await response_read.json();
+    let order_ids: any = [];
+    if (data_read.result.length>0) {
       for (let i =0; i<data_read.result.length; i++) {
         order_ids.push(data_read.result.records[i].order_id[1]);
       }
 
+      // console.log("order_ids ", order_ids);
 
-      raw = JSON.stringify({
-        "params": {
-          "model": "account.move",
-          "fields": ["partner_id", "ref"],
-          "offset": 0,
-          "domain": ["&", ["partner_id", "in", [array]], ["ref", "!=", ""], ["invoice_origin","in", order_ids]],
-        },
+      raw = JSON.stringify(
         
-      });
+        {
+          "params": {
+              "model": "account.move",
+              "method": "search_read",
+              "kwargs": {},
+              "args": [
+                ["&", ["partner_id", "in", array], ["ref", "!=", ""], ["invoice_origin", "in", order_ids]],
+                ["partner_id", "ref"],
+              ]
+          }
+      }
+
+      //   {
+      //   "params": {
+      //     "model": "account.move",
+      //     "fields": ["partner_id", "ref"],
+      //     "offset": 0,
+      //     "domain": ["&", ["partner_id", "in", array], ["ref", "!=", ""], ["invoice_origin", "in", order_ids]],
+      //   },
+
+      // }
+    
+    );
+
+      // console.log(raw);
 
       params_read = {
         headers: CustomHeaders,
@@ -3432,36 +3700,32 @@ export async function read_accountmove_reference(odoo_session:any, array: any) {
       };
 
       try {
-        const response_read = await fetch(settings.odoo_url + "dataset/search_read", params_read);
+        // const response_read = await fetch(settings.odoo_url + "dataset/search_read", params_read);
+        const response_read = await fetch(settings.odoo_url + "dataset/call_kw", params_read);
+
         const data_read = await response_read.json();
-    
-        // console.log("data_read", data_read)
-    
+
+        console.log("data_read", data_read);
+
         let user_payment = [];
-    
+
         for (let i =0; i<data_read.result.length; i++) {
           user_payment.push(data_read.result.records[i].partner_id[0]);
         }
-    
-    
+
+
         return user_payment;
       } catch (error) {
         functions.logger.error("[read_accountmove_reference] ERROR 2410231411: " + error, {"odoo_session": odoo_session, "array": array} );
         return [];
       }
-
     }
-    functions.logger.info("[read_accountmove_reference] No data fetched")
+    functions.logger.info("[read_accountmove_reference] No data fetched");
     return [];
-  
-  }
-
-  catch (error) {
+  } catch (error) {
     functions.logger.error("[read_accountmove_reference] ERROR 0306241658: " + error, {"odoo_session": odoo_session, "array": array} );
     return [];
   }
-  
-
 }
 
 export async function verify_user_exist_create_modify(odoo_session:any, crm_data :any) {
@@ -3521,17 +3785,36 @@ export async function get_crm_data(odoo_session:any, crm_id: number, since_times
     const date = new Date(Number(since_timestamp));
     const date_str = "'"+ date.getFullYear()+"-"+("0" + (date.getMonth() + 1)).slice(-2)+"-"+("0" +date.getDate()).slice(-2)+" "+ ("0" +date.getHours()).slice(-2)+":"+("0" +date.getMinutes()).slice(-2)+":"+("0" +date.getSeconds()).slice(-2) + "'";
 
-    raw = JSON.stringify({
-      "params": {
-        "model": "crm.lead",
-        "offset": 0,
-        "fields": [
-          "id", "partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
-          "name", "phone", "mobile", "tag_ids", "create_uid", "create_date", "write_date", "street", "street2", "zip", "country_id", "state_id", "tag_ids", "user_id",
-        ],
-        "domain": [["write_date", ">", date_str]],
-      },
-    });
+    raw = JSON.stringify(
+
+      {
+        "params": {
+            "model":  "crm.lead",
+            "method": "search_read",
+            "kwargs": {},
+            "args": [
+              [["write_date", ">", date_str]],
+              [
+                "id", "partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
+                "name", "phone", "mobile", "tag_ids", "create_uid", "create_date", "write_date", "street", "street2", "zip", "country_id", "state_id", "tag_ids", "user_id",
+              ],
+            ]
+        }
+    }
+      
+    //   {
+    //   "params": {
+    //     "model": "crm.lead",
+    //     "offset": 0,
+    //     "fields": [
+    //       "id", "partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
+    //       "name", "phone", "mobile", "tag_ids", "create_uid", "create_date", "write_date", "street", "street2", "zip", "country_id", "state_id", "tag_ids", "user_id",
+    //     ],
+    //     "domain": [["write_date", ">", date_str]],
+    //   },
+    // }
+  
+  );
   }
 
   const params = {
@@ -3541,7 +3824,9 @@ export async function get_crm_data(odoo_session:any, crm_id: number, since_times
   };
 
   try {
-    const response = await fetch(settings.odoo_url + "dataset/search_read", params);
+    // const response = await fetch(settings.odoo_url + "dataset/search_read", params);
+    const response = await fetch(settings.odoo_url + "dataset/call_kw", params);
+
     const data = await response.json();
 
     if (data.result.length<=1) return data.result.records[0];
@@ -3693,37 +3978,76 @@ export async function get_user_data(odoo_session:any, user_id: number, since_tim
     const date = new Date(Number(since_timestamp));
     const date_str = "'"+ date.getFullYear()+"-"+("0" + (date.getMonth() + 1)).slice(-2)+"-"+("0" +date.getDate()).slice(-2)+" "+ ("0" +date.getHours()).slice(-2)+":"+("0" +date.getMinutes()).slice(-2)+":"+("0" +date.getSeconds()).slice(-2) + "'";
 
-    raw = JSON.stringify({
-      "params": {
-        "model": "res.partner",
-        "offset": 0,
-        "fields": [
-          "is_company",
-          "phone",
-          "mobile",
-          "name",
-          "display_name",
-          "vat",
-          "l10n_latam_identification_type_id",
-          "street",
-          "street2",
-          "country_id",
-          "zip",
-          "category_id",
-          "city",
-          "state_id",
+    raw = JSON.stringify(
 
-          "tz",
-          "tz_offset",
-          "user_id",
-          "same_vat_partner_id",
-          "city_id",
+      {
+        "params": {
+            "model": "res.partner",
+            "method": "search_read",
+            "kwargs": {},
+            "args": [
+              [["write_date", ">", date_str]],
+              [
+                "is_company",
+                "phone",
+                "mobile",
+                "name",
+                "display_name",
+                "vat",
+                "l10n_latam_identification_type_id",
+                "street",
+                "street2",
+                "country_id",
+                "zip",
+                "category_id",
+                "city",
+                "state_id",
+      
+                "tz",
+                "tz_offset",
+                "user_id",
+                "same_vat_partner_id",
+                "city_id",
+      
+                "opportunity_ids",
+              ],
+            ]
+        }
+    }
+      
+      
+    //   {
+    //   "params": {
+    //     "model": "res.partner",
+    //     "offset": 0,
+    //     "fields": [
+    //       "is_company",
+    //       "phone",
+    //       "mobile",
+    //       "name",
+    //       "display_name",
+    //       "vat",
+    //       "l10n_latam_identification_type_id",
+    //       "street",
+    //       "street2",
+    //       "country_id",
+    //       "zip",
+    //       "category_id",
+    //       "city",
+    //       "state_id",
 
-          "opportunity_ids",
-        ],
-        "domain": [["write_date", ">", date_str]],
-      },
-    });
+    //       "tz",
+    //       "tz_offset",
+    //       "user_id",
+    //       "same_vat_partner_id",
+    //       "city_id",
+
+    //       "opportunity_ids",
+    //     ],
+    //     "domain": [["write_date", ">", date_str]],
+    //   },
+    // }
+  );
   }
 
   const params = {
@@ -3733,7 +4057,9 @@ export async function get_user_data(odoo_session:any, user_id: number, since_tim
   };
 
   try {
-    const response = await fetch(settings.odoo_url + "dataset/search_read", params);
+    // const response = await fetch(settings.odoo_url + "dataset/search_read", params);
+    const response = await fetch(settings.odoo_url + "dataset/call_kw", params);
+
     const data = await response.json();
 
 
@@ -3753,7 +4079,7 @@ export async function get_user_data(odoo_session:any, user_id: number, since_tim
 //   // {"partner_id": partner_id,
 //   // "partner_name": partner_name,
 //   // "order_id_name":order_id_name,}
-//   // 
+//   //
 
 //   const CustomHeaders: HeadersInit = {
 //     "Content-Type": "application/json",
@@ -3767,7 +4093,7 @@ export async function get_user_data(odoo_session:any, user_id: number, since_tim
 //       "offset": 0,
 //       "domain": [["order_partner_id", "=", user_id],
 //        ["name", "ilike", "Instalación baño al contado"],
-        
+
 //       ],
 //     },
 //   });
@@ -3934,22 +4260,40 @@ export async function odooToFirebase_Users_test(odoo_session:any, lastupdateTime
 
 
   try {
-    const raw = JSON.stringify({
-      "params": {
-        "model": "res.partner",
-        "offset": 0,
-        "fields": [
-          "id", "write_date"],
-        "domain": [["write_date", ">", date_str]],
-      },
-    });
+    const raw = JSON.stringify(
+
+      {
+        "params": {
+            "model": "res.partner",
+            "method": "search_read",
+            "kwargs": {},
+            "args": [
+              [["write_date", ">", date_str]],
+              [
+                "id", "write_date"],
+            ]
+        }
+    }
+      
+    //   {
+    //   "params": {
+    //     "model": "res.partner",
+    //     "offset": 0,
+    //     "fields": [
+    //       "id", "write_date"],
+    //     "domain": [["write_date", ">", date_str]],
+    //   },
+    // }
+  
+  );
 
     const params = {
       headers: CustomHeaders,
       method: "post",
       body: raw,
     };
-    const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+    const response = await fetch(settings.odoo_url + "dataset/call_kw/", params);
+    // const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
     let odoo_query_time = Date.now(); // THIS IS THE TIME WHERE I MADE THE CHECK
     console.log("odoo_query_time final", odoo_query_time);
     let data;
@@ -3987,17 +4331,32 @@ export async function readInventory_Odoo(odoo_session:any) {
   };
 
   try {
-    const raw = JSON.stringify({
-      "params": {
-        "model": "product.product",
-        "fields": ["id", "barcode", "code", "name"],
-        // "fields":["id","display_name","uom_name"],
-        "offset": 0,
-        // "domain":[["name","ilike","tubo de ve"]]
-        "domain": [],
-        // "limit": 100,
-      },
-    });
+    const raw = JSON.stringify(
+      {
+        "params": {
+            "model":"product.product",
+            "method": "search_read",
+            "kwargs": {},
+            "args": [
+              [],
+              ["id", "barcode", "code", "name"],
+            ]
+        }
+    }
+      
+    //   {
+    //   "params": {
+    //     "model": "product.product",
+    //     "fields": ["id", "barcode", "code", "name"],
+    //     // "fields":["id","display_name","uom_name"],
+    //     "offset": 0,
+    //     // "domain":[["name","ilike","tubo de ve"]]
+    //     "domain": [],
+    //     // "limit": 100,
+    //   },
+    // }
+  
+  );
 
     const params = {
       headers: CustomHeaders,
@@ -4005,7 +4364,8 @@ export async function readInventory_Odoo(odoo_session:any) {
       body: raw,
     };
 
-    const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+    const response = await fetch(settings.odoo_url + "dataset/call_kw/", params);
+    // const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
 
 
     let data = await response.json();
@@ -4074,17 +4434,33 @@ export async function getItemsCollection(odoo_session:any) {
   };
 
   try {
-    const raw = JSON.stringify({
-      "params": {
-        "model": "product.product",
-        "fields": ["id", "name"],
-        // "fields":["id","display_name","uom_name"],
-        "offset": 0,
-        // "domain":[["name","ilike","tubo de ve"]]
-        "domain": [],
-        // "limit": 100,
-      },
-    });
+    const raw = JSON.stringify(
+      
+      {
+        "params": {
+            "model":"product.product",
+            "method": "search_read",
+            "kwargs": {},
+            "args": [
+              [],
+              ["id", "name"],
+            ]
+        }
+    }
+
+    //   {
+    //   "params": {
+    //     "model": "product.product",
+    //     "fields": ["id", "name"],
+    //     // "fields":["id","display_name","uom_name"],
+    //     "offset": 0,
+    //     // "domain":[["name","ilike","tubo de ve"]]
+    //     "domain": [],
+    //     // "limit": 100,
+    //   },
+    // }
+  
+  );
 
     const params = {
       headers: CustomHeaders,
@@ -4092,7 +4468,8 @@ export async function getItemsCollection(odoo_session:any) {
       body: raw,
     };
 
-    const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+    // const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+    const response = await fetch(settings.odoo_url + "dataset/call_kw/", params);
 
 
     let data = await response.json();
@@ -4123,14 +4500,30 @@ export async function readZones_Odoo(odoo_session:any) {
   };
 
   try {
-    const raw = JSON.stringify({
-      "params": {
-        "model": "crm.tag",
-        "fields": ["name"],
-        "offset": 0,
-        "domain": [],
-      },
-    });
+    const raw = JSON.stringify(
+      
+      {
+        "params": {
+            "model":"crm.tag",
+            "method": "search_read",
+            "kwargs": {},
+            "args": [
+              [],
+              ["name"],
+            ]
+        }
+    }
+      
+    //   {
+    //   "params": {
+    //     "model": "crm.tag",
+    //     "fields": ["name"],
+    //     "offset": 0,
+    //     "domain": [],
+    //   },
+    // }
+  
+  );
 
     const params = {
       headers: CustomHeaders,
@@ -4138,7 +4531,8 @@ export async function readZones_Odoo(odoo_session:any) {
       body: raw,
     };
 
-    const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+    // const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+    const response = await fetch(settings.odoo_url + "dataset/call_kw/", params);
 
 
     let data = await response.json();
@@ -4169,14 +4563,30 @@ export async function readMedia_Odoo(odoo_session:any) {
   };
 
   try {
-    const raw = JSON.stringify({
-      "params": {
-        "model": "utm.medium",
-        "fields": ["name"],
-        "offset": 0,
-        "domain": [],
-      },
-    });
+    const raw = JSON.stringify(
+      
+      {
+        "params": {
+            "model": "utm.medium",
+            "method": "search_read",
+            "kwargs": {},
+            "args": [
+              [],
+              ["name"],
+            ]
+        }
+    }
+      
+    //   {
+    //   "params": {
+    //     "model": "utm.medium",
+    //     "fields": ["name"],
+    //     "offset": 0,
+    //     "domain": [],
+    //   },
+    // }
+  
+  );
 
     const params = {
       headers: CustomHeaders,
@@ -4184,7 +4594,8 @@ export async function readMedia_Odoo(odoo_session:any) {
       body: raw,
     };
 
-    const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+    // const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+    const response = await fetch(settings.odoo_url + "dataset/call_kw/", params);
 
 
     let data = await response.json();
@@ -4214,14 +4625,30 @@ export async function readSources_Odoo(odoo_session:any) {
   };
 
   try {
-    const raw = JSON.stringify({
-      "params": {
-        "model": "utm.source",
-        "fields": ["name"],
-        "offset": 0,
-        "domain": [],
-      },
-    });
+    const raw = JSON.stringify(
+      
+      {
+        "params": {
+            "model": "utm.source",
+            "method": "search_read",
+            "kwargs": {},
+            "args": [
+              [],
+              ["name"],
+            ]
+        }
+    }
+      
+    //   {
+    //   "params": {
+    //     "model": "utm.source",
+    //     "fields": ["name"],
+    //     "offset": 0,
+    //     "domain": [],
+    //   },
+    // }
+  
+  );
 
     const params = {
       headers: CustomHeaders,
@@ -4229,7 +4656,9 @@ export async function readSources_Odoo(odoo_session:any) {
       body: raw,
     };
 
-    const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+    const response = await fetch(settings.odoo_url + "dataset/call_kw/", params);
+    // const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+
 
 
     let data = await response.json();
@@ -4259,50 +4688,102 @@ export async function checkUserNoCRM(odoo_session:any) {
   };
 
   try {
-    const raw = JSON.stringify({
-      "params": {
-        "model": "res.partner",
-        "fields": [
-          "write_date",
-          // "is_company",
-          "phone",
-          "mobile",
-          "display_name",
-          "vat",
-          "l10n_latam_identification_type_id",
-          "street",
-          "street_name",
-          "street2",
-          "country_id",
-          "zip",
-          "category_id",
-          "city",
-          "state_id",
-          "tz",
-          "tz_offset",
-          "user_id",
-          "same_vat_partner_id",
-          "city_id",
-          "category_id",
-          "function",
-        ],
-        "offset": 0,
-        // "limit": 10,
-        "domain": [
-          "&",
-          [
-            "opportunity_ids",
-            "=",
-            false,
-          ],
-          [
-            "is_company",
-            "=",
-            false,
-          ],
-        ],
-      },
-    });
+    const raw = JSON.stringify(
+      
+      {
+        "params": {
+            "model":  "res.partner",
+            "method": "search_read",
+            "kwargs": {},
+            "args": [
+              [
+                "&",
+                [
+                  "opportunity_ids",
+                  "=",
+                  false,
+                ],
+                [
+                  "is_company",
+                  "=",
+                  false,
+                ],
+              ],
+              [
+                "write_date",
+                // "is_company",
+                "phone",
+                "mobile",
+                "display_name",
+                "vat",
+                "l10n_latam_identification_type_id",
+                "street",
+                "street_name",
+                "street2",
+                "country_id",
+                "zip",
+                "category_id",
+                "city",
+                "state_id",
+                "tz",
+                "tz_offset",
+                "user_id",
+                "same_vat_partner_id",
+                "city_id",
+                "category_id",
+                "function",
+              ],
+            ]
+        }
+    }
+
+      
+    //   {
+    //   "params": {
+    //     "model": "res.partner",
+    //     "fields": [
+    //       "write_date",
+    //       // "is_company",
+    //       "phone",
+    //       "mobile",
+    //       "display_name",
+    //       "vat",
+    //       "l10n_latam_identification_type_id",
+    //       "street",
+    //       "street_name",
+    //       "street2",
+    //       "country_id",
+    //       "zip",
+    //       "category_id",
+    //       "city",
+    //       "state_id",
+    //       "tz",
+    //       "tz_offset",
+    //       "user_id",
+    //       "same_vat_partner_id",
+    //       "city_id",
+    //       "category_id",
+    //       "function",
+    //     ],
+    //     "offset": 0,
+    //     // "limit": 10,
+    //     "domain": [
+    //       "&",
+    //       [
+    //         "opportunity_ids",
+    //         "=",
+    //         false,
+    //       ],
+    //       [
+    //         "is_company",
+    //         "=",
+    //         false,
+    //       ],
+    //     ],
+    //   },
+    // }
+  
+  );
 
     const params = {
       headers: CustomHeaders,
@@ -4310,7 +4791,8 @@ export async function checkUserNoCRM(odoo_session:any) {
       body: raw,
     };
 
-    const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+    // const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+    const response = await fetch(settings.odoo_url + "dataset/call_kw/", params);
 
 
     let data = await response.json();
@@ -4335,22 +4817,50 @@ export async function askcrmid(odoo_session:any, user_id : any) {
   };
 
   try {
-    const raw = JSON.stringify({
-      "params": {
-        "model": "res.partner",
-        "fields": [
-          "opportunity_ids",
-        ],
-        "offset": 0,
-        "domain": [
-          [
-            "id",
-            "=",
-            user_id,
-          ],
-        ],
-      },
-    });
+    const raw = JSON.stringify(
+      
+
+      {
+        "params": {
+            "model":"res.partner",
+            "method": "search_read",
+            "kwargs": {},
+            "args": [
+              [
+                [
+                  "id",
+                  "=",
+                  user_id,
+                ],
+              ],
+              [
+                "opportunity_ids",
+              ],
+            ]
+        }
+    }
+
+      
+      
+    //   {
+    //   "params": {
+    //     "model": "res.partner",
+    //     "fields": [
+    //       "opportunity_ids",
+    //     ],
+    //     "offset": 0,
+    //     "domain": [
+    //       [
+    //         "id",
+    //         "=",
+    //         user_id,
+    //       ],
+    //     ],
+    //   },
+    // }
+  
+  
+  );
 
     const params = {
       headers: CustomHeaders,
@@ -4358,7 +4868,9 @@ export async function askcrmid(odoo_session:any, user_id : any) {
       body: raw,
     };
 
-    const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+    // const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+    const response = await fetch(settings.odoo_url + "dataset/call_kw/", params);
+
 
 
     let data = await response.json();
@@ -4385,46 +4897,94 @@ export async function RewriteTestUsers(odoo_session:any) {
     };
 
 
-    let raw = JSON.stringify({
-      "params": {
-        "model": "res.partner",
-        "fields": [
-          "id",
-          // "write_date",
-          // "is_company",
-          "phone",
-          "mobile",
-          "display_name",
-          "vat",
-          // "l10n_latam_identification_type_id",
-          "street_name",
-          // "country_id",
-          "zip",
-          "category_id",
-          // "city",
-          "state_id",
-          // "tz",
-          // "tz_offset",
-          // "user_id",
-          // "same_vat_partner_id",
-          // "city_id",
-          "category_id",
-          // "function",
-          "opportunity_ids",
-        ],
-        "offset": 0,
-        // "limit": 10,
-        "domain": [
+    let raw = JSON.stringify(
+      
+      {
+        "params": {
+            "model":"res.partner",
+            "method": "search_read",
+            "kwargs": {},
+            "args": [
+              [
 
-          [
-            "is_company",
-            "=",
-            false,
-          ],
-          // [ "id", "=", 30910]
-        ],
-      },
-    });
+                [
+                  "is_company",
+                  "=",
+                  false,
+                ],
+                // [ "id", "=", 30910]
+              ],
+              [
+                "id",
+                // "write_date",
+                // "is_company",
+                "phone",
+                "mobile",
+                "display_name",
+                "vat",
+                // "l10n_latam_identification_type_id",
+                "street_name",
+                // "country_id",
+                "zip",
+                "category_id",
+                // "city",
+                "state_id",
+                // "tz",
+                // "tz_offset",
+                // "user_id",
+                // "same_vat_partner_id",
+                // "city_id",
+                "category_id",
+                // "function",
+                "opportunity_ids",
+              ],
+            ]
+        }
+    }
+      
+      
+    //   {
+    //   "params": {
+    //     "model": "res.partner",
+    //     "fields": [
+    //       "id",
+    //       // "write_date",
+    //       // "is_company",
+    //       "phone",
+    //       "mobile",
+    //       "display_name",
+    //       "vat",
+    //       // "l10n_latam_identification_type_id",
+    //       "street_name",
+    //       // "country_id",
+    //       "zip",
+    //       "category_id",
+    //       // "city",
+    //       "state_id",
+    //       // "tz",
+    //       // "tz_offset",
+    //       // "user_id",
+    //       // "same_vat_partner_id",
+    //       // "city_id",
+    //       "category_id",
+    //       // "function",
+    //       "opportunity_ids",
+    //     ],
+    //     "offset": 0,
+    //     // "limit": 10,
+    //     "domain": [
+
+    //       [
+    //         "is_company",
+    //         "=",
+    //         false,
+    //       ],
+    //       // [ "id", "=", 30910]
+    //     ],
+    //   },
+    // }
+  
+  );
 
     let params = {
       headers: CustomHeaders,
@@ -4433,7 +4993,9 @@ export async function RewriteTestUsers(odoo_session:any) {
     };
 
 
-    let response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+    // let response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+    let response = await fetch(settings.odoo_url + "dataset/call_kw/", params);
+
 
 
     let data = await response.json();
@@ -4495,18 +5057,39 @@ export async function RewriteTestUsers(odoo_session:any) {
 
             // download crm data
             try {
-              raw = JSON.stringify({
-                "params": {
-                  "model": "crm.lead",
-                  "offset": 0,
-                  "fields": [
-                    "id", "partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
-                    "name", "phone", "mobile", "tag_ids", "create_uid", "create_date", "write_date", "street", "street2", "zip", "country_id", "state_id", "tag_ids", "user_id",
+              raw = JSON.stringify(
+                {
+                  "params": {
+                      "model":"crm.lead",
+                      "method": "search_read",
+                      "kwargs": {},
+                      "args": [
+                        [["partner_id", "=", data_from_Odoo.id]],
+                        [
+                          "id", "partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
+                          "name", "phone", "mobile", "tag_ids", "create_uid", "create_date", "write_date", "street", "street2", "zip", "country_id", "state_id", "tag_ids", "user_id",
+      
+                        ],
+                      ]
+                  }
+              }
+                
+                
+                
+              //   {
+              //   "params": {
+              //     "model": "crm.lead",
+              //     "offset": 0,
+              //     "fields": [
+              //       "id", "partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
+              //       "name", "phone", "mobile", "tag_ids", "create_uid", "create_date", "write_date", "street", "street2", "zip", "country_id", "state_id", "tag_ids", "user_id",
 
-                  ],
-                  "domain": [["partner_id", "=", data_from_Odoo.id]],
-                },
-              });
+              //     ],
+              //     "domain": [["partner_id", "=", data_from_Odoo.id]],
+              //   },
+              // }
+            
+            );
 
               params = {
                 headers: CustomHeaders,
@@ -4514,7 +5097,9 @@ export async function RewriteTestUsers(odoo_session:any) {
                 body: raw,
               };
 
-              response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+              response = await fetch(settings.odoo_url + "dataset/call_kw/", params);
+              // response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+
 
 
               let crm_data = await response.json();
@@ -4677,52 +5262,72 @@ export async function Script_RewriteUsers(odoo_session:any) {
     };
 
 
-    let raw = JSON.stringify({
-      "params": {
-        "model": "res.partner",
-        "fields": [
-          "id",
-          // "write_date",
-          // "is_company",
-          // "phone",
-          // "mobile",
-          // "display_name",
-          // "vat",
-          // "l10n_latam_identification_type_id",
-          // "street_name",
-          // "country_id",
-          // "zip",
-          // "category_id",
-          // "city",
-          // "state_id",
-          // "tz",
-          // "tz_offset",
-          // "user_id",
-          // "same_vat_partner_id",
-          // "city_id",
-          "category_id",
-          // "function",
-          // "opportunity_ids",
-        ],
-        "offset": 0,
-        // "limit": 10,
-        "domain": [
+    let raw = JSON.stringify(
+      
+      {
+        "params": {
+            "model":"res.partner",
+            "method": "search_read",
+            "kwargs": {},
+            "args": [
+              [
 
-          "&",
-          [
-            "category_id",
-            "in",
-            [453],
-          ],
-          [
-            "is_company",
-            "=",
-            false,
-          ],
-          // [ "id", "=", 30910]
-        ],
-      },
-    });
+                "&",
+                [
+                  "category_id",
+                  "in",
+                  [453],
+                ],
+                [
+                  "is_company",
+                  "=",
+                  false,
+                ],
+                // [ "id", "=", 30910]
+              ],
+              [
+                "id",
+      
+                "category_id",
+                // "function",
+                // "opportunity_ids",
+              ],
+            ]
+        }
+    }
+      
+      
+    //   {
+    //   "params": {
+    //     "model": "res.partner",
+    //     "fields": [
+    //       "id",
+
+    //       "category_id",
+    //       // "function",
+    //       // "opportunity_ids",
+    //     ],
+    //     "offset": 0,
+    //     // "limit": 10,
+    //     "domain": [
+
+    //       "&",
+    //       [
+    //         "category_id",
+    //         "in",
+    //         [453],
+    //       ],
+    //       [
+    //         "is_company",
+    //         "=",
+    //         false,
+    //       ],
+    //       // [ "id", "=", 30910]
+    //     ],
+    //   },
+    // }
+  
+  );
 
     let params = {
       headers: CustomHeaders,
@@ -4731,7 +5336,9 @@ export async function Script_RewriteUsers(odoo_session:any) {
     };
 
 
-    let response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+    let response = await fetch(settings.odoo_url + "dataset/call_kw/", params);
+    // let response = await fetch(settings.odoo_url + "dataset/search_read/", params);
+
 
 
     let data = await response.json();
@@ -4783,3 +5390,67 @@ export async function Script_RewriteUsers(odoo_session:any) {
   }
 }
 
+
+export async function test ( odoo_session:any, lastupdateTimestamp: any) {
+
+  // let odoo_query_time = Date.now();// THIS IS THE TIME WHERE I MADE THE CHECK
+
+  // The function reads the tickes CRM created in odoo after the last update
+   const date = new Date(Number(lastupdateTimestamp));
+  const date_str = "'"+ date.getFullYear()+"-"+("0" + (date.getMonth() + 1)).slice(-2)+"-"+("0" +date.getDate()).slice(-2)+" "+ ("0" +date.getHours()).slice(-2)+":"+("0" +date.getMinutes()).slice(-2)+":"+("0" +date.getSeconds()).slice(-2) + "'";
+
+  const CustomHeaders: HeadersInit = {
+    "Content-Type": "application/json",
+    "Cookie": "session_id="+odoo_session,
+  };
+
+  // let raw = {
+  //   "params": {
+  //     "model": "crm.lead",
+  //     "offset": 0,
+  //     "fields": [
+  //       "id", "partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
+  //       "name", "phone", "mobile", "tag_ids", "create_uid", "create_date", "write_date", "street", "street2", "zip", "country_id", "state_id", "tag_ids", "user_id",
+
+  //     ],
+  //     "domain": ["&", ["write_date", ">", date_str], ["partner_id", "!=", false]],
+  //   },
+  // };
+
+  let raw2 = { 
+    "params": {
+      "model": "crm.lead",
+      "method": "search_read",
+      "kwargs": {},
+      "args": [
+        ["&", ["write_date", ">", date_str], ["partner_id", "!=", false]],
+        [
+                "id", "partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
+                "name", "phone", "mobile", "tag_ids", "create_uid", "create_date", "write_date", "street", "street2", "zip", "country_id", "state_id", "tag_ids", "user_id",
+        
+              ],
+    ]
+
+    },
+  }
+
+  // let raw2 = transformRaw(raw);
+
+  // sales person is user_id
+
+  const params = {
+    headers: CustomHeaders,
+    method: "call",
+    body: JSON.stringify(raw2),
+    // body: raw
+  };
+
+
+  const response = await fetch(settings.odoo_url + "dataset/call_kw", params);
+    const data = await response.json();
+
+    console.log(data);
+
+
+
+}

@@ -22,10 +22,11 @@
     "@firebase/app": "^0.10.1",
     "@firebase/auth": "^1.7.1",
     "@firebase/auth-types": "^0.12.1",
+    "@google-cloud/pubsub": "^4.7.1",
     "@google-cloud/secret-manager": "^5.3.0",
     "@types/node-fetch": "^2.6.11",
-    "firebase-admin": "^11.5.0",
-    "firebase-functions": "^4.7.0",
+    "firebase-admin": "^12.4.0",
+    "firebase-functions": "^5.1.1",
     "http-crud": "^4.0.0",
     "nodemailer": "^6.9.4"
   },

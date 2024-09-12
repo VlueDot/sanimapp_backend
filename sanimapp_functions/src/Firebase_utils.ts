@@ -13,6 +13,12 @@ export const urldatabase = settings.get_urldatabase();
 
 export function initapp() {
   try {
+    // console.log("initapp" ,  {projectId: process.env.credential_projectId,
+    //   privateKey: process.env.credential_privateKey,
+    //   clientEmail: process.env.credential_clientEmail,
+    //   databaseURL: urldatabase
+
+    // })
     admin.initializeApp({
       credential: admin.credential.cert(
           {projectId: process.env.credential_projectId,
