@@ -627,14 +627,14 @@ firebaseToOdoo_CRM_update = functions
       }
     });
 
-odooToFirebase_syncUsers = functions.https.onRequest(async (request, response)=> {
-// odooToFirebase_syncUsers = functions
-//     .runWith(
-//         {timeoutSeconds: timeoutSeconds_,
-//           secrets: settings.ALL_SECRETS})
-//     .pubsub.schedule(schedule_)
-//     .timeZone("America/Lima")
-//     .onRun(async () =>{
+// odooToFirebase_syncUsers = functions.https.onRequest(async (request, response)=> {
+odooToFirebase_syncUsers = functions
+    .runWith(
+        {timeoutSeconds: timeoutSeconds_,
+          secrets: settings.ALL_SECRETS})
+    .pubsub.schedule(schedule_)
+    .timeZone("America/Lima")
+    .onRun(async () =>{
       // this will run with certain periodicity. This will be the stable function.
       // Here will be everything at the moment. eventually we will separate them to test each one of these.
 
@@ -666,12 +666,12 @@ odooToFirebase_syncUsers = functions.https.onRequest(async (request, response)=>
             });
           }
         }
-        response.send("odooToFirebase_syncUsers. odoo_session: .." + odoo_session?.substring(odoo_session.length - 5));
-        // return true;
+        // response.send("odooToFirebase_syncUsers. odoo_session: .." + odoo_session?.substring(odoo_session.length - 5));
+        return true;
       } catch (error) {
         functions.logger.error( "[odooToFirebase_syncUsers] ERROR at Start. ", error);
-        response.send("odooToFirebase_syncUsers Error: "+error);
-        // return false;
+        // response.send("odooToFirebase_syncUsers Error: "+error);
+        return false;
       }
     });
 
@@ -801,11 +801,10 @@ exports.test = functions
       const firebaseType = await FirebaseFcn.firebaseGet("/firebaseType");
 
       const lastupdateTimestamp_crm = await FirebaseFcn.firebaseGet("/timestamp_collection/CMR_tickets_timestamp");
-        // const lastupdateTimestamp_users = await FirebaseFcn.firebaseGet("/timestamp_collection/ussersTimeStamp");
+      // const lastupdateTimestamp_users = await FirebaseFcn.firebaseGet("/timestamp_collection/ussersTimeStamp");
 
 
-
-      OdooFcn.test(odoo_session, lastupdateTimestamp_crm)
+      OdooFcn.test(odoo_session, lastupdateTimestamp_crm);
       // OdooFcn.test( lastupdateTimestamp_crm)
 
 

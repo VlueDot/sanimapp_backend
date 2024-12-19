@@ -101,8 +101,8 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
 
   try {
     const raw = JSON.stringify(
-      {
-        "params": {
+        {
+          "params": {
             "model": "res.partner",
             "method": "search_read",
             "kwargs": {},
@@ -111,26 +111,25 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
               [
                 "id", "name", "phone", "mobile", "zip",
                 "vat", "street", "street2", "city", "country_id", "display_name", "category_id", "write_date", "opportunity_ids"],
-             
-            ]
+
+            ],
+          },
         }
-    }
 
 
-    //   {
-    //   "params": {
-    //     "model": "res.partner",
-    //     "offset": 0,
-    //     "fields": [
-    //       "id", "name", "phone", "mobile", "zip",
-    //       "vat", "street", "street2", "city", "country_id", "display_name", "category_id", "write_date", "opportunity_ids"],
-    //     "domain": [["write_date", ">", date_str]],
-    //   },
+        //   {
+        //   "params": {
+        //     "model": "res.partner",
+        //     "offset": 0,
+        //     "fields": [
+        //       "id", "name", "phone", "mobile", "zip",
+        //       "vat", "street", "street2", "city", "country_id", "display_name", "category_id", "write_date", "opportunity_ids"],
+        //     "domain": [["write_date", ">", date_str]],
+        //   },
 
-    // }
-  
-  );
+        // }
 
+    );
 
 
     const params = {
@@ -698,20 +697,18 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
 
                   const raw = JSON.stringify(
 
-                    
-                    
-                    
-                    {
-                    "params": {
-                      "model": "res.partner",
-                      "method": "write",
-                      "kwargs": {},
-                      "args": [user_id,
-                        {
-                          "category_id": user_categories,
-                        }],
-                    },
-                  });
+
+                      {
+                        "params": {
+                          "model": "res.partner",
+                          "method": "write",
+                          "kwargs": {},
+                          "args": [user_id,
+                            {
+                              "category_id": user_categories,
+                            }],
+                        },
+                      });
 
                   const params = {
                     headers: CustomHeaders,
@@ -721,8 +718,6 @@ export async function odooToFirebase_Users(odoo_session:any, lastupdateTimestamp
 
                   // await fetch(settings.odoo_url + "dataset/call_kw/res.partner/write", params);
                   await fetch(settings.odoo_url + "dataset/call_kw/", params);
-
-                  
                 } catch (err) {
                   functions.logger.error( "[odooToFirebase_Users] Error updating route in Odoo: " + err, info);
                 }
@@ -1013,31 +1008,29 @@ export async function odooToFirebase_Campaigns(odoo_session:any, lastupdateTimes
   const raw = JSON.stringify(
 
 
-
-    {
-      "params": {
+      {
+        "params": {
           "model": "utm.campaign",
           "method": "search_read",
           "kwargs": {},
           "args": [
             [["write_date", ">", date_str]],
             ["display_name"],
-          ]
+          ],
+        },
       }
-  }
-    
-  //   {
-  //   "params": {
-  //     "model": "utm.campaign",
-  //     "offset": 0,
-  //     "fields": ["display_name"],
-  //     "domain": [["write_date", ">", date_str]],
-  //   },
-  // }
+
+      //   {
+      //   "params": {
+      //     "model": "utm.campaign",
+      //     "offset": 0,
+      //     "fields": ["display_name"],
+      //     "domain": [["write_date", ">", date_str]],
+      //   },
+      // }
 
 
-
-);
+  );
 
   const params = {
     headers: CustomHeaders,
@@ -1160,32 +1153,29 @@ export async function odooToFirebase_ServiceTickets(odoo_session:any, lastupdate
 
   const raw = JSON.stringify(
 
-    {
-      "params": {
+      {
+        "params": {
           "model": "helpdesk.ticket",
           "method": "search_read",
           "kwargs": {},
           "args": [
             [["write_date", ">", date_str]],
             ["create_date", "partner_id", "description", "name", "stage_id", "tag_ids", "write_date"],
-          ]
+          ],
+        },
       }
-  }
 
-    
-    
-    
-    
-  //   {
-  //   "params": {
-  //     "model": "helpdesk.ticket",
-  //     "offset": 0,
-  //     "fields": ["create_date", "partner_id", "description", "name", "stage_id", "tag_ids", "write_date"],
-  //     "domain": [["write_date", ">", date_str]],
-  //   },
-  // }
 
-);
+      //   {
+      //   "params": {
+      //     "model": "helpdesk.ticket",
+      //     "offset": 0,
+      //     "fields": ["create_date", "partner_id", "description", "name", "stage_id", "tag_ids", "write_date"],
+      //     "domain": [["write_date", ">", date_str]],
+      //   },
+      // }
+
+  );
 
   const params = {
     headers: CustomHeaders,
@@ -1576,32 +1566,31 @@ export async function is_there_install_serviceTicket(odoo_session:any, user_id: 
 
   const raw = JSON.stringify(
 
-    {
-      "params": {
+      {
+        "params": {
           "model": "helpdesk.ticket",
           "method": "search_read",
           "kwargs": {},
           "args": [
             ["&", ["partner_id", "=",
               user_id], ["tag_ids", "=", 278]], // before 14
-              ["partner_id"],
-          ]
+            ["partner_id"],
+          ],
+        },
       }
-  }
 
-    
-    
-  //   {
-  //   "params": {
-  //     "model": "helpdesk.ticket",
-  //     "offset": 0,
-  //     "fields": ["partner_id"],
-  //     "domain": ["&", ["partner_id", "=",
-  //       user_id], ["tag_ids", "=", 278]], // before 14
-  //   },
-  // }
 
-);
+      //   {
+      //   "params": {
+      //     "model": "helpdesk.ticket",
+      //     "offset": 0,
+      //     "fields": ["partner_id"],
+      //     "domain": ["&", ["partner_id", "=",
+      //       user_id], ["tag_ids", "=", 278]], // before 14
+      //   },
+      // }
+
+  );
 
   const params = {
     headers: CustomHeaders,
@@ -1646,36 +1635,36 @@ export async function odooToFirebase_CRMTickets(odoo_session:any, lastupdateTime
 
   const raw = JSON.stringify(
 
-    {
-      "params": {
+      {
+        "params": {
           "model": "crm.lead",
           "method": "search_read",
           "kwargs": {},
           "args": [
             ["&", ["write_date", ">", date_str], ["partner_id", "!=", false]],
-              [
-                "id", "partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
-                "name", "phone", "mobile", "tag_ids", "create_uid", "create_date", "write_date", "street", "street2", "zip", "country_id", "state_id", "tag_ids", "user_id",
-        
-              ],
-          ]
+            [
+              "id", "partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
+              "name", "phone", "mobile", "tag_ids", "create_uid", "create_date", "write_date", "street", "street2", "zip", "country_id", "state_id", "tag_ids", "user_id",
+
+            ],
+          ],
+        },
       }
-  }
-    
-  //   {
-  //   "params": {
-  //     "model": "crm.lead",
-  //     "offset": 0,
-  //     "fields": [
-  //       "id", "partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
-  //       "name", "phone", "mobile", "tag_ids", "create_uid", "create_date", "write_date", "street", "street2", "zip", "country_id", "state_id", "tag_ids", "user_id",
 
-  //     ],
-  //     "domain": ["&", ["write_date", ">", date_str], ["partner_id", "!=", false]],
-  //   },
-  // }
+      //   {
+      //   "params": {
+      //     "model": "crm.lead",
+      //     "offset": 0,
+      //     "fields": [
+      //       "id", "partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
+      //       "name", "phone", "mobile", "tag_ids", "create_uid", "create_date", "write_date", "street", "street2", "zip", "country_id", "state_id", "tag_ids", "user_id",
 
-);
+      //     ],
+      //     "domain": ["&", ["write_date", ">", date_str], ["partner_id", "!=", false]],
+      //   },
+      // }
+
+  );
 
   // let raw2 = transformRaw(raw);
 
@@ -2486,30 +2475,29 @@ export async function getCategories(odoo_session:any) {
 
     const raw = JSON.stringify(
 
-      {
-        "params": {
+        {
+          "params": {
             "model": "res.partner.category",
             "method": "search_read",
             "kwargs": {},
             "args": [
               [],
-              ["id", "name"]
-            ]
+              ["id", "name"],
+            ],
+          },
         }
-    }
-      
-      
-      
-    //   {
-    //   "params": {
-    //     "model": "res.partner.category",
-    //     "fields": ["id", "name"],
-    //     "offset": 0,
-    //     "domain": [],
-    //   },
-    // }
-  
-  );
+
+
+        //   {
+        //   "params": {
+        //     "model": "res.partner.category",
+        //     "fields": ["id", "name"],
+        //     "offset": 0,
+        //     "domain": [],
+        //   },
+        // }
+
+    );
 
     let params = {
       headers: CustomHeaders,
@@ -2540,29 +2528,29 @@ export async function firebaseToOdoo_DeleteStopLabels(odoo_session:any, idOdoo: 
 
   const raw_read = JSON.stringify(
 
-    {
-      "params": {
+      {
+        "params": {
           "model": "res.partner",
           "method": "search_read",
           "kwargs": {},
           "args": [
             [["id", "like", partnerId]],
-            []
-          ]
+            [],
+          ],
+        },
       }
-  }
-    
-    
-  //   {
-  //   "params": {
-  //     "model": "res.partner",
-  //     "fields": [],
-  //     "offset": 0,
-  //     "domain": [["id", "like", partnerId]],
-  //   },
-  // }
 
-);
+
+      //   {
+      //   "params": {
+      //     "model": "res.partner",
+      //     "fields": [],
+      //     "offset": 0,
+      //     "domain": [["id", "like", partnerId]],
+      //   },
+      // }
+
+  );
 
   const params_read = {
     headers: CustomHeaders,
@@ -2668,30 +2656,30 @@ export async function verifyIfodooWriteInFirebase(odoo_session:any, idOdoo: numb
   };
 
   const raw = JSON.stringify(
-    
-    {
-      "params": {
+
+      {
+        "params": {
           "model": "res.partner.category",
           "method": "search_read",
           "kwargs": {},
           "args": [
             ["&", ["id", "=", idOdoo], ["write_date", ">", date_str]],
             ["id", "name"],
-          ]
+          ],
+        },
       }
-  }
-    
-    
-  //   {
-  //   "params": {
-  //     "model": "res.partner.category",
-  //     "fields": ["id", "name"],
-  //     "offset": 0,
-  //     "domain": ["&", ["id", "=", idOdoo], ["write_date", ">", date_str]],
-  //   },
-  // }
 
-);
+
+      //   {
+      //   "params": {
+      //     "model": "res.partner.category",
+      //     "fields": ["id", "name"],
+      //     "offset": 0,
+      //     "domain": ["&", ["id", "=", idOdoo], ["write_date", ">", date_str]],
+      //   },
+      // }
+
+  );
 
   const params = {
     headers: CustomHeaders,
@@ -2716,9 +2704,9 @@ async function contactInfoById(odoo_session:any, id_client: any) {
   };
 
   const raw = JSON.stringify(
-    
-    {
-      "params": {
+
+      {
+        "params": {
           "model": "res.partner",
           "method": "search_read",
           "kwargs": {},
@@ -2726,22 +2714,22 @@ async function contactInfoById(odoo_session:any, id_client: any) {
             [["id", "=", id_client]],
             ["id", "phone", "mobile", "comment", "name", "vat", "street", "street2", "city",
               "country_id", "display_name", "category_id", "zip"],
-          ]
+          ],
+        },
       }
-  }
 
-    
-  //   {
-  //   "params": {
-  //     "model": "res.partner",
-  //     "fields": ["id", "phone", "mobile", "comment", "name", "vat", "street", "street2", "city",
-  //       "country_id", "display_name", "category_id", "zip"],
-  //     "offset": 0,
-  //     "domain": [["id", "=", id_client]],
-  //   },
-  // }
 
-);
+      //   {
+      //   "params": {
+      //     "model": "res.partner",
+      //     "fields": ["id", "phone", "mobile", "comment", "name", "vat", "street", "street2", "city",
+      //       "country_id", "display_name", "category_id", "zip"],
+      //     "offset": 0,
+      //     "domain": [["id", "=", id_client]],
+      //   },
+      // }
+
+  );
 
   const params = {
     headers: CustomHeaders,
@@ -2809,30 +2797,29 @@ export async function firebaseToOdoo_ActiveOrInstall(odoo_session:any, partnerId
 
   const raw_read = JSON.stringify(
 
-    {
-      "params": {
+      {
+        "params": {
           "model": "res.partner",
           "method": "search_read",
           "kwargs": {},
           "args": [
             [["id", "like", partnerId]],
             [],
-          ]
+          ],
+        },
       }
-  }
 
-    
-    
-  //   {
-  //   "params": {
-  //     "model": "res.partner",
-  //     "fields": [],
-  //     "offset": 0,
-  //     "domain": [["id", "like", partnerId]],
-  //   },
-  // }
 
-);
+      //   {
+      //   "params": {
+      //     "model": "res.partner",
+      //     "fields": [],
+      //     "offset": 0,
+      //     "domain": [["id", "like", partnerId]],
+      //   },
+      // }
+
+  );
 
   const params_read = {
     headers: CustomHeaders,
@@ -3159,9 +3146,9 @@ export async function readTicketCRM(odoo_session:any, lastupdateTimestamp: any, 
   };
 
   const raw = JSON.stringify(
-    
-    {
-      "params": {
+
+      {
+        "params": {
           "model": "crm.lead",
           "method": "search_read",
           "kwargs": {},
@@ -3171,24 +3158,24 @@ export async function readTicketCRM(odoo_session:any, lastupdateTimestamp: any, 
               "partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
               "name", "phone", "mobile", "tag_ids", "user_id", "create_date", "write_date", "color",
             ],
-          ]
+          ],
+        },
       }
-  }
 
-    
-  //   {
-  //   "params": {
-  //     "model": "crm.lead",
-  //     "offset": 0,
-  //     "fields": [
-  //       "partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
-  //       "name", "phone", "mobile", "tag_ids", "user_id", "create_date", "write_date", "color",
-  //     ],
-  //     "domain": ["&", ["name", "=", args.name], ["write_date", ">", date_str], ["user_id", "=", args.user_id]],
-  //   },
-  // }
-  
-);
+
+      //   {
+      //   "params": {
+      //     "model": "crm.lead",
+      //     "offset": 0,
+      //     "fields": [
+      //       "partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
+      //       "name", "phone", "mobile", "tag_ids", "user_id", "create_date", "write_date", "color",
+      //     ],
+      //     "domain": ["&", ["name", "=", args.name], ["write_date", ">", date_str], ["user_id", "=", args.user_id]],
+      //   },
+      // }
+
+  );
 
   const params = {
     headers: CustomHeaders,
@@ -3620,31 +3607,31 @@ export async function read_accountmove_reference(odoo_session:any, array: any) {
 
 
   let raw = JSON.stringify(
-    
-    {
-      "params": {
+
+      {
+        "params": {
           "model": "sale.order.line",
           "method": "search_read",
           "kwargs": {},
           "args": [
             [["order_partner_id", "in", array], ["name", "ilike", "Instalación baño al contado"]],
             ["order_id", "order_partner_id"],
-          ]
+          ],
+        },
       }
-  }
-    
 
-  //   {
-  //   "params": {
-  //     "model": "sale.order.line",
-  //     "fields": ["order_id", "order_partner_id"],
-  //     "domain": [["order_partner_id", "in", array], ["name", "ilike", "Instalación baño al contado"]],
 
-  //   },
+      //   {
+      //   "params": {
+      //     "model": "sale.order.line",
+      //     "fields": ["order_id", "order_partner_id"],
+      //     "domain": [["order_partner_id", "in", array], ["name", "ilike", "Instalación baño al contado"]],
 
-  // }
+      //   },
 
-);
+      // }
+
+  );
 
   let params_read = {
     headers: CustomHeaders,
@@ -3666,30 +3653,30 @@ export async function read_accountmove_reference(odoo_session:any, array: any) {
       // console.log("order_ids ", order_ids);
 
       raw = JSON.stringify(
-        
-        {
-          "params": {
+
+          {
+            "params": {
               "model": "account.move",
               "method": "search_read",
               "kwargs": {},
               "args": [
                 ["&", ["partner_id", "in", array], ["ref", "!=", ""], ["invoice_origin", "in", order_ids]],
                 ["partner_id", "ref"],
-              ]
+              ],
+            },
           }
-      }
 
-      //   {
-      //   "params": {
-      //     "model": "account.move",
-      //     "fields": ["partner_id", "ref"],
-      //     "offset": 0,
-      //     "domain": ["&", ["partner_id", "in", array], ["ref", "!=", ""], ["invoice_origin", "in", order_ids]],
-      //   },
+          //   {
+          //   "params": {
+          //     "model": "account.move",
+          //     "fields": ["partner_id", "ref"],
+          //     "offset": 0,
+          //     "domain": ["&", ["partner_id", "in", array], ["ref", "!=", ""], ["invoice_origin", "in", order_ids]],
+          //   },
 
-      // }
-    
-    );
+          // }
+
+      );
 
       // console.log(raw);
 
@@ -3787,9 +3774,9 @@ export async function get_crm_data(odoo_session:any, crm_id: number, since_times
 
     raw = JSON.stringify(
 
-      {
-        "params": {
-            "model":  "crm.lead",
+        {
+          "params": {
+            "model": "crm.lead",
             "method": "search_read",
             "kwargs": {},
             "args": [
@@ -3798,23 +3785,23 @@ export async function get_crm_data(odoo_session:any, crm_id: number, since_times
                 "id", "partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
                 "name", "phone", "mobile", "tag_ids", "create_uid", "create_date", "write_date", "street", "street2", "zip", "country_id", "state_id", "tag_ids", "user_id",
               ],
-            ]
+            ],
+          },
         }
-    }
-      
-    //   {
-    //   "params": {
-    //     "model": "crm.lead",
-    //     "offset": 0,
-    //     "fields": [
-    //       "id", "partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
-    //       "name", "phone", "mobile", "tag_ids", "create_uid", "create_date", "write_date", "street", "street2", "zip", "country_id", "state_id", "tag_ids", "user_id",
-    //     ],
-    //     "domain": [["write_date", ">", date_str]],
-    //   },
-    // }
-  
-  );
+
+        //   {
+        //   "params": {
+        //     "model": "crm.lead",
+        //     "offset": 0,
+        //     "fields": [
+        //       "id", "partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
+        //       "name", "phone", "mobile", "tag_ids", "create_uid", "create_date", "write_date", "street", "street2", "zip", "country_id", "state_id", "tag_ids", "user_id",
+        //     ],
+        //     "domain": [["write_date", ">", date_str]],
+        //   },
+        // }
+
+    );
   }
 
   const params = {
@@ -3980,8 +3967,8 @@ export async function get_user_data(odoo_session:any, user_id: number, since_tim
 
     raw = JSON.stringify(
 
-      {
-        "params": {
+        {
+          "params": {
             "model": "res.partner",
             "method": "search_read",
             "kwargs": {},
@@ -4002,52 +3989,52 @@ export async function get_user_data(odoo_session:any, user_id: number, since_tim
                 "category_id",
                 "city",
                 "state_id",
-      
+
                 "tz",
                 "tz_offset",
                 "user_id",
                 "same_vat_partner_id",
                 "city_id",
-      
+
                 "opportunity_ids",
               ],
-            ]
+            ],
+          },
         }
-    }
-      
-      
-    //   {
-    //   "params": {
-    //     "model": "res.partner",
-    //     "offset": 0,
-    //     "fields": [
-    //       "is_company",
-    //       "phone",
-    //       "mobile",
-    //       "name",
-    //       "display_name",
-    //       "vat",
-    //       "l10n_latam_identification_type_id",
-    //       "street",
-    //       "street2",
-    //       "country_id",
-    //       "zip",
-    //       "category_id",
-    //       "city",
-    //       "state_id",
 
-    //       "tz",
-    //       "tz_offset",
-    //       "user_id",
-    //       "same_vat_partner_id",
-    //       "city_id",
+
+        //   {
+        //   "params": {
+        //     "model": "res.partner",
+        //     "offset": 0,
+        //     "fields": [
+        //       "is_company",
+        //       "phone",
+        //       "mobile",
+        //       "name",
+        //       "display_name",
+        //       "vat",
+        //       "l10n_latam_identification_type_id",
+        //       "street",
+        //       "street2",
+        //       "country_id",
+        //       "zip",
+        //       "category_id",
+        //       "city",
+        //       "state_id",
+
+        //       "tz",
+        //       "tz_offset",
+        //       "user_id",
+        //       "same_vat_partner_id",
+        //       "city_id",
 
     //       "opportunity_ids",
     //     ],
     //     "domain": [["write_date", ">", date_str]],
     //   },
     // }
-  );
+    );
   }
 
   const params = {
@@ -4262,8 +4249,8 @@ export async function odooToFirebase_Users_test(odoo_session:any, lastupdateTime
   try {
     const raw = JSON.stringify(
 
-      {
-        "params": {
+        {
+          "params": {
             "model": "res.partner",
             "method": "search_read",
             "kwargs": {},
@@ -4271,21 +4258,21 @@ export async function odooToFirebase_Users_test(odoo_session:any, lastupdateTime
               [["write_date", ">", date_str]],
               [
                 "id", "write_date"],
-            ]
+            ],
+          },
         }
-    }
-      
-    //   {
-    //   "params": {
-    //     "model": "res.partner",
-    //     "offset": 0,
-    //     "fields": [
-    //       "id", "write_date"],
-    //     "domain": [["write_date", ">", date_str]],
-    //   },
-    // }
-  
-  );
+
+        //   {
+        //   "params": {
+        //     "model": "res.partner",
+        //     "offset": 0,
+        //     "fields": [
+        //       "id", "write_date"],
+        //     "domain": [["write_date", ">", date_str]],
+        //   },
+        // }
+
+    );
 
     const params = {
       headers: CustomHeaders,
@@ -4332,31 +4319,31 @@ export async function readInventory_Odoo(odoo_session:any) {
 
   try {
     const raw = JSON.stringify(
-      {
-        "params": {
-            "model":"product.product",
+        {
+          "params": {
+            "model": "product.product",
             "method": "search_read",
             "kwargs": {},
             "args": [
               [],
               ["id", "barcode", "code", "name"],
-            ]
+            ],
+          },
         }
-    }
-      
-    //   {
-    //   "params": {
-    //     "model": "product.product",
-    //     "fields": ["id", "barcode", "code", "name"],
-    //     // "fields":["id","display_name","uom_name"],
-    //     "offset": 0,
-    //     // "domain":[["name","ilike","tubo de ve"]]
-    //     "domain": [],
-    //     // "limit": 100,
-    //   },
-    // }
-  
-  );
+
+        //   {
+        //   "params": {
+        //     "model": "product.product",
+        //     "fields": ["id", "barcode", "code", "name"],
+        //     // "fields":["id","display_name","uom_name"],
+        //     "offset": 0,
+        //     // "domain":[["name","ilike","tubo de ve"]]
+        //     "domain": [],
+        //     // "limit": 100,
+        //   },
+        // }
+
+    );
 
     const params = {
       headers: CustomHeaders,
@@ -4435,32 +4422,32 @@ export async function getItemsCollection(odoo_session:any) {
 
   try {
     const raw = JSON.stringify(
-      
-      {
-        "params": {
-            "model":"product.product",
+
+        {
+          "params": {
+            "model": "product.product",
             "method": "search_read",
             "kwargs": {},
             "args": [
               [],
               ["id", "name"],
-            ]
+            ],
+          },
         }
-    }
 
-    //   {
-    //   "params": {
-    //     "model": "product.product",
-    //     "fields": ["id", "name"],
-    //     // "fields":["id","display_name","uom_name"],
-    //     "offset": 0,
-    //     // "domain":[["name","ilike","tubo de ve"]]
-    //     "domain": [],
-    //     // "limit": 100,
-    //   },
-    // }
-  
-  );
+        //   {
+        //   "params": {
+        //     "model": "product.product",
+        //     "fields": ["id", "name"],
+        //     // "fields":["id","display_name","uom_name"],
+        //     "offset": 0,
+        //     // "domain":[["name","ilike","tubo de ve"]]
+        //     "domain": [],
+        //     // "limit": 100,
+        //   },
+        // }
+
+    );
 
     const params = {
       headers: CustomHeaders,
@@ -4501,29 +4488,29 @@ export async function readZones_Odoo(odoo_session:any) {
 
   try {
     const raw = JSON.stringify(
-      
-      {
-        "params": {
-            "model":"crm.tag",
+
+        {
+          "params": {
+            "model": "crm.tag",
             "method": "search_read",
             "kwargs": {},
             "args": [
               [],
               ["name"],
-            ]
+            ],
+          },
         }
-    }
-      
-    //   {
-    //   "params": {
-    //     "model": "crm.tag",
-    //     "fields": ["name"],
-    //     "offset": 0,
-    //     "domain": [],
-    //   },
-    // }
-  
-  );
+
+        //   {
+        //   "params": {
+        //     "model": "crm.tag",
+        //     "fields": ["name"],
+        //     "offset": 0,
+        //     "domain": [],
+        //   },
+        // }
+
+    );
 
     const params = {
       headers: CustomHeaders,
@@ -4564,29 +4551,29 @@ export async function readMedia_Odoo(odoo_session:any) {
 
   try {
     const raw = JSON.stringify(
-      
-      {
-        "params": {
+
+        {
+          "params": {
             "model": "utm.medium",
             "method": "search_read",
             "kwargs": {},
             "args": [
               [],
               ["name"],
-            ]
+            ],
+          },
         }
-    }
-      
-    //   {
-    //   "params": {
-    //     "model": "utm.medium",
-    //     "fields": ["name"],
-    //     "offset": 0,
-    //     "domain": [],
-    //   },
-    // }
-  
-  );
+
+        //   {
+        //   "params": {
+        //     "model": "utm.medium",
+        //     "fields": ["name"],
+        //     "offset": 0,
+        //     "domain": [],
+        //   },
+        // }
+
+    );
 
     const params = {
       headers: CustomHeaders,
@@ -4626,29 +4613,29 @@ export async function readSources_Odoo(odoo_session:any) {
 
   try {
     const raw = JSON.stringify(
-      
-      {
-        "params": {
+
+        {
+          "params": {
             "model": "utm.source",
             "method": "search_read",
             "kwargs": {},
             "args": [
               [],
               ["name"],
-            ]
+            ],
+          },
         }
-    }
-      
-    //   {
-    //   "params": {
-    //     "model": "utm.source",
-    //     "fields": ["name"],
-    //     "offset": 0,
-    //     "domain": [],
-    //   },
-    // }
-  
-  );
+
+        //   {
+        //   "params": {
+        //     "model": "utm.source",
+        //     "fields": ["name"],
+        //     "offset": 0,
+        //     "domain": [],
+        //   },
+        // }
+
+    );
 
     const params = {
       headers: CustomHeaders,
@@ -4658,7 +4645,6 @@ export async function readSources_Odoo(odoo_session:any) {
 
     const response = await fetch(settings.odoo_url + "dataset/call_kw/", params);
     // const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
-
 
 
     let data = await response.json();
@@ -4689,10 +4675,10 @@ export async function checkUserNoCRM(odoo_session:any) {
 
   try {
     const raw = JSON.stringify(
-      
-      {
-        "params": {
-            "model":  "res.partner",
+
+        {
+          "params": {
+            "model": "res.partner",
             "method": "search_read",
             "kwargs": {},
             "args": [
@@ -4733,57 +4719,57 @@ export async function checkUserNoCRM(odoo_session:any) {
                 "category_id",
                 "function",
               ],
-            ]
+            ],
+          },
         }
-    }
 
-      
-    //   {
-    //   "params": {
-    //     "model": "res.partner",
-    //     "fields": [
-    //       "write_date",
-    //       // "is_company",
-    //       "phone",
-    //       "mobile",
-    //       "display_name",
-    //       "vat",
-    //       "l10n_latam_identification_type_id",
-    //       "street",
-    //       "street_name",
-    //       "street2",
-    //       "country_id",
-    //       "zip",
-    //       "category_id",
-    //       "city",
-    //       "state_id",
-    //       "tz",
-    //       "tz_offset",
-    //       "user_id",
-    //       "same_vat_partner_id",
-    //       "city_id",
-    //       "category_id",
-    //       "function",
-    //     ],
-    //     "offset": 0,
-    //     // "limit": 10,
-    //     "domain": [
-    //       "&",
-    //       [
-    //         "opportunity_ids",
-    //         "=",
-    //         false,
-    //       ],
-    //       [
-    //         "is_company",
-    //         "=",
-    //         false,
-    //       ],
-    //     ],
-    //   },
-    // }
-  
-  );
+
+        //   {
+        //   "params": {
+        //     "model": "res.partner",
+        //     "fields": [
+        //       "write_date",
+        //       // "is_company",
+        //       "phone",
+        //       "mobile",
+        //       "display_name",
+        //       "vat",
+        //       "l10n_latam_identification_type_id",
+        //       "street",
+        //       "street_name",
+        //       "street2",
+        //       "country_id",
+        //       "zip",
+        //       "category_id",
+        //       "city",
+        //       "state_id",
+        //       "tz",
+        //       "tz_offset",
+        //       "user_id",
+        //       "same_vat_partner_id",
+        //       "city_id",
+        //       "category_id",
+        //       "function",
+        //     ],
+        //     "offset": 0,
+        //     // "limit": 10,
+        //     "domain": [
+        //       "&",
+        //       [
+        //         "opportunity_ids",
+        //         "=",
+        //         false,
+        //       ],
+        //       [
+        //         "is_company",
+        //         "=",
+        //         false,
+        //       ],
+        //     ],
+        //   },
+        // }
+
+    );
 
     const params = {
       headers: CustomHeaders,
@@ -4818,11 +4804,11 @@ export async function askcrmid(odoo_session:any, user_id : any) {
 
   try {
     const raw = JSON.stringify(
-      
 
-      {
-        "params": {
-            "model":"res.partner",
+
+        {
+          "params": {
+            "model": "res.partner",
             "method": "search_read",
             "kwargs": {},
             "args": [
@@ -4836,31 +4822,30 @@ export async function askcrmid(odoo_session:any, user_id : any) {
               [
                 "opportunity_ids",
               ],
-            ]
+            ],
+          },
         }
-    }
 
-      
-      
-    //   {
-    //   "params": {
-    //     "model": "res.partner",
-    //     "fields": [
-    //       "opportunity_ids",
-    //     ],
-    //     "offset": 0,
-    //     "domain": [
-    //       [
-    //         "id",
-    //         "=",
-    //         user_id,
-    //       ],
-    //     ],
-    //   },
-    // }
-  
-  
-  );
+
+        //   {
+        //   "params": {
+        //     "model": "res.partner",
+        //     "fields": [
+        //       "opportunity_ids",
+        //     ],
+        //     "offset": 0,
+        //     "domain": [
+        //       [
+        //         "id",
+        //         "=",
+        //         user_id,
+        //       ],
+        //     ],
+        //   },
+        // }
+
+
+    );
 
     const params = {
       headers: CustomHeaders,
@@ -4870,7 +4855,6 @@ export async function askcrmid(odoo_session:any, user_id : any) {
 
     // const response = await fetch(settings.odoo_url + "dataset/search_read/", params);
     const response = await fetch(settings.odoo_url + "dataset/call_kw/", params);
-
 
 
     let data = await response.json();
@@ -4898,10 +4882,10 @@ export async function RewriteTestUsers(odoo_session:any) {
 
 
     let raw = JSON.stringify(
-      
-      {
-        "params": {
-            "model":"res.partner",
+
+        {
+          "params": {
+            "model": "res.partner",
             "method": "search_read",
             "kwargs": {},
             "args": [
@@ -4938,53 +4922,53 @@ export async function RewriteTestUsers(odoo_session:any) {
                 // "function",
                 "opportunity_ids",
               ],
-            ]
+            ],
+          },
         }
-    }
-      
-      
-    //   {
-    //   "params": {
-    //     "model": "res.partner",
-    //     "fields": [
-    //       "id",
-    //       // "write_date",
-    //       // "is_company",
-    //       "phone",
-    //       "mobile",
-    //       "display_name",
-    //       "vat",
-    //       // "l10n_latam_identification_type_id",
-    //       "street_name",
-    //       // "country_id",
-    //       "zip",
-    //       "category_id",
-    //       // "city",
-    //       "state_id",
-    //       // "tz",
-    //       // "tz_offset",
-    //       // "user_id",
-    //       // "same_vat_partner_id",
-    //       // "city_id",
-    //       "category_id",
-    //       // "function",
-    //       "opportunity_ids",
-    //     ],
-    //     "offset": 0,
-    //     // "limit": 10,
-    //     "domain": [
 
-    //       [
-    //         "is_company",
-    //         "=",
-    //         false,
-    //       ],
-    //       // [ "id", "=", 30910]
-    //     ],
-    //   },
-    // }
-  
-  );
+
+        //   {
+        //   "params": {
+        //     "model": "res.partner",
+        //     "fields": [
+        //       "id",
+        //       // "write_date",
+        //       // "is_company",
+        //       "phone",
+        //       "mobile",
+        //       "display_name",
+        //       "vat",
+        //       // "l10n_latam_identification_type_id",
+        //       "street_name",
+        //       // "country_id",
+        //       "zip",
+        //       "category_id",
+        //       // "city",
+        //       "state_id",
+        //       // "tz",
+        //       // "tz_offset",
+        //       // "user_id",
+        //       // "same_vat_partner_id",
+        //       // "city_id",
+        //       "category_id",
+        //       // "function",
+        //       "opportunity_ids",
+        //     ],
+        //     "offset": 0,
+        //     // "limit": 10,
+        //     "domain": [
+
+        //       [
+        //         "is_company",
+        //         "=",
+        //         false,
+        //       ],
+        //       // [ "id", "=", 30910]
+        //     ],
+        //   },
+        // }
+
+    );
 
     let params = {
       headers: CustomHeaders,
@@ -4995,7 +4979,6 @@ export async function RewriteTestUsers(odoo_session:any) {
 
     // let response = await fetch(settings.odoo_url + "dataset/search_read/", params);
     let response = await fetch(settings.odoo_url + "dataset/call_kw/", params);
-
 
 
     let data = await response.json();
@@ -5058,9 +5041,9 @@ export async function RewriteTestUsers(odoo_session:any) {
             // download crm data
             try {
               raw = JSON.stringify(
-                {
-                  "params": {
-                      "model":"crm.lead",
+                  {
+                    "params": {
+                      "model": "crm.lead",
                       "method": "search_read",
                       "kwargs": {},
                       "args": [
@@ -5068,28 +5051,27 @@ export async function RewriteTestUsers(odoo_session:any) {
                         [
                           "id", "partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
                           "name", "phone", "mobile", "tag_ids", "create_uid", "create_date", "write_date", "street", "street2", "zip", "country_id", "state_id", "tag_ids", "user_id",
-      
-                        ],
-                      ]
-                  }
-              }
-                
-                
-                
-              //   {
-              //   "params": {
-              //     "model": "crm.lead",
-              //     "offset": 0,
-              //     "fields": [
-              //       "id", "partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
-              //       "name", "phone", "mobile", "tag_ids", "create_uid", "create_date", "write_date", "street", "street2", "zip", "country_id", "state_id", "tag_ids", "user_id",
 
-              //     ],
-              //     "domain": [["partner_id", "=", data_from_Odoo.id]],
-              //   },
-              // }
-            
-            );
+                        ],
+                      ],
+                    },
+                  }
+
+
+                  //   {
+                  //   "params": {
+                  //     "model": "crm.lead",
+                  //     "offset": 0,
+                  //     "fields": [
+                  //       "id", "partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
+                  //       "name", "phone", "mobile", "tag_ids", "create_uid", "create_date", "write_date", "street", "street2", "zip", "country_id", "state_id", "tag_ids", "user_id",
+
+                  //     ],
+                  //     "domain": [["partner_id", "=", data_from_Odoo.id]],
+                  //   },
+                  // }
+
+              );
 
               params = {
                 headers: CustomHeaders,
@@ -5099,7 +5081,6 @@ export async function RewriteTestUsers(odoo_session:any) {
 
               response = await fetch(settings.odoo_url + "dataset/call_kw/", params);
               // response = await fetch(settings.odoo_url + "dataset/search_read/", params);
-
 
 
               let crm_data = await response.json();
@@ -5263,10 +5244,10 @@ export async function Script_RewriteUsers(odoo_session:any) {
 
 
     let raw = JSON.stringify(
-      
-      {
-        "params": {
-            "model":"res.partner",
+
+        {
+          "params": {
+            "model": "res.partner",
             "method": "search_read",
             "kwargs": {},
             "args": [
@@ -5287,47 +5268,47 @@ export async function Script_RewriteUsers(odoo_session:any) {
               ],
               [
                 "id",
-      
+
                 "category_id",
                 // "function",
                 // "opportunity_ids",
               ],
-            ]
+            ],
+          },
         }
-    }
-      
-      
-    //   {
-    //   "params": {
-    //     "model": "res.partner",
-    //     "fields": [
-    //       "id",
 
-    //       "category_id",
-    //       // "function",
-    //       // "opportunity_ids",
-    //     ],
-    //     "offset": 0,
-    //     // "limit": 10,
-    //     "domain": [
 
-    //       "&",
-    //       [
-    //         "category_id",
-    //         "in",
-    //         [453],
-    //       ],
-    //       [
-    //         "is_company",
-    //         "=",
-    //         false,
-    //       ],
-    //       // [ "id", "=", 30910]
-    //     ],
-    //   },
-    // }
-  
-  );
+        //   {
+        //   "params": {
+        //     "model": "res.partner",
+        //     "fields": [
+        //       "id",
+
+        //       "category_id",
+        //       // "function",
+        //       // "opportunity_ids",
+        //     ],
+        //     "offset": 0,
+        //     // "limit": 10,
+        //     "domain": [
+
+        //       "&",
+        //       [
+        //         "category_id",
+        //         "in",
+        //         [453],
+        //       ],
+        //       [
+        //         "is_company",
+        //         "=",
+        //         false,
+        //       ],
+        //       // [ "id", "=", 30910]
+        //     ],
+        //   },
+        // }
+
+    );
 
     let params = {
       headers: CustomHeaders,
@@ -5338,7 +5319,6 @@ export async function Script_RewriteUsers(odoo_session:any) {
 
     let response = await fetch(settings.odoo_url + "dataset/call_kw/", params);
     // let response = await fetch(settings.odoo_url + "dataset/search_read/", params);
-
 
 
     let data = await response.json();
@@ -5391,12 +5371,11 @@ export async function Script_RewriteUsers(odoo_session:any) {
 }
 
 
-export async function test ( odoo_session:any, lastupdateTimestamp: any) {
-
+export async function test( odoo_session:any, lastupdateTimestamp: any) {
   // let odoo_query_time = Date.now();// THIS IS THE TIME WHERE I MADE THE CHECK
 
   // The function reads the tickes CRM created in odoo after the last update
-   const date = new Date(Number(lastupdateTimestamp));
+  const date = new Date(Number(lastupdateTimestamp));
   const date_str = "'"+ date.getFullYear()+"-"+("0" + (date.getMonth() + 1)).slice(-2)+"-"+("0" +date.getDate()).slice(-2)+" "+ ("0" +date.getHours()).slice(-2)+":"+("0" +date.getMinutes()).slice(-2)+":"+("0" +date.getSeconds()).slice(-2) + "'";
 
   const CustomHeaders: HeadersInit = {
@@ -5417,7 +5396,7 @@ export async function test ( odoo_session:any, lastupdateTimestamp: any) {
   //   },
   // };
 
-  let raw2 = { 
+  let raw2 = {
     "params": {
       "model": "crm.lead",
       "method": "search_read",
@@ -5425,14 +5404,14 @@ export async function test ( odoo_session:any, lastupdateTimestamp: any) {
       "args": [
         ["&", ["write_date", ">", date_str], ["partner_id", "!=", false]],
         [
-                "id", "partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
-                "name", "phone", "mobile", "tag_ids", "create_uid", "create_date", "write_date", "street", "street2", "zip", "country_id", "state_id", "tag_ids", "user_id",
-        
-              ],
-    ]
+          "id", "partner_id", "campaign_id", "stage_id", "medium_id", "source_id", "referred",
+          "name", "phone", "mobile", "tag_ids", "create_uid", "create_date", "write_date", "street", "street2", "zip", "country_id", "state_id", "tag_ids", "user_id",
+
+        ],
+      ],
 
     },
-  }
+  };
 
   // let raw2 = transformRaw(raw);
 
@@ -5447,10 +5426,7 @@ export async function test ( odoo_session:any, lastupdateTimestamp: any) {
 
 
   const response = await fetch(settings.odoo_url + "dataset/call_kw", params);
-    const data = await response.json();
+  const data = await response.json();
 
-    console.log(data);
-
-
-
+  console.log(data);
 }
